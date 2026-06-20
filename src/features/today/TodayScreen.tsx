@@ -1,0 +1,240 @@
+import { ChevronLeft, ChevronRight, Trash2, UtensilsCrossed, Wine, Ticket, ShoppingBag, Wallet, CalendarClock } from 'lucide-react';
+import { useProject } from '@/context/ProjectProvider';
+import { useDay, dayCost, type DayData } from '@/hooks/useDay';
+import { useEntryMutations, type EntryTable } from '@/hooks/useEntryMutations';
+import { useConfirmDelete } from '@/hooks/useConfirmDelete';
+import { useQuickAdd, type AddKind } from '@/lib/quickAdd';
+import { Card, SectionTitle } from '@/components/ui/Card';
+import { RatingBadge } from '@/components/ui/RatingInput';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { DateField } from '@/components/ui/DateField';
+import { addDays, formatLongDate, formatMoney, formatWeekday } from '@/lib/format';
+import {
+  activityTitle,
+  drinkAmount,
+  drinkTitle,
+  foodSubtitle,
+  foodTitle,
+} from '@/features/entries/entryDisplay';
+
+function Row({
+  title,
+  subtitle,
+  cost,
+  rating,
+  onEdit,
+  onDelete,
+}: {
+  title: string;
+  subtitle?: string;
+  cost?: number | null;
+  rating?: number | null;
+  onEdit: () => void;
+  onDelete: () => void;
+}) {
+  const { settings } = useProject();
+  return (
+    <div className="flex items-center gap-2 border-t border-border first:border-t-0">
+      <button onClick={onEdit} className="flex min-w-0 flex-1 items-center gap-2 py-2.5 text-left">
+        <div className="min-w-0 flex-1">
+          <div className="truncate text-[15px] font-medium">{title}</div>
+          {subtitle && <div className="truncate text-sm text-text-muted">{subtitle}</div>}
+        </div>
+        {rating != null && <RatingBadge value={rating} scale={settings.rating_scale} />}
+        {cost != null && (
+          <span className="text-sm font-medium text-text-muted">
+            {formatMoney(cost, settings.currency)}
+          </span>
+        )}
+      </button>
+      <button
+        onClick={onDelete}
+        className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-text-muted hover:bg-surface-alt hover:text-danger"
+        aria-label="Delete"
+      >
+        <Trash2 size={16} />
+      </button>
+    </div>
+  );
+}
+
+function alcoholSummary(d: DayData) {
+  let beers = 0;
+  let c05 = 0;
+  let c033 = 0;
+  let drinks = 0;
+  for (const e of d.drinks) {
+    if (e.drink_type === 'beer') {
+      c05 += e.count_05l;
+      c033 += e.count_033l;
+      beers += e.count_05l + e.count_033l;
+    } else {
+      drinks += e.quantity;
+    }
+  }
+  return { beers, c05, c033, drinks };
+}
+
+export function TodayScreen() {
+  const { project, date, setDate, settings } = useProject();
+  const { data, isLoading } = useDay(project?.id, date);
+  const { remove } = useEntryMutations();
+  const confirmDelete = useConfirmDelete();
+  const openAdd = useQuickAdd((s) => s.open);
+
+  const edit = (kind: AddKind, id: string) => openAdd(kind, id);
+  const del = async (table: EntryTable, id: string) => {
+    if (confirmDelete()) await remove(table, id);
+  };
+
+  const total = dayCost(data);
+  const al = data ? alcoholSummary(data) : null;
+  const isEmpty =
+    data &&
+    !data.food.length &&
+    !data.drinks.length &&
+    !data.activities.length &&
+    !data.purchases.length;
+
+  return (
+    <div className="space-y-4">
+      {/* Date navigator */}
+      <Card className="flex items-center justify-between p-2">
+        <button
+          onClick={() => setDate(addDays(date, -1))}
+          className="grid h-10 w-10 place-items-center rounded-xl hover:bg-surface-alt"
+          aria-label="Previous day"
+        >
+          <ChevronLeft size={20} />
+        </button>
+        <div className="flex flex-col items-center">
+          <span className="font-serif text-lg font-semibold">{formatLongDate(date)}</span>
+          <span className="text-xs text-text-muted">{formatWeekday(date)}</span>
+        </div>
+        <button
+          onClick={() => setDate(addDays(date, 1))}
+          className="grid h-10 w-10 place-items-center rounded-xl hover:bg-surface-alt"
+          aria-label="Next day"
+        >
+          <ChevronRight size={20} />
+        </button>
+      </Card>
+
+      <div className="flex items-center gap-2">
+        <CalendarClock size={16} className="text-text-muted" />
+        <span className="text-sm text-text-muted">Pick the experience date</span>
+        <div className="ml-auto w-40">
+          <DateField value={date} onChange={setDate} />
+        </div>
+      </div>
+
+      {isLoading && <p className="py-8 text-center text-sm text-text-muted">Loading…</p>}
+
+      {isEmpty && (
+        <EmptyState
+          icon={CalendarClock}
+          title="Nothing logged yet"
+          subtitle="Use the + button to add food, drinks, activities or purchases for this day."
+        />
+      )}
+
+      {/* Food */}
+      {!!data?.food.length && (
+        <section>
+          <SectionTitle icon={<UtensilsCrossed size={15} />}>Food</SectionTitle>
+          <Card className="px-4">
+            {data.food.map((e) => (
+              <Row
+                key={e.id}
+                title={foodTitle(e)}
+                subtitle={foodSubtitle(e)}
+                cost={e.cost}
+                rating={e.rating}
+                onEdit={() => edit('food', e.id)}
+                onDelete={() => del('memoir_food_entries', e.id)}
+              />
+            ))}
+          </Card>
+        </section>
+      )}
+
+      {/* Alcohol */}
+      {!!data?.drinks.length && al && (
+        <section>
+          <SectionTitle icon={<Wine size={15} />}>
+            Alcohol
+            <span className="ml-2 font-normal normal-case text-text-muted">
+              {al.beers > 0 && `${al.beers} beer${al.beers === 1 ? '' : 's'}`}
+              {al.beers > 0 && (al.c05 > 0 || al.c033 > 0) ? ` (${al.c05}×0.5L, ${al.c033}×0.33L)` : ''}
+              {al.drinks > 0 ? `${al.beers > 0 ? ' · ' : ''}${al.drinks} drink${al.drinks === 1 ? '' : 's'}` : ''}
+            </span>
+          </SectionTitle>
+          <Card className="px-4">
+            {data.drinks.map((e) => (
+              <Row
+                key={e.id}
+                title={drinkTitle(e)}
+                subtitle={drinkAmount(e)}
+                cost={e.cost}
+                rating={e.rating}
+                onEdit={() => edit('drink', e.id)}
+                onDelete={() => del('memoir_drink_entries', e.id)}
+              />
+            ))}
+          </Card>
+        </section>
+      )}
+
+      {/* Activities */}
+      {!!data?.activities.length && (
+        <section>
+          <SectionTitle icon={<Ticket size={15} />}>Activities</SectionTitle>
+          <Card className="px-4">
+            {data.activities.map((e) => (
+              <Row
+                key={e.id}
+                title={activityTitle(e)}
+                subtitle={e.description ?? undefined}
+                cost={e.cost}
+                rating={e.rating}
+                onEdit={() => edit('activity', e.id)}
+                onDelete={() => del('memoir_activity_entries', e.id)}
+              />
+            ))}
+          </Card>
+        </section>
+      )}
+
+      {/* Purchases */}
+      {!!data?.purchases.length && (
+        <section>
+          <SectionTitle icon={<ShoppingBag size={15} />}>Purchases</SectionTitle>
+          <Card className="px-4">
+            {data.purchases.map((e) => (
+              <Row
+                key={e.id}
+                title={e.item_name}
+                subtitle={e.category}
+                cost={e.cost}
+                onEdit={() => edit('purchase', e.id)}
+                onDelete={() => del('memoir_purchase_entries', e.id)}
+              />
+            ))}
+          </Card>
+        </section>
+      )}
+
+      {/* Expenses */}
+      {!isEmpty && (
+        <Card className="flex items-center justify-between p-4">
+          <span className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-text-muted">
+            <Wallet size={15} /> Day total
+          </span>
+          <span className="font-serif text-xl font-semibold text-accent">
+            {formatMoney(total, settings.currency)}
+          </span>
+        </Card>
+      )}
+    </div>
+  );
+}

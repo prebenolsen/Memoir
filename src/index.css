@@ -1,0 +1,70 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Light — calm, warm, timeless */
+    --bg: 247 244 238; /* #F7F4EE warm off-white */
+    --surface: 255 255 255; /* #FFFFFF */
+    --surface-alt: 241 237 229; /* slightly raised off-white */
+    --border: 226 220 209;
+    --primary: 31 77 58; /* #1F4D3A deep forest green */
+    --primary-fg: 247 244 238;
+    --accent: 196 154 74; /* #C49A4A muted gold */
+    --accent-fg: 34 34 34;
+    --text: 34 34 34; /* #222222 */
+    --text-muted: 119 119 119; /* #777777 */
+    --danger: 176 58 46;
+  }
+
+  .dark {
+    --bg: 21 21 21; /* #151515 */
+    --surface: 30 30 30; /* #1E1E1E */
+    --surface-alt: 38 38 38;
+    --border: 56 56 56;
+    --primary: 58 122 95; /* lightened forest green for contrast on dark */
+    --primary-fg: 247 244 238;
+    --accent: 209 169 92; /* slightly brighter gold */
+    --accent-fg: 21 21 21;
+    --text: 237 237 237;
+    --text-muted: 154 154 154;
+    --danger: 224 122 95;
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    @apply bg-bg text-text font-sans antialiased;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  h1,
+  h2,
+  h3 {
+    @apply font-serif;
+  }
+
+  /* Native date input icon tint */
+  input[type='date']::-webkit-calendar-picker-indicator {
+    opacity: 0.5;
+    cursor: pointer;
+  }
+}
+
+@layer utilities {
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}

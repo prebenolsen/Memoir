@@ -1,0 +1,105 @@
+import { useMemo, useState } from 'react';
+import { Search, Database } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
+import { useItemList, type ItemKind, type ItemWithStats } from '@/hooks/useItems';
+import { useProject } from '@/context/ProjectProvider';
+import { Card } from '@/components/ui/Card';
+import { ListRow } from '@/components/ui/ListRow';
+import { RatingBadge } from '@/components/ui/RatingInput';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { Input } from '@/components/ui/Input';
+import { titleCase } from '@/lib/format';
+import { ItemDetailSheet } from './ItemDetailSheet';
+
+type SortKey = 'most' | 'rated' | 'name';
+
+export function ItemListView({
+  kind,
+  emptyIcon,
+  emptyText,
+  countLabel,
+}: {
+  kind: ItemKind;
+  emptyIcon: LucideIcon;
+  emptyText: string;
+  countLabel: (n: number) => string;
+}) {
+  const { settings } = useProject();
+  const { data: items = [], isLoading } = useItemList(kind);
+  const [selected, setSelected] = useState<ItemWithStats | null>(null);
+  const [query, setQuery] = useState('');
+  const [sort, setSort] = useState<SortKey>('most');
+
+  const shown = useMemo(() => {
+    let list = items;
+    if (query.trim()) {
+      const q = query.toLowerCase();
+      list = list.filter((i) => i.name.toLowerCase().includes(q));
+    }
+    return [...list].sort((a, b) => {
+      if (sort === 'name') return a.name.localeCompare(b.name);
+      if (sort === 'rated') return (b.avg_rating ?? -1) - (a.avg_rating ?? -1);
+      return b.count - a.count;
+    });
+  }, [items, query, sort]);
+
+  if (isLoading) return <p className="py-8 text-center text-sm text-text-muted">Loading…</p>;
+  if (items.length === 0)
+    return <EmptyState icon={emptyIcon} title={`No ${kind} items yet`} subtitle={emptyText} />;
+
+  return (
+    <div className="space-y-3">
+      <div className="relative">
+        <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
+        <Input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder={`Search ${kind}…`}
+          className="pl-9"
+        />
+      </div>
+
+      <div className="flex gap-2 text-sm">
+        {(['most', 'rated', 'name'] as SortKey[]).map((k) => (
+          <button
+            key={k}
+            onClick={() => setSort(k)}
+            className={
+              'rounded-full px-3 py-1 ' +
+              (sort === k ? 'bg-primary text-primary-fg' : 'bg-surface-alt text-text-muted')
+            }
+          >
+            {k === 'most' ? 'Most logged' : k === 'rated' ? 'Top rated' : 'A–Z'}
+          </button>
+        ))}
+      </div>
+
+      <Card>
+        {shown.map((item) => (
+          <div key={item.id} className="border-t border-border first:border-t-0">
+            <ListRow
+              title={item.name}
+              subtitle={
+                countLabel(item.count) +
+                (kind === 'restaurant' && item.extra?.source
+                  ? ` · ${titleCase(String(item.extra.source))}`
+                  : '')
+              }
+              right={<RatingBadge value={item.avg_rating} scale={settings.rating_scale} />}
+              chevron
+              onClick={() => setSelected(item)}
+            />
+          </div>
+        ))}
+        {shown.length === 0 && (
+          <div className="px-4 py-6 text-center text-sm text-text-muted">
+            <Database className="mx-auto mb-1 opacity-50" size={20} />
+            No matches.
+          </div>
+        )}
+      </Card>
+
+      <ItemDetailSheet kind={kind} item={selected} onClose={() => setSelected(null)} />
+    </div>
+  );
+}
