@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import { ChevronLeft, ChevronRight, Trash2, UtensilsCrossed, Wine, Ticket, ShoppingBag, Wallet, CalendarClock } from 'lucide-react';
 import { useProject } from '@/context/ProjectProvider';
 import { useDay, dayCost, type DayData } from '@/hooks/useDay';
@@ -7,7 +8,6 @@ import { useQuickAdd, type AddKind } from '@/lib/quickAdd';
 import { Card, SectionTitle } from '@/components/ui/Card';
 import { RatingBadge } from '@/components/ui/RatingInput';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { DateField } from '@/components/ui/DateField';
 import { addDays, formatLongDate, formatMoney, formatWeekday } from '@/lib/format';
 import {
   activityTitle,
@@ -81,6 +81,15 @@ export function TodayScreen() {
   const { remove } = useEntryMutations();
   const confirmDelete = useConfirmDelete();
   const openAdd = useQuickAdd((s) => s.open);
+  const dateInputRef = useRef<HTMLInputElement>(null);
+
+  const openCalendar = () => {
+    const el = dateInputRef.current;
+    if (!el) return;
+    // showPicker is the reliable way to open the native calendar on click.
+    if (typeof el.showPicker === 'function') el.showPicker();
+    else el.focus();
+  };
 
   const edit = (kind: AddKind, id: string) => openAdd(kind, id);
   const del = async (table: EntryTable, id: string) => {
@@ -107,9 +116,25 @@ export function TodayScreen() {
         >
           <ChevronLeft size={20} />
         </button>
-        <div className="flex flex-col items-center">
-          <span className="font-serif text-lg font-semibold">{formatLongDate(date)}</span>
-          <span className="text-xs text-text-muted">{formatWeekday(date)}</span>
+        <div className="relative flex flex-col items-center">
+          <button
+            type="button"
+            onClick={openCalendar}
+            className="flex flex-col items-center rounded-xl px-3 py-1 hover:bg-surface-alt"
+            aria-label="Pick date"
+          >
+            <span className="font-serif text-lg font-semibold">{formatLongDate(date)}</span>
+            <span className="text-xs text-text-muted">{formatWeekday(date)}</span>
+          </button>
+          <input
+            ref={dateInputRef}
+            type="date"
+            value={date}
+            onChange={(e) => e.target.value && setDate(e.target.value)}
+            className="pointer-events-none absolute inset-x-0 bottom-0 h-0 w-full opacity-0"
+            tabIndex={-1}
+            aria-hidden
+          />
         </div>
         <button
           onClick={() => setDate(addDays(date, 1))}
@@ -119,14 +144,6 @@ export function TodayScreen() {
           <ChevronRight size={20} />
         </button>
       </Card>
-
-      <div className="flex items-center gap-2">
-        <CalendarClock size={16} className="text-text-muted" />
-        <span className="text-sm text-text-muted">Pick the experience date</span>
-        <div className="ml-auto w-40">
-          <DateField value={date} onChange={setDate} />
-        </div>
-      </div>
 
       {isLoading && <p className="py-8 text-center text-sm text-text-muted">Loading…</p>}
 

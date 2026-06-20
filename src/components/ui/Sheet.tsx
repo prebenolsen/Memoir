@@ -8,10 +8,12 @@ interface Props {
   title?: string;
   children: ReactNode;
   footer?: ReactNode;
+  /** Center the card vertically instead of anchoring it to the bottom. */
+  center?: boolean;
 }
 
 /** Bottom sheet on mobile, centered card on larger screens. */
-export function Sheet({ open, onClose, title, children, footer }: Props) {
+export function Sheet({ open, onClose, title, children, footer, center = false }: Props) {
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
@@ -26,7 +28,12 @@ export function Sheet({ open, onClose, title, children, footer }: Props) {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
+    <div
+      className={cn(
+        'fixed inset-0 z-50 flex justify-center',
+        center ? 'items-center p-4' : 'items-end sm:items-center',
+      )}
+    >
       <div
         className="absolute inset-0 bg-black/40 backdrop-blur-[1px] animate-[fadeIn_120ms_ease-out]"
         onClick={onClose}
@@ -34,7 +41,8 @@ export function Sheet({ open, onClose, title, children, footer }: Props) {
       <div
         className={cn(
           'relative w-full sm:max-w-md max-h-[92vh] flex flex-col',
-          'bg-bg sm:rounded-2xl rounded-t-2xl shadow-sheet border border-border',
+          'bg-bg shadow-sheet border border-border',
+          center ? 'max-w-md rounded-2xl' : 'sm:max-w-md sm:rounded-2xl rounded-t-2xl',
           'animate-[sheetUp_180ms_cubic-bezier(0.16,1,0.3,1)]',
         )}
       >

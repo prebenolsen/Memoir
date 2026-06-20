@@ -29,7 +29,7 @@ export function QuickAddFab() {
           />
         )}
 
-        <div className="absolute bottom-[68px] right-4 flex flex-col items-end gap-2">
+        <div className="absolute bottom-[160px] right-4 flex flex-col items-end gap-2">
           {open &&
             actions.map(({ kind, label, icon: Icon }, i) => (
               <button
@@ -47,7 +47,7 @@ export function QuickAddFab() {
         <button
           onClick={() => setOpen((v) => !v)}
           className={cn(
-            'pointer-events-auto absolute bottom-[68px] right-4 grid h-14 w-14 place-items-center rounded-full bg-primary text-primary-fg shadow-soft transition active:scale-95',
+            'pointer-events-auto absolute bottom-[88px] right-4 grid h-14 w-14 place-items-center rounded-full bg-primary text-primary-fg shadow-soft transition active:scale-95',
             open && 'rotate-45',
           )}
           aria-label="Quick add"

@@ -1,22 +1,15 @@
 import { useState } from 'react';
-import { Plus, UtensilsCrossed, Store } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
+import { UtensilsCrossed, Store } from 'lucide-react';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { ItemListView } from '@/features/items/ItemListView';
-import { useQuickAdd } from '@/lib/quickAdd';
 
 type Tab = 'food' | 'restaurant';
 
 export function FoodScreen() {
   const [tab, setTab] = useState<Tab>('food');
-  const openAdd = useQuickAdd((s) => s.open);
 
   return (
     <div className="space-y-4">
-      <Button block size="lg" onClick={() => openAdd('food')}>
-        <Plus size={18} /> Add food
-      </Button>
-
       <SegmentedControl
         value={tab}
         onChange={setTab}

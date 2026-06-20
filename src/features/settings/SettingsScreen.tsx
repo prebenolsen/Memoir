@@ -18,6 +18,7 @@ import { Toggle } from '@/components/ui/Toggle';
 import { Button } from '@/components/ui/Button';
 import { toast } from '@/components/ui/Toast';
 import { exportAll, exportProject, importData, deleteProject } from '@/lib/dataTransfer';
+import versionRaw from '../../../VERSION.md?raw';
 import type {
   Currency,
   DateFormat,
@@ -234,7 +235,9 @@ export function SettingsScreen() {
         </Button>
       </Card>
 
-      <p className="px-1 pt-4 text-center text-xs text-text-muted">Memoir · {user?.email}</p>
+      <p className="px-1 pt-4 text-center text-xs text-text-muted">
+        Memoir v{versionRaw.trim()} · {user?.email}
+      </p>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import { ProjectSwitcher } from './ProjectSwitcher';
 import { BottomNav } from './BottomNav';
 import { QuickAddFab } from './QuickAddFab';
@@ -7,15 +7,20 @@ import { Toaster } from '@/components/ui/Toast';
 import { GlobalAddSheets } from '@/features/entries/GlobalAddSheets';
 
 export function AppShell() {
+  const { pathname } = useLocation();
+  // Project switching only belongs on the Today page.
+  const showProjectSwitcher = pathname === '/today';
+
   return (
-    <div className="mx-auto min-h-full max-w-md bg-bg">
+    <div className="mx-auto flex h-full max-w-md flex-col bg-bg">
       <SyncBanner />
-      <header className="sticky top-0 z-30 flex items-center justify-between border-b border-border bg-bg/90 px-4 py-3 backdrop-blur">
+      <header className="z-30 flex items-center justify-between border-b border-border bg-bg/90 px-4 py-3 backdrop-blur">
         <h1 className="font-serif text-xl font-semibold text-primary">Memoir</h1>
-        <ProjectSwitcher />
+        {showProjectSwitcher && <ProjectSwitcher />}
       </header>
 
-      <main className="px-4 pb-28 pt-4">
+      {/* Single, reliable scroll container so scrolling never gets stuck. */}
+      <main className="flex-1 overflow-y-auto px-4 pb-28 pt-4">
         <Outlet />
       </main>
 
