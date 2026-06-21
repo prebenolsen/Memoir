@@ -56,7 +56,7 @@ export function ProjectSwitcher() {
           setCreating(false);
         }}
         title={creating ? 'New project' : 'Projects'}
-        center={creating}
+        center
       >
         {!creating ? (
           <div className="space-y-1">

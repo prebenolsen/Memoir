@@ -53,6 +53,10 @@ export interface Restaurant {
   source: FoodSource | null;
   default_rating: number | null;
   notes: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  address: string | null;
+  osm_id: string | null;
   created_at: string;
 }
 

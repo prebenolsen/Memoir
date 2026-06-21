@@ -2,10 +2,25 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { newId } from '@/lib/format';
 
+/** Location fields that may travel in `extra` from the "Find location" flow. */
+const LOCATION_KEYS = ['latitude', 'longitude', 'address', 'osm_id'] as const;
+
+function locationPatch(extra: Record<string, unknown>): Record<string, unknown> {
+  const patch: Record<string, unknown> = {};
+  for (const key of LOCATION_KEYS) {
+    if (extra[key] != null) patch[key] = extra[key];
+  }
+  return patch;
+}
+
 /**
  * Resolve a Combobox selection to a concrete item id, creating the reusable
  * item if it does not yet exist. Called at entry-save time so typing a new name
  * stays a single-tap action and we never orphan items from abandoned forms.
+ *
+ * When `extra` carries location fields (from the GPS "Find location" flow) we
+ * dedupe by `osm_id` first and backfill coordinates on an existing row that is
+ * missing them, so a picked place reliably keeps its location.
  */
 export async function resolveItem(
   table: string,
@@ -13,17 +28,42 @@ export async function resolveItem(
   extra: Record<string, unknown> = {},
 ): Promise<string | null> {
   if (!selection || !selection.name.trim()) return null;
-  if (selection.id) return selection.id;
+
+  const patch = locationPatch(extra);
+  const hasLocation = Object.keys(patch).length > 0;
+
+  // Already-linked existing item: backfill location if we have it.
+  if (selection.id) {
+    if (hasLocation) await backfillLocation(table, selection.id, patch);
+    return selection.id;
+  }
+
+  // Dedupe by OSM id when present (same physical place, any spelling).
+  if (extra.osm_id) {
+    const { data: byOsm } = await supabase
+      .from(table)
+      .select('id')
+      .eq('osm_id', extra.osm_id as string)
+      .limit(1)
+      .maybeSingle();
+    if (byOsm?.id) {
+      if (hasLocation) await backfillLocation(table, byOsm.id as string, patch);
+      return byOsm.id as string;
+    }
+  }
 
   const name = selection.name.trim();
-  // Case-insensitive exact match first (respects unique(user_id, lower(name))).
+  // Case-insensitive exact match next (respects unique(user_id, lower(name))).
   const { data: existing } = await supabase
     .from(table)
     .select('id')
     .ilike('name', name)
     .limit(1)
     .maybeSingle();
-  if (existing?.id) return existing.id as string;
+  if (existing?.id) {
+    if (hasLocation) await backfillLocation(table, existing.id as string, patch);
+    return existing.id as string;
+  }
 
   const id = newId();
   const { data, error } = await supabase
@@ -33,6 +73,26 @@ export async function resolveItem(
     .single();
   if (error) throw error;
   return data.id as string;
+}
+
+/** Set location fields on an existing row only where they are currently null. */
+async function backfillLocation(
+  table: string,
+  id: string,
+  patch: Record<string, unknown>,
+): Promise<void> {
+  const { data: row } = await supabase
+    .from(table)
+    .select('latitude, longitude, address, osm_id')
+    .eq('id', id)
+    .maybeSingle();
+  if (!row) return;
+  const update: Record<string, unknown> = {};
+  for (const [key, val] of Object.entries(patch)) {
+    if ((row as Record<string, unknown>)[key] == null) update[key] = val;
+  }
+  if (Object.keys(update).length === 0) return;
+  await supabase.from(table).update(update).eq('id', id);
 }
 
 export interface ItemWithStats {

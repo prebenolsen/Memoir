@@ -1,4 +1,5 @@
 import { useEffect, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/cn';
 
@@ -27,7 +28,9 @@ export function Sheet({ open, onClose, title, children, footer, center = false }
 
   if (!open) return null;
 
-  return (
+  // Portal to <body> so `fixed` positioning is relative to the viewport, not an
+  // ancestor with a filter/transform (e.g. the header's backdrop-blur).
+  return createPortal(
     <div
       className={cn(
         'fixed inset-0 z-50 flex justify-center',
@@ -65,6 +68,7 @@ export function Sheet({ open, onClose, title, children, footer, center = false }
         @keyframes sheetUp { from { transform: translateY(16px); opacity: 0 } to { transform: translateY(0); opacity: 1 } }
         @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
       `}</style>
-    </div>
+    </div>,
+    document.body,
   );
 }

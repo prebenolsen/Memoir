@@ -8,8 +8,8 @@ import { GlobalAddSheets } from '@/features/entries/GlobalAddSheets';
 
 export function AppShell() {
   const { pathname } = useLocation();
-  // Project switching only belongs on the Today page.
-  const showProjectSwitcher = pathname === '/today';
+  // Project switching belongs on the four main tabs, but not on Stats/Settings.
+  const showProjectSwitcher = ['/today', '/food', '/alcohol', '/activities'].includes(pathname);
 
   return (
     <div className="mx-auto flex h-full max-w-md flex-col bg-bg">

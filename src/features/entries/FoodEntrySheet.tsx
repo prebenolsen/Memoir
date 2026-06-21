@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp, MapPin } from 'lucide-react';
 import { Sheet } from '@/components/ui/Sheet';
 import { Button } from '@/components/ui/Button';
 import { Field, Input, Textarea } from '@/components/ui/Input';
@@ -15,6 +15,8 @@ import { supabase } from '@/lib/supabase';
 import { newId, titleCase } from '@/lib/format';
 import { MEAL_TYPES, FOOD_SOURCES, type FoodEntry, type MealType, type FoodSource } from '@/types/db';
 import { useEditingEntry } from './useEditingEntry';
+import { NearbyRestaurantPicker } from './NearbyRestaurantPicker';
+import type { NearbyPlace } from '@/lib/nearbyPlaces';
 
 export function FoodEntrySheet({
   open,
@@ -34,6 +36,8 @@ export function FoodEntrySheet({
   const [source, setSource] = useState<FoodSource>('restaurant');
   const [food, setFood] = useState<ComboValue | null>(null);
   const [restaurant, setRestaurant] = useState<ComboValue | null>(null);
+  const [pickedPlace, setPickedPlace] = useState<NearbyPlace | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const [showCourses, setShowCourses] = useState(false);
   const [starter, setStarter] = useState('');
   const [main, setMain] = useState('');
@@ -51,6 +55,7 @@ export function FoodEntrySheet({
       setSource(editing.source);
       setFood(null);
       setRestaurant(null);
+      setPickedPlace(null);
       setStarter(editing.starter ?? '');
       setMain(editing.main_course ?? '');
       setDessert(editing.dessert ?? '');
@@ -64,6 +69,7 @@ export function FoodEntrySheet({
       setSource('restaurant');
       setFood(null);
       setRestaurant(null);
+      setPickedPlace(null);
       setShowCourses(false);
       setStarter('');
       setMain('');
@@ -108,8 +114,23 @@ export function FoodEntrySheet({
     setBusy(true);
     try {
       const food_item_id = await resolveItem('memoir_food_items', food);
+      // Pass through GPS-picked location when it still matches the chosen name.
+      const placeMatches =
+        !!pickedPlace && !!restaurant && pickedPlace.name === restaurant.name;
       const restaurant_id =
-        source === 'home' ? null : await resolveItem('memoir_restaurants', restaurant, { source });
+        source === 'home'
+          ? null
+          : await resolveItem('memoir_restaurants', restaurant, {
+              source,
+              ...(placeMatches && pickedPlace
+                ? {
+                    latitude: pickedPlace.latitude,
+                    longitude: pickedPlace.longitude,
+                    address: pickedPlace.address,
+                    osm_id: pickedPlace.osmId,
+                  }
+                : {}),
+            });
       await save('memoir_food_entries', editId ?? newId(), {
         project_id: project.id,
         entry_date: entryDate,
@@ -169,12 +190,26 @@ export function FoodEntrySheet({
 
         {source !== 'home' && (
           <Field label={source === 'cafe' ? 'Cafe' : 'Restaurant'} optional>
-            <Combobox
-              table="memoir_restaurants"
-              value={restaurant}
-              onChange={setRestaurant}
-              placeholder="Where?"
-            />
+            <div className="space-y-2">
+              <Combobox
+                table="memoir_restaurants"
+                value={restaurant}
+                onChange={(v) => {
+                  setRestaurant(v);
+                  setPickedPlace(null);
+                }}
+                placeholder="Where?"
+              />
+              <Button
+                variant="secondary"
+                size="sm"
+                type="button"
+                onClick={() => setPickerOpen(true)}
+              >
+                <MapPin size={16} />
+                Find location
+              </Button>
+            </div>
           </Field>
         )}
 
@@ -211,6 +246,16 @@ export function FoodEntrySheet({
           <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} />
         </Field>
       </div>
+
+      <NearbyRestaurantPicker
+        open={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        onSelect={(place) => {
+          setRestaurant({ id: null, name: place.name });
+          setPickedPlace(place);
+          if (place.source !== source) setSource(place.source);
+        }}
+      />
     </Sheet>
   );
 }

@@ -11,6 +11,15 @@ This project uses [Semantic Versioning](https://semver.org/) (`MAJOR.MINOR.PATCH
 The current version is tracked in [`VERSION.md`](VERSION.md) and shown at the bottom
 of the in-app **Settings** screen.
 
+## [2.0.0] - 2026-06-21
+
+### Added
+- **Find restaurants near you.** When adding a meal eaten out (Source: *Restaurant*
+  or *Cafe*), a new **Find location** button uses your device's GPS to list nearby
+  restaurants and cafes (powered by OpenStreetMap). Pick one and the name fills in
+  automatically — and its location (coordinates + address) is saved with the place,
+  so it's recognised next time.
+
 ## [1.0.1] - 2026-06-21
 
 Small UI/UX fixes — no feature changes.
@@ -23,13 +32,15 @@ Small UI/UX fixes — no feature changes.
   the navigation bar.
 - **Quick-add pop-up actions were hidden behind the "+" button.** They now stack fully
   above it.
-- **The "New project" card could fall off the bottom of the screen.** It is now
-  centered on screen.
+- **The project switcher and "New project" card could fall off the screen.** They now
+  open centered on screen. (Root cause: the header's backdrop blur was breaking
+  `fixed` positioning; sheets now render via a portal to `<body>`.)
 
 ### Changed
 - **Today page now has a single date control.** The redundant second date row was
   removed; clicking the date at the top opens the calendar picker directly.
-- **Project switcher is now only on the Today page** instead of every page.
+- **Project switcher now appears on the four main tabs** (Today, Food, Alcohol,
+  Activities) but not on Stats/Settings, and its card opens centered on screen.
 - **Removed the top "Add food / Add drink / Add activity" buttons** on the Food,
   Alcohol, and Activities pages — the floating "+" button already covers this.
 
