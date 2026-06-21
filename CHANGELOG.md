@@ -11,6 +11,12 @@ This project uses [Semantic Versioning](https://semver.org/) (`MAJOR.MINOR.PATCH
 The current version is tracked in [`VERSION.md`](VERSION.md) and shown at the bottom
 of the in-app **Settings** screen.
 
+## [2.0.1] - 2026-06-21
+
+### Changed
+- Renamed the **Today** tab to **Journal** and gave it a notebook icon, so the
+  day-by-day log reads more like a diary.
+
 ## [2.0.0] - 2026-06-21
 
 ### Added

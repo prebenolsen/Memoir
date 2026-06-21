@@ -1,9 +1,9 @@
 import { NavLink } from 'react-router-dom';
-import { CalendarDays, UtensilsCrossed, Wine, Ticket, BarChart3 } from 'lucide-react';
+import { NotebookPen, UtensilsCrossed, Wine, Ticket, BarChart3 } from 'lucide-react';
 import { cn } from '@/lib/cn';
 
 const tabs = [
-  { to: '/today', label: 'Today', icon: CalendarDays },
+  { to: '/today', label: 'Journal', icon: NotebookPen },
   { to: '/food', label: 'Food', icon: UtensilsCrossed },
   { to: '/alcohol', label: 'Alcohol', icon: Wine },
   { to: '/activities', label: 'Activities', icon: Ticket },
