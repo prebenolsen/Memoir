@@ -1,13 +1,29 @@
 # Memoir
 
-A reusable **personal experience database** — not a travel diary. Create multiple
+**Memoir** is a personal experience database — a place to remember the things you eat,
+drink, do, and buy, and how you felt about them. You organize everything into
 **projects** (e.g. _Spain summer 2026_, _Japan 2027_, plus a default _Everyday_) and
-track experiences inside them: **food**, **alcohol**, **activities**, and **purchases**.
+log experiences inside them across four types: **food**, **alcohol**, **activities**,
+and **purchases**.
 
-The core idea: **entries are history, items are reusable**. You create a drink like
-_Estrella Galicia_ once and reuse it forever — rate the item, not every sip. The app
-learns from previous input and offers autocomplete everywhere. Built for **fast entry**
-on mobile.
+The core idea is that **entries are history, items are reusable**. You create something
+like the drink _Estrella Galicia_ once and reuse it forever — so you rate the item, not
+every sip, and build up a lasting record of what you've tried and what you thought of it.
+
+### Main features
+
+- **Projects** to keep separate trips, periods, or themes apart, with an _Everyday_
+  project for day-to-day logging.
+- **Four entry types** — food, alcohol, activities, and purchases — each with ratings,
+  notes, and dates.
+- **Reusable items** so your favorites carry across entries and projects without retyping.
+- **Location tracking** to remember where an experience happened.
+- **Stats** that derive counts and average ratings, giving you an at-a-glance picture of
+  what you've logged.
+
+It's meant for anyone who wants to **remember and rate** their personal experiences —
+whether that's tracking the meals and drinks of a single holiday or building a long-term,
+private log of everything worth remembering. Designed for **fast entry on mobile**.
 
 ## Stack
 
