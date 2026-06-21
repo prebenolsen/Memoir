@@ -191,6 +191,23 @@ export const DEFAULT_ABV: Partial<Record<DrinkType, number>> = {
   wine: 12.5,
 };
 
+/** Realistic name examples shown as the drink-name placeholder per type. */
+export const DRINK_NAME_PLACEHOLDERS: Record<DrinkType, string> = {
+  beer: 'e.g. Estrella Galicia',
+  wine: 'e.g. Catena Malbec',
+  cocktail: 'e.g. Negroni',
+  spirit: 'e.g. Lagavulin 16',
+  other: 'e.g. Somersby Apple',
+};
+
+/** Wine examples are style-specific so the placeholder matches the chosen style. */
+export const WINE_NAME_PLACEHOLDERS: Record<WineStyle, string> = {
+  red: 'e.g. Catena Malbec',
+  white: 'e.g. Cloudy Bay Sauvignon Blanc',
+  rose: 'e.g. Whispering Angel',
+  sparkling: 'e.g. Veuve Clicquot',
+};
+
 /** Seeds for the cocktail autocomplete; users can still type any custom name. */
 export const COCKTAIL_SUGGESTIONS: string[] = [
   'Aperol Spritz',

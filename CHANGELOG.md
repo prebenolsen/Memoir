@@ -11,6 +11,17 @@ This project uses [Semantic Versioning](https://semver.org/) (`MAJOR.MINOR.PATCH
 The current version is tracked in [`VERSION.md`](VERSION.md) and shown at the bottom
 of the in-app **Settings** screen.
 
+## [3.1.0] - 2026-06-21
+
+### Changed
+- **Consistent drink-sheet height.** Adding a cocktail, spirit or "other" drink now
+  keeps the same layout height as beer and wine, so the fields no longer jump up when
+  switching type.
+- **Realistic drink-name examples.** The drink-name hint now shows a fitting example
+  for every type: a red, white, rosé or sparkling wine (matching the chosen style), a
+  whiskey for spirits, and a cider for "other" — alongside the existing beer and
+  cocktail examples.
+
 ## [3.0.0] - 2026-06-21
 
 ### Added

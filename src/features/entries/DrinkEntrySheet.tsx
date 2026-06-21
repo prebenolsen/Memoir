@@ -17,7 +17,9 @@ import { newId, titleCase } from '@/lib/format';
 import {
   COCKTAIL_SUGGESTIONS,
   DEFAULT_ABV,
+  DRINK_NAME_PLACEHOLDERS,
   DRINK_TYPES,
+  WINE_NAME_PLACEHOLDERS,
   WINE_STYLES,
   type DrinkEntry,
   type DrinkType,
@@ -157,7 +159,9 @@ export function DrinkEntrySheet({
             table="memoir_drink_items"
             value={drink}
             onChange={setDrink}
-            placeholder={isCocktail ? 'e.g. Negroni' : 'e.g. Estrella Galicia'}
+            placeholder={
+              isWine ? WINE_NAME_PLACEHOLDERS[wineStyle] : DRINK_NAME_PLACEHOLDERS[drinkType]
+            }
             suggestions={isCocktail ? COCKTAIL_SUGGESTIONS : undefined}
           />
         </Field>
@@ -175,10 +179,20 @@ export function DrinkEntrySheet({
           </Field>
         )}
 
-        {tracksAbv && (
+        {tracksAbv ? (
           <Field label="ABV (%)" optional>
             <AbvInput value={abv} onChange={setAbv} defaultValue={DEFAULT_ABV[drinkType] ?? 12.5} />
           </Field>
+        ) : (
+          // Reserve the ABV field's footprint so cocktail/spirit/other keep the same
+          // sheet height as beer/wine and the fields below stay in a fixed position.
+          <div aria-hidden className="invisible">
+            <Field label="ABV (%)" optional>
+              <div className="rounded-xl border border-border bg-surface-alt/50 p-3.5">
+                <div className="h-11" />
+              </div>
+            </Field>
+          </div>
         )}
 
         <Field label="Rating" optional>
