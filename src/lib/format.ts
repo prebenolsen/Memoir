@@ -103,3 +103,20 @@ export function newId(): string {
 export function titleCase(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
+
+/** Display an ABV percentage without a trailing ".0" (e.g. "5", "4.7", "12.5"). */
+export function formatAbv(v: number): string {
+  const r = Math.round(v * 10) / 10;
+  return Number.isInteger(r) ? String(r) : r.toFixed(1);
+}
+
+/**
+ * Parse a number from free text, accepting both ',' and '.' as the decimal
+ * separator so the value is always normalised to a JS number (stored with ".").
+ */
+export function parseDecimal(raw: string): number | null {
+  const cleaned = raw.replace(',', '.').replace(/[^0-9.]/g, '');
+  if (!cleaned || cleaned === '.') return null;
+  const n = parseFloat(cleaned);
+  return Number.isFinite(n) ? n : null;
+}

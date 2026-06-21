@@ -19,10 +19,16 @@ interface Props {
   /** Allow offering "create new". Defaults to true. */
   allowCreate?: boolean;
   autoFocus?: boolean;
+  /**
+   * Built-in name suggestions shown alongside the user's saved items (e.g. common
+   * cocktails). Picking one behaves like typing it: the item is resolved/created
+   * at save time, so users are never restricted to this list.
+   */
+  suggestions?: string[];
 }
 
 interface Row {
-  id: string;
+  id: string | null;
   name: string;
 }
 
@@ -39,6 +45,7 @@ export function Combobox({
   placeholder,
   allowCreate = true,
   autoFocus,
+  suggestions,
 }: Props) {
   const [text, setText] = useState(value?.name ?? '');
   const [open, setOpen] = useState(false);
@@ -70,7 +77,16 @@ export function Combobox({
     },
   });
 
-  const exactExists = results.some((r) => r.name.toLowerCase() === q.toLowerCase());
+  // Merge saved items with built-in suggestions (deduped by name); seeds carry a
+  // null id so they resolve/create at save time like any freshly typed name.
+  const ql = q.toLowerCase();
+  const savedNames = new Set(results.map((r) => r.name.toLowerCase()));
+  const seedRows: Row[] = (suggestions ?? [])
+    .filter((s) => !savedNames.has(s.toLowerCase()) && (!q || s.toLowerCase().includes(ql)))
+    .map((s) => ({ id: null, name: s }));
+  const options: Row[] = [...results, ...seedRows].slice(0, 8);
+
+  const exactExists = options.some((r) => r.name.toLowerCase() === ql);
   const showCreate = allowCreate && q.length > 0 && !exactExists;
 
   const choose = (row: Row) => {
@@ -103,17 +119,19 @@ export function Combobox({
         />
       </div>
 
-      {open && (results.length > 0 || showCreate) && (
+      {open && (options.length > 0 || showCreate) && (
         <div className="absolute z-30 mt-1 w-full overflow-hidden rounded-xl border border-border bg-surface shadow-soft">
-          {results.map((row) => (
+          {options.map((row) => (
             <button
-              key={row.id}
+              key={row.id ?? `seed:${row.name}`}
               type="button"
               onClick={() => choose(row)}
               className="flex w-full items-center justify-between px-3.5 py-2.5 text-left text-[15px] hover:bg-surface-alt"
             >
               <span className="truncate">{row.name}</span>
-              {value?.id === row.id && <Check size={16} className="text-primary" />}
+              {value?.name.toLowerCase() === row.name.toLowerCase() && (
+                <Check size={16} className="text-primary" />
+              )}
             </button>
           ))}
           {showCreate && (
@@ -126,7 +144,7 @@ export function Combobox({
               }}
               className={cn(
                 'flex w-full items-center gap-2 px-3.5 py-2.5 text-left text-[15px] text-primary hover:bg-surface-alt',
-                results.length > 0 && 'border-t border-border',
+                options.length > 0 && 'border-t border-border',
               )}
             >
               <Plus size={16} />

@@ -8,12 +8,21 @@ import { RatingInput } from '@/components/ui/RatingInput';
 import { CurrencyInput } from '@/components/ui/CurrencyInput';
 import { DateField } from '@/components/ui/DateField';
 import { Stepper } from '@/components/ui/Stepper';
+import { AbvInput } from '@/components/ui/AbvInput';
 import { useProject } from '@/context/ProjectProvider';
 import { useEntryMutations } from '@/hooks/useEntryMutations';
 import { resolveItem } from '@/hooks/useItems';
 import { supabase } from '@/lib/supabase';
 import { newId, titleCase } from '@/lib/format';
-import { DRINK_TYPES, type DrinkEntry, type DrinkType } from '@/types/db';
+import {
+  COCKTAIL_SUGGESTIONS,
+  DEFAULT_ABV,
+  DRINK_TYPES,
+  WINE_STYLES,
+  type DrinkEntry,
+  type DrinkType,
+  type WineStyle,
+} from '@/types/db';
 import { useEditingEntry } from './useEditingEntry';
 
 export function DrinkEntrySheet({
@@ -31,6 +40,8 @@ export function DrinkEntrySheet({
 
   const [entryDate, setEntryDate] = useState(date);
   const [drinkType, setDrinkType] = useState<DrinkType>('beer');
+  const [wineStyle, setWineStyle] = useState<WineStyle>('red');
+  const [abv, setAbv] = useState<number | null>(null);
   const [drink, setDrink] = useState<ComboValue | null>(null);
   const [count05, setCount05] = useState(0);
   const [count033, setCount033] = useState(1);
@@ -45,6 +56,8 @@ export function DrinkEntrySheet({
     if (editing) {
       setEntryDate(editing.entry_date);
       setDrinkType(editing.drink_type);
+      setWineStyle(editing.wine_style ?? 'red');
+      setAbv(editing.abv);
       setCount05(editing.count_05l);
       setCount033(editing.count_033l);
       setQuantity(editing.quantity);
@@ -63,6 +76,8 @@ export function DrinkEntrySheet({
     } else if (!editId) {
       setEntryDate(date);
       setDrinkType('beer');
+      setWineStyle('red');
+      setAbv(null);
       setDrink(null);
       setCount05(0);
       setCount033(1);
@@ -74,7 +89,16 @@ export function DrinkEntrySheet({
   }, [open, editing, editId, date]);
 
   const isBeer = drinkType === 'beer';
+  const isWine = drinkType === 'wine';
+  const isCocktail = drinkType === 'cocktail';
+  const tracksAbv = isBeer || isWine;
   const canSave = !!project && !!drink?.name;
+
+  // Changing type resets ABV so the wheel re-seeds at the new type's default.
+  const changeType = (t: DrinkType) => {
+    setDrinkType(t);
+    setAbv(null);
+  };
 
   const submit = async () => {
     if (!project || busy) return;
@@ -88,6 +112,8 @@ export function DrinkEntrySheet({
         entry_date: entryDate,
         drink_item_id,
         drink_type: drinkType,
+        wine_style: isWine ? wineStyle : null,
+        abv: tracksAbv ? abv : null,
         count_05l: isBeer ? count05 : 0,
         count_033l: isBeer ? count033 : 0,
         quantity: isBeer ? Math.max(1, count05 + count033) : quantity,
@@ -114,11 +140,16 @@ export function DrinkEntrySheet({
     >
       <div className="space-y-4">
         <Field label="Type">
-          <SegmentedControl
-            value={drinkType}
-            onChange={setDrinkType}
-            options={DRINK_TYPES.map((t) => ({ value: t, label: titleCase(t) }))}
-          />
+          <div className="space-y-2">
+            <SegmentedControl
+              value={drinkType}
+              onChange={changeType}
+              options={DRINK_TYPES.map((t) => ({ value: t, label: titleCase(t) }))}
+            />
+            {isWine && (
+              <SegmentedControl value={wineStyle} onChange={setWineStyle} options={WINE_STYLES} />
+            )}
+          </div>
         </Field>
 
         <Field label="Drink">
@@ -126,7 +157,8 @@ export function DrinkEntrySheet({
             table="memoir_drink_items"
             value={drink}
             onChange={setDrink}
-            placeholder="e.g. Estrella Galicia"
+            placeholder={isCocktail ? 'e.g. Negroni' : 'e.g. Estrella Galicia'}
+            suggestions={isCocktail ? COCKTAIL_SUGGESTIONS : undefined}
           />
         </Field>
 
@@ -140,6 +172,12 @@ export function DrinkEntrySheet({
             <div className="rounded-xl border border-border bg-surface-alt/50 p-3.5">
               <Stepper label="Servings" value={quantity} onChange={setQuantity} min={1} />
             </div>
+          </Field>
+        )}
+
+        {tracksAbv && (
+          <Field label="ABV (%)" optional>
+            <AbvInput value={abv} onChange={setAbv} defaultValue={DEFAULT_ABV[drinkType] ?? 12.5} />
           </Field>
         )}
 

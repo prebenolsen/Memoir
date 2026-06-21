@@ -3,6 +3,7 @@
 export type MealType = 'breakfast' | 'lunch' | 'dinner';
 export type FoodSource = 'home' | 'restaurant' | 'cafe';
 export type DrinkType = 'beer' | 'wine' | 'cocktail' | 'spirit' | 'other';
+export type WineStyle = 'red' | 'white' | 'rose' | 'sparkling';
 export type PurchaseCategory = 'clothes' | 'souvenir' | 'electronics' | 'other';
 
 export type DateFormat = 'DD.MM.YYYY' | 'MM/DD/YYYY' | 'YYYY-MM-DD';
@@ -104,6 +105,8 @@ export interface DrinkEntry {
   entry_date: string;
   drink_item_id: string | null;
   drink_type: DrinkType;
+  wine_style: WineStyle | null;
+  abv: number | null;
   count_05l: number;
   count_033l: number;
   quantity: number;
@@ -170,6 +173,49 @@ export interface ActivityItemStat {
 export const MEAL_TYPES: MealType[] = ['breakfast', 'lunch', 'dinner'];
 export const FOOD_SOURCES: FoodSource[] = ['home', 'restaurant', 'cafe'];
 export const DRINK_TYPES: DrinkType[] = ['beer', 'wine', 'cocktail', 'spirit', 'other'];
+
+export const WINE_STYLES: { value: WineStyle; label: string }[] = [
+  { value: 'red', label: 'Red' },
+  { value: 'white', label: 'White' },
+  { value: 'rose', label: 'Rosé' },
+  { value: 'sparkling', label: 'Sparkling' },
+];
+
+export function wineStyleLabel(style: WineStyle): string {
+  return WINE_STYLES.find((w) => w.value === style)?.label ?? style;
+}
+
+/** Default ABV (%) the wheel picker starts on for each type that tracks it. */
+export const DEFAULT_ABV: Partial<Record<DrinkType, number>> = {
+  beer: 4.7,
+  wine: 12.5,
+};
+
+/** Seeds for the cocktail autocomplete; users can still type any custom name. */
+export const COCKTAIL_SUGGESTIONS: string[] = [
+  'Aperol Spritz',
+  'Negroni',
+  'Old Fashioned',
+  'Margarita',
+  'Mojito',
+  'Daiquiri',
+  'Whiskey Sour',
+  'Espresso Martini',
+  'Martini',
+  'Manhattan',
+  'Moscow Mule',
+  "Dark 'n' Stormy",
+  'Piña Colada',
+  'Mai Tai',
+  'Cosmopolitan',
+  'Long Island Iced Tea',
+  'Tom Collins',
+  'French 75',
+  'Paloma',
+  'Caipirinha',
+  'Gin&Tonic',
+];
+
 export const PURCHASE_CATEGORIES: PurchaseCategory[] = ['clothes', 'souvenir', 'electronics', 'other'];
 
 export type ExpenseCategory = 'food' | 'alcohol' | 'activities' | 'purchases' | 'other';

@@ -11,6 +11,19 @@ This project uses [Semantic Versioning](https://semver.org/) (`MAJOR.MINOR.PATCH
 The current version is tracked in [`VERSION.md`](VERSION.md) and shown at the bottom
 of the in-app **Settings** screen.
 
+## [3.0.0] - 2026-06-21
+
+### Added
+- **Wine subcategories.** When adding a wine, pick its style — *Red*, *White*,
+  *Rosé* or *Sparkling* — right under the drink type. The style shows on the entry.
+- **ABV (%) for beer and wine.** A new optional field records the strength of a
+  drink. Type it in (the keyboard switches to numbers, and both `,` and `.` work as
+  the decimal separator) or flick a scroll wheel to dial it in. The wheel starts at
+  **12.5%** for wine and **4.7%** for beer.
+- **Cocktail autocomplete.** Choosing *Cocktail* offers a searchable list of common
+  cocktails (Negroni, Aperol Spritz, Margarita and more) seeded for quick picking.
+  You can still type any custom name — you're never limited to the list.
+
 ## [2.0.1] - 2026-06-21
 
 ### Changed
