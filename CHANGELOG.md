@@ -9,7 +9,32 @@ This project uses [Semantic Versioning](https://semver.org/) (`MAJOR.MINOR.PATCH
 - **PATCH** — minor UI/UX fixes and polish.
 
 The current version is tracked in [`VERSION.md`](VERSION.md) and shown at the bottom
-of the in-app **Settings** screen.
+of the in-app **Profile** screen.
+
+## [6.0.0] - 2026-06-22
+
+### Added
+- **Explore tab.** Food, Alcohol and Activities are merged into one **Explore** tab
+  with sub-tabs for **Restaurants**, **Beverages** and **Activities**. Each category
+  shows your latest visits and your top-rated favorites at a glance, with a **See all**
+  link to the full searchable list.
+- **Nearby / Mine / Friends.** A filter at the top of Explore. **Nearby** (the default)
+  uses your location to surface the best-rated restaurants — yours and your friends' —
+  within 5 km; **Mine** shows everything you've logged; **Friends** shows your friends'
+  favorite restaurants.
+- **Profile page.** A new page opened from the person icon in the top-right of every
+  screen. Set a unique **username**, send and accept **friend requests** (by username
+  or login email), and manage your friends.
+- **Friends' favorite restaurants.** Once a friend request is accepted, you can see
+  each other's favorite places (name, location and rating) in Explore.
+
+### Changed
+- **Bottom navigation** is now **Journal · Explore · Stats**.
+- **Settings moved into Profile.** All settings (general, app behavior, data,
+  account) now live on the Profile page; the gear on the Stats screen is gone.
+
+> Requires the new database migration `supabase/migrations/0005_social_friends.sql`
+> to be run in the Supabase dashboard before usernames and friends work.
 
 ## [5.0.0] - 2026-06-22
 

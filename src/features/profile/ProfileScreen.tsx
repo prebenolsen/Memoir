@@ -1,31 +1,31 @@
-import { useRef, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
-  ArrowLeft,
   Download,
   Upload,
   Trash2,
   DatabaseBackup,
   LogOut,
+  UserPlus,
+  Check,
+  X,
+  Users,
 } from 'lucide-react';
 import { useSettings } from '@/context/SettingsProvider';
 import { useProject } from '@/context/ProjectProvider';
 import { useAuth } from '@/context/AuthProvider';
+import { useProfile } from '@/hooks/useProfile';
+import { useFriends } from '@/hooks/useFriends';
 import { useQueryClient } from '@tanstack/react-query';
 import { Card } from '@/components/ui/Card';
 import { Select } from '@/components/ui/Select';
 import { Toggle } from '@/components/ui/Toggle';
 import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
 import { toast } from '@/components/ui/Toast';
 import { exportAll, exportProject, importData, deleteProject } from '@/lib/dataTransfer';
 import versionRaw from '../../../VERSION.md?raw';
-import type {
-  Currency,
-  DateFormat,
-  FirstDayOfWeek,
-  RatingScale,
-  Theme,
-} from '@/types/db';
+import type { Currency, DateFormat, FirstDayOfWeek, RatingScale, Theme } from '@/types/db';
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -44,7 +44,150 @@ function GroupTitle({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function SettingsScreen() {
+function UsernameCard() {
+  const { profile, setUsername, saving } = useProfile();
+  const [value, setValue] = useState('');
+
+  useEffect(() => {
+    setValue(profile?.username ?? '');
+  }, [profile?.username]);
+
+  const dirty = value.trim() !== (profile?.username ?? '');
+
+  const save = async () => {
+    try {
+      await setUsername(value);
+      toast('Username saved');
+    } catch (e) {
+      toast((e as Error)?.message ?? 'Could not save username', 'error');
+    }
+  };
+
+  return (
+    <Card className="space-y-2 p-4">
+      <p className="text-sm text-text-muted">
+        Your username lets friends find you. It must be unique.
+      </p>
+      <div className="flex gap-2">
+        <Input
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          placeholder="username"
+          autoCapitalize="none"
+          autoCorrect="off"
+        />
+        <Button onClick={save} disabled={!dirty || !value.trim() || saving}>
+          Save
+        </Button>
+      </div>
+    </Card>
+  );
+}
+
+function FriendsCard() {
+  const { friends, incoming, outgoing, addFriend, adding, acceptRequest, removeFriend } =
+    useFriends();
+  const [identifier, setIdentifier] = useState('');
+
+  const submitAdd = async () => {
+    try {
+      await addFriend(identifier);
+      setIdentifier('');
+      toast('Friend request sent');
+    } catch (e) {
+      toast((e as Error)?.message ?? 'Could not send request', 'error');
+    }
+  };
+
+  return (
+    <div className="space-y-3">
+      <Card className="space-y-2 p-4">
+        <p className="text-sm text-text-muted">Add a friend by their username or login email.</p>
+        <div className="flex gap-2">
+          <Input
+            value={identifier}
+            onChange={(e) => setIdentifier(e.target.value)}
+            placeholder="username or email"
+            autoCapitalize="none"
+            autoCorrect="off"
+            onKeyDown={(e) => e.key === 'Enter' && submitAdd()}
+          />
+          <Button onClick={submitAdd} disabled={adding || !identifier.trim()}>
+            <UserPlus size={18} /> Add
+          </Button>
+        </div>
+      </Card>
+
+      {incoming.length > 0 && (
+        <Card>
+          <p className="px-4 pt-3 text-xs font-semibold uppercase tracking-wide text-text-muted">
+            Requests
+          </p>
+          {incoming.map((f) => (
+            <div
+              key={f.friendshipId}
+              className="flex items-center justify-between gap-2 border-t border-border px-4 py-3"
+            >
+              <span className="truncate text-[15px]">@{f.username ?? 'unknown'}</span>
+              <div className="flex gap-2">
+                <Button size="sm" onClick={() => acceptRequest(f.friendshipId).then(() => toast('Friend added'))}>
+                  <Check size={16} /> Accept
+                </Button>
+                <Button size="sm" variant="secondary" onClick={() => removeFriend(f.friendshipId)}>
+                  <X size={16} />
+                </Button>
+              </div>
+            </div>
+          ))}
+        </Card>
+      )}
+
+      <Card>
+        {friends.length === 0 && outgoing.length === 0 ? (
+          <p className="px-4 py-6 text-center text-sm text-text-muted">
+            <Users className="mx-auto mb-1 opacity-50" size={20} />
+            No friends yet.
+          </p>
+        ) : (
+          <>
+            {friends.map((f) => (
+              <div
+                key={f.friendshipId}
+                className="flex items-center justify-between gap-2 border-t border-border px-4 py-3 first:border-t-0"
+              >
+                <span className="truncate text-[15px]">@{f.username ?? 'unknown'}</span>
+                <button
+                  onClick={() => removeFriend(f.friendshipId)}
+                  className="text-sm text-text-muted hover:text-danger"
+                >
+                  Remove
+                </button>
+              </div>
+            ))}
+            {outgoing.map((f) => (
+              <div
+                key={f.friendshipId}
+                className="flex items-center justify-between gap-2 border-t border-border px-4 py-3 first:border-t-0"
+              >
+                <span className="truncate text-[15px] text-text-muted">
+                  @{f.username ?? 'unknown'} · pending
+                </span>
+                <button
+                  onClick={() => removeFriend(f.friendshipId)}
+                  className="text-sm text-text-muted hover:text-danger"
+                >
+                  Cancel
+                </button>
+              </div>
+            ))}
+          </>
+        )}
+      </Card>
+    </div>
+  );
+}
+
+export function ProfileScreen() {
   const { settings, update } = useSettings();
   const { project, projects, refetchProjects, setProject } = useProject();
   const { user, signOut } = useAuth();
@@ -95,7 +238,10 @@ export function SettingsScreen() {
       toast('The default project cannot be deleted', 'error');
       return;
     }
-    if (settings.confirm_before_delete && !window.confirm(`Delete project "${project.name}" and all its entries? This cannot be undone.`))
+    if (
+      settings.confirm_before_delete &&
+      !window.confirm(`Delete project "${project.name}" and all its entries? This cannot be undone.`)
+    )
       return;
     setBusy(true);
     try {
@@ -114,16 +260,13 @@ export function SettingsScreen() {
 
   return (
     <div className="space-y-1 pb-6">
-      <div className="mb-3 flex items-center gap-2">
-        <Link
-          to="/stats"
-          className="grid h-9 w-9 place-items-center rounded-full hover:bg-surface-alt"
-          aria-label="Back"
-        >
-          <ArrowLeft size={20} />
-        </Link>
-        <h1 className="font-serif text-2xl font-semibold">Settings</h1>
-      </div>
+      <h1 className="mb-3 font-serif text-2xl font-semibold">Profile</h1>
+
+      <GroupTitle>Username</GroupTitle>
+      <UsernameCard />
+
+      <GroupTitle>Friends</GroupTitle>
+      <FriendsCard />
 
       <GroupTitle>General</GroupTitle>
       <Card>

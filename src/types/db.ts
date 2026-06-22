@@ -144,6 +144,37 @@ export interface PurchaseEntry {
   created_at: string;
 }
 
+// Social layer (usernames + friends)
+export type FriendshipStatus = 'pending' | 'accepted';
+
+export interface Profile {
+  user_id: string;
+  username: string | null;
+  created_at: string;
+}
+
+export interface Friendship {
+  id: string;
+  requester_id: string;
+  addressee_id: string;
+  status: FriendshipStatus;
+  created_at: string;
+  responded_at: string | null;
+}
+
+/** Aggregated restaurant favorite shared by a friend (from the RPC). */
+export interface FriendFavorite {
+  friend_id: string;
+  friend_username: string | null;
+  restaurant_id: string;
+  name: string;
+  latitude: number | null;
+  longitude: number | null;
+  address: string | null;
+  avg_rating: number | null;
+  visits: number;
+}
+
 // Stat view rows
 export interface FoodItemStat {
   food_item_id: string;

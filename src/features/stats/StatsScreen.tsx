@@ -1,7 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
 import {
-  Settings as SettingsIcon,
   UtensilsCrossed,
   Wine,
   Ticket,
@@ -86,18 +84,9 @@ export function StatsScreen() {
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm text-text-muted">Statistics for</p>
-          <h2 className="font-serif text-xl font-semibold">{project?.name}</h2>
-        </div>
-        <Link
-          to="/settings"
-          className="grid h-10 w-10 place-items-center rounded-full border border-border bg-surface text-text"
-          aria-label="Settings"
-        >
-          <SettingsIcon size={18} />
-        </Link>
+      <div>
+        <p className="text-sm text-text-muted">Statistics for</p>
+        <h2 className="font-serif text-xl font-semibold">{project?.name}</h2>
       </div>
 
       {!hasData && (
