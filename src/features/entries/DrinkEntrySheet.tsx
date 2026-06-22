@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { ScanLine } from 'lucide-react';
 import { Sheet } from '@/components/ui/Sheet';
 import { Button } from '@/components/ui/Button';
 import { Field, Textarea } from '@/components/ui/Input';
@@ -27,16 +28,21 @@ import {
   type DrinkType,
   type WineStyle,
 } from '@/types/db';
+import type { DrinkPreFill } from '@/lib/quickAdd';
+import { type BarcodeProduct } from '@/lib/barcodeProduct';
 import { useEditingEntry } from './useEditingEntry';
+import { BarcodeScanner } from './BarcodeScanner';
 
 export function DrinkEntrySheet({
   open,
   onClose,
   editId,
+  preFill,
 }: {
   open: boolean;
   onClose: () => void;
   editId: string | null;
+  preFill?: DrinkPreFill | null;
 }) {
   const { project, date, settings } = useProject();
   const { save } = useEntryMutations();
@@ -55,6 +61,7 @@ export function DrinkEntrySheet({
   const [cost, setCost] = useState<number | null>(null);
   const [notes, setNotes] = useState('');
   const [busy, setBusy] = useState(false);
+  const [scannerOpen, setScannerOpen] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -82,18 +89,19 @@ export function DrinkEntrySheet({
       }
     } else if (!editId) {
       setEntryDate(date);
-      setDrinkType('beer');
-      setWineStyle('red');
-      setAbv(null);
-      setDrink(null);
-      setBeerSize(BEER_SIZES[0].key);
+      setDrinkType(preFill?.drinkType ?? 'beer');
+      setWineStyle(preFill?.wineStyle ?? 'red');
+      setAbv(preFill?.abv ?? null);
+      setDrink(preFill?.name ? { id: null, name: preFill.name } : null);
+      const sizeKey = preFill?.beerSizeKey ?? BEER_SIZES[0].key;
+      setBeerSize(sizeKey);
       setBeerCount(0);
       setQuantity(1);
       setRating(null);
       setCost(null);
       setNotes('');
     }
-  }, [open, editing, editId, date]);
+  }, [open, editing, editId, date, preFill]);
 
   const isBeer = drinkType === 'beer';
   const isWine = drinkType === 'wine';
@@ -131,6 +139,15 @@ export function DrinkEntrySheet({
   const changeType = (t: DrinkType) => {
     setDrinkType(t);
     setAbv(null);
+  };
+
+  const applyScannedProduct = (p: BarcodeProduct) => {
+    setScannerOpen(false);
+    if (p.drinkType) setDrinkType(p.drinkType);
+    if (p.wineStyle) setWineStyle(p.wineStyle);
+    if (p.name) setDrink({ id: null, name: p.name });
+    if (p.abv != null) setAbv(p.abv);
+    if (p.beerSizeKey) setBeerSize(p.beerSizeKey);
   };
 
   const submit = async () => {
@@ -187,6 +204,17 @@ export function DrinkEntrySheet({
       }
     >
       <div className="space-y-4">
+        <Button
+          variant="secondary"
+          size="sm"
+          type="button"
+          className="w-full"
+          onClick={() => setScannerOpen(true)}
+        >
+          <ScanLine size={16} />
+          Scan barcode
+        </Button>
+
         <Field label="Type">
           <div className="space-y-2">
             <SegmentedControl
@@ -278,6 +306,12 @@ export function DrinkEntrySheet({
           <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} />
         </Field>
       </div>
+
+      <BarcodeScanner
+        open={scannerOpen}
+        onClose={() => setScannerOpen(false)}
+        onProduct={applyScannedProduct}
+      />
     </Sheet>
   );
 }

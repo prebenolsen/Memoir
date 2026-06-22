@@ -1,19 +1,34 @@
 import { create } from 'zustand';
+import type { DrinkType, WineStyle } from '@/types/db';
 
 export type AddKind = 'food' | 'drink' | 'activity' | 'purchase';
 
+export interface DrinkPreFill {
+  drinkType?: DrinkType;
+  wineStyle?: WineStyle;
+  name?: string;
+  abv?: number;
+  beerSizeKey?: string;
+}
+
 interface QuickAddState {
-  /** Which add-sheet is open, or null. */
   kind: AddKind | null;
-  /** Entry id being edited, if any (null = new). */
   editId: string | null;
-  open: (kind: AddKind, editId?: string | null) => void;
+  preFill: DrinkPreFill | null;
+  scannerOpen: boolean;
+  open: (kind: AddKind, editId?: string | null, preFill?: DrinkPreFill | null) => void;
   close: () => void;
+  openScanner: () => void;
+  closeScanner: () => void;
 }
 
 export const useQuickAdd = create<QuickAddState>((set) => ({
   kind: null,
   editId: null,
-  open: (kind, editId = null) => set({ kind, editId }),
-  close: () => set({ kind: null, editId: null }),
+  preFill: null,
+  scannerOpen: false,
+  open: (kind, editId = null, preFill = null) => set({ kind, editId, preFill, scannerOpen: false }),
+  close: () => set({ kind: null, editId: null, preFill: null }),
+  openScanner: () => set({ scannerOpen: true }),
+  closeScanner: () => set({ scannerOpen: false }),
 }));

@@ -11,6 +11,14 @@ This project uses [Semantic Versioning](https://semver.org/) (`MAJOR.MINOR.PATCH
 The current version is tracked in [`VERSION.md`](VERSION.md) and shown at the bottom
 of the in-app **Settings** screen.
 
+## [5.0.0] - 2026-06-22
+
+### Added
+- **Barcode scanner.** Scan a beer or wine bottle barcode and the app looks up the product in Open Food Facts (free, no API key). Name, ABV, and bottle size (for beer) are pre-filled automatically.
+- **Scan from anywhere.** The global + button now includes a "Scan barcode" action. The scanner identifies the product category and opens the drink entry sheet pre-filled — no need to navigate manually.
+- **Scan inside the drink form.** A "Scan barcode" button at the top of the Add/Edit drink sheet lets you scan at any point to populate the current form.
+- **Wine type auto-detection.** When a wine barcode is scanned, the category (red, white, rosé, sparkling) is detected from the product database and selected automatically.
+
 ## [4.0.0] - 2026-06-22
 
 ### Added

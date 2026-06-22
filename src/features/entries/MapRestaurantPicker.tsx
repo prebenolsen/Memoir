@@ -1,25 +1,34 @@
-import { useCallback, useRef, useState } from 'react';
-import { MapContainer, TileLayer, useMapEvents } from 'react-leaflet';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { MapContainer, TileLayer, useMap, useMapEvents } from 'react-leaflet';
 import { Coffee, MapPin, UtensilsCrossed, X } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 import { Sheet } from '@/components/ui/Sheet';
 import { Button } from '@/components/ui/Button';
+import { getCurrentPosition, GeoError } from '@/lib/geo';
 import { findNearbyRestaurants, NearbyError, type NearbyPlace } from '@/lib/nearbyPlaces';
 import type { Map as LeafletMap, LatLng } from 'leaflet';
 
 const RADIUS = 200;
+const DEFAULT_CENTER: [number, number] = [48.8566, 2.3522]; // Paris fallback
 
 function formatDistance(m: number): string {
   return m < 1000 ? `${m} m` : `${(m / 1000).toFixed(1)} km`;
 }
 
-/** Tracks map center changes and exposes the current center via a ref. */
 function MapCenterTracker({ centerRef }: { centerRef: React.MutableRefObject<LatLng | null> }) {
   useMapEvents({
     move(e) {
       centerRef.current = e.target.getCenter();
     },
   });
+  return null;
+}
+
+function FlyToLocation({ coords }: { coords: [number, number] | null }) {
+  const map = useMap();
+  useEffect(() => {
+    if (coords) map.flyTo(coords, 16, { duration: 1 });
+  }, [map, coords]);
   return null;
 }
 
@@ -40,7 +49,20 @@ export function MapRestaurantPicker({
 }) {
   const centerRef = useRef<LatLng | null>(null);
   const mapRef = useRef<LeafletMap | null>(null);
+  const [userCoords, setUserCoords] = useState<[number, number] | null>(null);
   const [search, setSearch] = useState<SearchState>({ status: 'idle' });
+
+  // Fly to user's location each time the sheet opens.
+  useEffect(() => {
+    if (!open) return;
+    setUserCoords(null);
+    setSearch({ status: 'idle' });
+    getCurrentPosition()
+      .then(({ latitude, longitude }) => setUserCoords([latitude, longitude]))
+      .catch(() => {
+        // Permission denied or unavailable — stay on default center.
+      });
+  }, [open]);
 
   const handleSearch = useCallback(async () => {
     const center = centerRef.current ?? mapRef.current?.getCenter();
@@ -51,7 +73,9 @@ export function MapRestaurantPicker({
       setSearch({ status: 'ready', places });
     } catch (err) {
       const message =
-        err instanceof NearbyError ? err.message : 'Something went wrong finding restaurants.';
+        err instanceof NearbyError || err instanceof GeoError
+          ? err.message
+          : 'Something went wrong finding restaurants.';
       setSearch({ status: 'error', message });
     }
   }, []);
@@ -64,7 +88,7 @@ export function MapRestaurantPicker({
       <div className="relative -mx-4 h-64 overflow-hidden">
         {open && (
           <MapContainer
-            center={[48.8566, 2.3522]}
+            center={DEFAULT_CENTER}
             zoom={15}
             style={{ height: '100%', width: '100%' }}
             zoomControl={false}
@@ -75,6 +99,7 @@ export function MapRestaurantPicker({
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
             <MapCenterTracker centerRef={centerRef} />
+            <FlyToLocation coords={userCoords} />
           </MapContainer>
         )}
         {/* Fixed crosshair pin at center */}
@@ -92,11 +117,7 @@ export function MapRestaurantPicker({
       </p>
 
       <div className="mt-3 flex gap-2">
-        <Button
-          block
-          onClick={handleSearch}
-          disabled={search.status === 'loading'}
-        >
+        <Button block onClick={handleSearch} disabled={search.status === 'loading'}>
           {search.status === 'loading' ? 'Searching…' : `Search here (${RADIUS} m)`}
         </Button>
         {search.status !== 'idle' && (
