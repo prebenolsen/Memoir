@@ -181,8 +181,8 @@ export function StatsScreen() {
         <SectionTitle icon={<Wine size={15} />}>Alcohol</SectionTitle>
         <div className="mb-3 grid grid-cols-3 gap-3">
           <StatCard label="Beers" value={stats.totalBeers} />
-          <StatCard label="0.5L" value={stats.total05} />
-          <StatCard label="0.33L" value={stats.total033} />
+          <StatCard label="0.5l" value={stats.total05} />
+          <StatCard label="0.33l" value={stats.total033} />
         </div>
         <Card>
           <p className="px-4 pt-3 text-xs font-medium uppercase tracking-wide text-text-muted">

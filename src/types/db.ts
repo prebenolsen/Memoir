@@ -194,7 +194,7 @@ export const DEFAULT_ABV: Partial<Record<DrinkType, number>> = {
   wine: 12.5,
 };
 
-/** A beer serving size with its own stepper and a name used when none is typed. */
+/** A beer serving size, picked from a dropdown, with a name used when none is typed. */
 export interface BeerSize {
   /** Stable key (matches the db column suffix). */
   key: string;
@@ -202,24 +202,24 @@ export interface BeerSize {
   column: 'count_033l' | 'count_04l' | 'count_05l' | 'count_0568l' | 'count_06l';
   /** Volume in litres, used for ordering. */
   liters: number;
-  /** Label shown next to the stepper. */
-  stepperLabel: string;
-  /** Compact label for summaries, e.g. "0.5L". */
-  shortLabel: string;
+  /** Label shown in the size dropdown, e.g. "0.568l (pint)". */
+  label: string;
+  /** Compact label for summaries, e.g. "0.5l". */
+  short: string;
   /** Name applied to the drink when the name field is left blank. */
   emptyName: string;
 }
 
 /**
- * Beer serving sizes, smallest first. Each has its own count column and stepper.
- * The 0.33L bottle is the conventional default the placeholder hints at.
+ * Beer serving sizes, smallest first. Picked from a dropdown next to the amount
+ * stepper. The 0.33l bottle is the default the size dropdown starts on.
  */
 export const BEER_SIZES: BeerSize[] = [
-  { key: '033', column: 'count_033l', liters: 0.33, stepperLabel: '0.33L bottles', shortLabel: '0.33L', emptyName: '0.33L of beer' },
-  { key: '04', column: 'count_04l', liters: 0.4, stepperLabel: '0.4L glasses', shortLabel: '0.4L', emptyName: '0.4L of beer' },
-  { key: '05', column: 'count_05l', liters: 0.5, stepperLabel: '0.5L glasses', shortLabel: '0.5L', emptyName: '0.5L of beer' },
-  { key: '0568', column: 'count_0568l', liters: 0.568, stepperLabel: '0.568L pints', shortLabel: '0.568L', emptyName: 'A pint of beer' },
-  { key: '06', column: 'count_06l', liters: 0.6, stepperLabel: '0.6L glasses', shortLabel: '0.6L', emptyName: '0.6L of beer' },
+  { key: '033', column: 'count_033l', liters: 0.33, label: '0.33l', short: '0.33l', emptyName: '0.33l of beer' },
+  { key: '04', column: 'count_04l', liters: 0.4, label: '0.4l', short: '0.4l', emptyName: '0.4l of beer' },
+  { key: '05', column: 'count_05l', liters: 0.5, label: '0.5l', short: '0.5l', emptyName: '0.5l of beer' },
+  { key: '0568', column: 'count_0568l', liters: 0.568, label: '0.568l (pint)', short: '0.568l', emptyName: 'A pint of beer' },
+  { key: '06', column: 'count_06l', liters: 0.6, label: '0.6l', short: '0.6l', emptyName: '0.6l of beer' },
 ];
 
 /** Name applied to a wine when the name field is left blank, per style. */

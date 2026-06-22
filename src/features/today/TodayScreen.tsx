@@ -62,14 +62,14 @@ function Row({
 function alcoholSummary(d: DayData) {
   let beers = 0;
   let drinks = 0;
-  const bySize = new Map<string, number>(); // shortLabel -> total count
+  const bySize = new Map<string, number>(); // size label -> total count
   for (const e of d.drinks) {
     if (e.drink_type === 'beer') {
       for (const s of BEER_SIZES) {
         const n = e[s.column];
         if (n) {
           beers += n;
-          bySize.set(s.shortLabel, (bySize.get(s.shortLabel) ?? 0) + n);
+          bySize.set(s.short, (bySize.get(s.short) ?? 0) + n);
         }
       }
     } else {

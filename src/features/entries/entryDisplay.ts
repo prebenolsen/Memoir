@@ -26,7 +26,7 @@ export function drinkAmount(e: DrinkEntryFull): string {
 
   if (e.drink_type === 'beer') {
     const glasses = BEER_SIZES.filter((s) => e[s.column]).map(
-      (s) => `${e[s.column]}×${s.shortLabel}`,
+      (s) => `${e[s.column]}×${s.short}`,
     );
     parts.push(glasses.join(' + ') || `${e.quantity}`);
   } else if (e.quantity > 1) {
