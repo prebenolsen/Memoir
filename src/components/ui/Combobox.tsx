@@ -25,6 +25,18 @@ interface Props {
    * at save time, so users are never restricted to this list.
    */
   suggestions?: string[];
+  /**
+   * When true, the built-in `suggestions` are pinned to the top of the list,
+   * above the user's saved items (used for the beer/wine default names). When
+   * false (default) they appear after saved items (used for cocktails).
+   */
+  pinSuggestions?: boolean;
+  /**
+   * Column equality filters applied to the saved-item query, e.g.
+   * `{ drink_type: 'beer' }` so only beers are suggested. Each entry is matched
+   * with `.eq`; null values are ignored.
+   */
+  match?: Record<string, string | null>;
 }
 
 interface Row {
@@ -46,6 +58,8 @@ export function Combobox({
   allowCreate = true,
   autoFocus,
   suggestions,
+  pinSuggestions = false,
+  match,
 }: Props) {
   const [text, setText] = useState(value?.name ?? '');
   const [open, setOpen] = useState(false);
@@ -64,13 +78,18 @@ export function Combobox({
   }, []);
 
   const q = text.trim();
+  // Stable filter entries (ignoring null values) used in the query and its key.
+  const matchEntries = Object.entries(match ?? {}).filter(
+    (e): e is [string, string] => e[1] != null,
+  );
   const { data: results = [] } = useQuery({
-    queryKey: ['combo', table, q],
+    queryKey: ['combo', table, q, matchEntries],
     enabled: open,
     staleTime: 10_000,
     queryFn: async () => {
       let query = supabase.from(table).select('id, name').order('name').limit(8);
       if (q) query = query.ilike('name', `%${q}%`);
+      for (const [col, val] of matchEntries) query = query.eq(col, val);
       const { data, error } = await query;
       if (error) throw error;
       return data as Row[];
@@ -84,7 +103,10 @@ export function Combobox({
   const seedRows: Row[] = (suggestions ?? [])
     .filter((s) => !savedNames.has(s.toLowerCase()) && (!q || s.toLowerCase().includes(ql)))
     .map((s) => ({ id: null, name: s }));
-  const options: Row[] = [...results, ...seedRows].slice(0, 8);
+  // Pinned seeds lead the list (beer/wine defaults); otherwise they trail it.
+  const options: Row[] = (
+    pinSuggestions ? [...seedRows, ...results] : [...results, ...seedRows]
+  ).slice(0, 8);
 
   const exactExists = options.some((r) => r.name.toLowerCase() === ql);
   const showCreate = allowCreate && q.length > 0 && !exactExists;

@@ -9,6 +9,7 @@ import { Card, SectionTitle } from '@/components/ui/Card';
 import { RatingBadge } from '@/components/ui/RatingInput';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { addDays, formatLongDate, formatMoney, formatWeekday } from '@/lib/format';
+import { BEER_SIZES } from '@/types/db';
 import {
   activityTitle,
   drinkAmount,
@@ -60,19 +61,23 @@ function Row({
 
 function alcoholSummary(d: DayData) {
   let beers = 0;
-  let c05 = 0;
-  let c033 = 0;
   let drinks = 0;
+  const bySize = new Map<string, number>(); // shortLabel -> total count
   for (const e of d.drinks) {
     if (e.drink_type === 'beer') {
-      c05 += e.count_05l;
-      c033 += e.count_033l;
-      beers += e.count_05l + e.count_033l;
+      for (const s of BEER_SIZES) {
+        const n = e[s.column];
+        if (n) {
+          beers += n;
+          bySize.set(s.shortLabel, (bySize.get(s.shortLabel) ?? 0) + n);
+        }
+      }
     } else {
       drinks += e.quantity;
     }
   }
-  return { beers, c05, c033, drinks };
+  const sizeDetail = [...bySize.entries()].map(([label, n]) => `${n}×${label}`).join(', ');
+  return { beers, sizeDetail, drinks };
 }
 
 export function TodayScreen() {
@@ -182,7 +187,7 @@ export function TodayScreen() {
             Alcohol
             <span className="ml-2 font-normal normal-case text-text-muted">
               {al.beers > 0 && `${al.beers} beer${al.beers === 1 ? '' : 's'}`}
-              {al.beers > 0 && (al.c05 > 0 || al.c033 > 0) ? ` (${al.c05}×0.5L, ${al.c033}×0.33L)` : ''}
+              {al.beers > 0 && al.sizeDetail ? ` (${al.sizeDetail})` : ''}
               {al.drinks > 0 ? `${al.beers > 0 ? ' · ' : ''}${al.drinks} drink${al.drinks === 1 ? '' : 's'}` : ''}
             </span>
           </SectionTitle>

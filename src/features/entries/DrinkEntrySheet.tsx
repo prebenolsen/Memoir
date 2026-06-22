@@ -15,11 +15,12 @@ import { resolveItem } from '@/hooks/useItems';
 import { supabase } from '@/lib/supabase';
 import { newId, titleCase } from '@/lib/format';
 import {
+  BEER_SIZES,
   COCKTAIL_SUGGESTIONS,
   DEFAULT_ABV,
   DRINK_NAME_PLACEHOLDERS,
   DRINK_TYPES,
-  WINE_NAME_PLACEHOLDERS,
+  WINE_EMPTY_NAMES,
   WINE_STYLES,
   type DrinkEntry,
   type DrinkType,
@@ -45,8 +46,8 @@ export function DrinkEntrySheet({
   const [wineStyle, setWineStyle] = useState<WineStyle>('red');
   const [abv, setAbv] = useState<number | null>(null);
   const [drink, setDrink] = useState<ComboValue | null>(null);
-  const [count05, setCount05] = useState(0);
-  const [count033, setCount033] = useState(1);
+  // Beer serving counts keyed by BEER_SIZES key; no size is pre-selected.
+  const [beerCounts, setBeerCounts] = useState<Record<string, number>>({});
   const [quantity, setQuantity] = useState(1);
   const [rating, setRating] = useState<number | null>(null);
   const [cost, setCost] = useState<number | null>(null);
@@ -60,8 +61,9 @@ export function DrinkEntrySheet({
       setDrinkType(editing.drink_type);
       setWineStyle(editing.wine_style ?? 'red');
       setAbv(editing.abv);
-      setCount05(editing.count_05l);
-      setCount033(editing.count_033l);
+      setBeerCounts(
+        Object.fromEntries(BEER_SIZES.map((s) => [s.key, editing[s.column] ?? 0])),
+      );
       setQuantity(editing.quantity);
       setRating(editing.rating);
       setCost(editing.cost);
@@ -81,8 +83,7 @@ export function DrinkEntrySheet({
       setWineStyle('red');
       setAbv(null);
       setDrink(null);
-      setCount05(0);
-      setCount033(1);
+      setBeerCounts({});
       setQuantity(1);
       setRating(null);
       setCost(null);
@@ -94,7 +95,21 @@ export function DrinkEntrySheet({
   const isWine = drinkType === 'wine';
   const isCocktail = drinkType === 'cocktail';
   const tracksAbv = isBeer || isWine;
-  const canSave = !!project && !!drink?.name;
+  // The drink name is optional — beers/wines fall back to a generated default.
+  const canSave = !!project;
+
+  const nameEmpty = !drink?.name?.trim();
+
+  // The first size with a count drives the beer placeholder; default to 0.33L.
+  const activeBeerSize = BEER_SIZES.find((s) => (beerCounts[s.key] ?? 0) > 0) ?? BEER_SIZES[0];
+
+  // Stepper handler: when a size is bumped while the name is blank, fill the name
+  // with that size's default so the entry reads e.g. "0.33L of beer".
+  const setBeerCount = (size: (typeof BEER_SIZES)[number], value: number) => {
+    const prev = beerCounts[size.key] ?? 0;
+    setBeerCounts((c) => ({ ...c, [size.key]: value }));
+    if (value > prev && nameEmpty) setDrink({ id: null, name: size.emptyName });
+  };
 
   // Changing type resets ABV so the wheel re-seeds at the new type's default.
   const changeType = (t: DrinkType) => {
@@ -106,9 +121,26 @@ export function DrinkEntrySheet({
     if (!project || busy) return;
     setBusy(true);
     try {
-      const drink_item_id = await resolveItem('memoir_drink_items', drink, {
+      const beerTotal = BEER_SIZES.reduce((sum, s) => sum + (beerCounts[s.key] ?? 0), 0);
+
+      // Fall back to a generated name when the field is left blank, so beers and
+      // wines still read meaningfully ("A glass of red", "0.33L of beer").
+      let selection = drink;
+      if (nameEmpty) {
+        const fallback = isWine
+          ? WINE_EMPTY_NAMES[wineStyle]
+          : isBeer
+            ? (BEER_SIZES.find((s) => (beerCounts[s.key] ?? 0) > 0) ?? activeBeerSize).emptyName
+            : null;
+        selection = fallback ? { id: null, name: fallback } : null;
+      }
+
+      const drink_item_id = await resolveItem('memoir_drink_items', selection, {
         drink_type: drinkType,
       });
+      const sizeColumns = Object.fromEntries(
+        BEER_SIZES.map((s) => [s.column, isBeer ? beerCounts[s.key] ?? 0 : 0]),
+      );
       await save('memoir_drink_entries', editId ?? newId(), {
         project_id: project.id,
         entry_date: entryDate,
@@ -116,9 +148,8 @@ export function DrinkEntrySheet({
         drink_type: drinkType,
         wine_style: isWine ? wineStyle : null,
         abv: tracksAbv ? abv : null,
-        count_05l: isBeer ? count05 : 0,
-        count_033l: isBeer ? count033 : 0,
-        quantity: isBeer ? Math.max(1, count05 + count033) : quantity,
+        ...sizeColumns,
+        quantity: isBeer ? Math.max(1, beerTotal) : quantity,
         rating,
         cost,
         notes: notes || null,
@@ -154,22 +185,42 @@ export function DrinkEntrySheet({
           </div>
         </Field>
 
-        <Field label="Drink">
+        <Field label="Drink" optional>
           <Combobox
             table="memoir_drink_items"
             value={drink}
             onChange={setDrink}
+            match={{ drink_type: drinkType }}
             placeholder={
-              isWine ? WINE_NAME_PLACEHOLDERS[wineStyle] : DRINK_NAME_PLACEHOLDERS[drinkType]
+              isBeer
+                ? activeBeerSize.emptyName
+                : isWine
+                  ? WINE_EMPTY_NAMES[wineStyle]
+                  : DRINK_NAME_PLACEHOLDERS[drinkType]
             }
-            suggestions={isCocktail ? COCKTAIL_SUGGESTIONS : undefined}
+            suggestions={
+              isBeer
+                ? BEER_SIZES.map((s) => s.emptyName)
+                : isWine
+                  ? [WINE_EMPTY_NAMES[wineStyle]]
+                  : isCocktail
+                    ? COCKTAIL_SUGGESTIONS
+                    : undefined
+            }
+            pinSuggestions={isBeer || isWine}
           />
         </Field>
 
         {isBeer ? (
           <div className="space-y-3 rounded-xl border border-border bg-surface-alt/50 p-3.5">
-            <Stepper label="0.5L glasses" value={count05} onChange={setCount05} />
-            <Stepper label="0.33L bottles" value={count033} onChange={setCount033} />
+            {BEER_SIZES.map((s) => (
+              <Stepper
+                key={s.key}
+                label={s.stepperLabel}
+                value={beerCounts[s.key] ?? 0}
+                onChange={(v) => setBeerCount(s, v)}
+              />
+            ))}
           </div>
         ) : (
           <Field label="Quantity">

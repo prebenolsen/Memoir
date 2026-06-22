@@ -11,6 +11,24 @@ This project uses [Semantic Versioning](https://semver.org/) (`MAJOR.MINOR.PATCH
 The current version is tracked in [`VERSION.md`](VERSION.md) and shown at the bottom
 of the in-app **Settings** screen.
 
+## [3.2.0] - 2026-06-22
+
+### Added
+- **More beer sizes.** Alongside 0.33L and 0.5L you can now count 0.4L, 0.6L and
+  0.568L (imperial pint) servings, each with its own stepper.
+
+### Changed
+- **Drink name is now optional.** Just want to track how many beers or glasses of
+  wine you had? Leave the name blank. Beers are saved as e.g. *"0.33L of beer"* and
+  wines as e.g. *"A glass of red"*, based on the size or style you picked.
+- **Per-type name suggestions.** Tapping the drink name now only suggests drinks of
+  the matching type — beers no longer show up when you're adding a wine, and vice
+  versa.
+- **Smarter beer/wine defaults.** No serving size is pre-selected anymore. The name
+  hint shows the size you're adding (e.g. *"0.33L of beer"*), and bumping a size fills
+  the name in for you when it's still blank. The handy default names always sit at the
+  top of the suggestion list for beer and wine.
+
 ## [3.1.0] - 2026-06-21
 
 ### Changed

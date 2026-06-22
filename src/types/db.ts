@@ -107,8 +107,11 @@ export interface DrinkEntry {
   drink_type: DrinkType;
   wine_style: WineStyle | null;
   abv: number | null;
-  count_05l: number;
   count_033l: number;
+  count_04l: number;
+  count_05l: number;
+  count_0568l: number;
+  count_06l: number;
   quantity: number;
   rating: number | null;
   cost: number | null;
@@ -191,6 +194,42 @@ export const DEFAULT_ABV: Partial<Record<DrinkType, number>> = {
   wine: 12.5,
 };
 
+/** A beer serving size with its own stepper and a name used when none is typed. */
+export interface BeerSize {
+  /** Stable key (matches the db column suffix). */
+  key: string;
+  /** Column on memoir_drink_entries that stores this size's count. */
+  column: 'count_033l' | 'count_04l' | 'count_05l' | 'count_0568l' | 'count_06l';
+  /** Volume in litres, used for ordering. */
+  liters: number;
+  /** Label shown next to the stepper. */
+  stepperLabel: string;
+  /** Compact label for summaries, e.g. "0.5L". */
+  shortLabel: string;
+  /** Name applied to the drink when the name field is left blank. */
+  emptyName: string;
+}
+
+/**
+ * Beer serving sizes, smallest first. Each has its own count column and stepper.
+ * The 0.33L bottle is the conventional default the placeholder hints at.
+ */
+export const BEER_SIZES: BeerSize[] = [
+  { key: '033', column: 'count_033l', liters: 0.33, stepperLabel: '0.33L bottles', shortLabel: '0.33L', emptyName: '0.33L of beer' },
+  { key: '04', column: 'count_04l', liters: 0.4, stepperLabel: '0.4L glasses', shortLabel: '0.4L', emptyName: '0.4L of beer' },
+  { key: '05', column: 'count_05l', liters: 0.5, stepperLabel: '0.5L glasses', shortLabel: '0.5L', emptyName: '0.5L of beer' },
+  { key: '0568', column: 'count_0568l', liters: 0.568, stepperLabel: '0.568L pints', shortLabel: '0.568L', emptyName: 'A pint of beer' },
+  { key: '06', column: 'count_06l', liters: 0.6, stepperLabel: '0.6L glasses', shortLabel: '0.6L', emptyName: '0.6L of beer' },
+];
+
+/** Name applied to a wine when the name field is left blank, per style. */
+export const WINE_EMPTY_NAMES: Record<WineStyle, string> = {
+  red: 'A glass of red',
+  white: 'A glass of white',
+  rose: 'A glass of rosé',
+  sparkling: 'A glass of sparkling',
+};
+
 /** Realistic name examples shown as the drink-name placeholder per type. */
 export const DRINK_NAME_PLACEHOLDERS: Record<DrinkType, string> = {
   beer: 'e.g. Estrella Galicia',
@@ -198,14 +237,6 @@ export const DRINK_NAME_PLACEHOLDERS: Record<DrinkType, string> = {
   cocktail: 'e.g. Negroni',
   spirit: 'e.g. Lagavulin 16',
   other: 'e.g. Somersby Apple',
-};
-
-/** Wine examples are style-specific so the placeholder matches the chosen style. */
-export const WINE_NAME_PLACEHOLDERS: Record<WineStyle, string> = {
-  red: 'e.g. Catena Malbec',
-  white: 'e.g. Cloudy Bay Sauvignon Blanc',
-  rose: 'e.g. Whispering Angel',
-  sparkling: 'e.g. Veuve Clicquot',
 };
 
 /** Seeds for the cocktail autocomplete; users can still type any custom name. */

@@ -1,5 +1,5 @@
 import { formatAbv, titleCase } from '@/lib/format';
-import { wineStyleLabel } from '@/types/db';
+import { BEER_SIZES, wineStyleLabel } from '@/types/db';
 import type { DrinkEntryFull, FoodEntryFull, ActivityEntryFull } from '@/hooks/useDay';
 
 export function foodTitle(e: FoodEntryFull): string {
@@ -25,9 +25,9 @@ export function drinkAmount(e: DrinkEntryFull): string {
   if (e.drink_type === 'wine' && e.wine_style) parts.push(wineStyleLabel(e.wine_style));
 
   if (e.drink_type === 'beer') {
-    const glasses: string[] = [];
-    if (e.count_05l) glasses.push(`${e.count_05l}×0.5L`);
-    if (e.count_033l) glasses.push(`${e.count_033l}×0.33L`);
+    const glasses = BEER_SIZES.filter((s) => e[s.column]).map(
+      (s) => `${e[s.column]}×${s.shortLabel}`,
+    );
     parts.push(glasses.join(' + ') || `${e.quantity}`);
   } else if (e.quantity > 1) {
     parts.push(`×${e.quantity}`);

@@ -60,7 +60,7 @@ export function useProjectStats(projectId: string | undefined) {
           'memoir_food_entries',
           'entry_date, rating, cost, restaurant_id, food_item:memoir_food_items(name)',
         ),
-        p('memoir_drink_entries', 'entry_date, rating, cost, drink_type, count_05l, count_033l, quantity, drink_item:memoir_drink_items(name)'),
+        p('memoir_drink_entries', 'entry_date, rating, cost, drink_type, count_033l, count_04l, count_05l, count_0568l, count_06l, quantity, drink_item:memoir_drink_items(name)'),
         p('memoir_activity_entries', 'entry_date, rating, cost, activity_item:memoir_activity_items(name)'),
         p('memoir_purchase_entries', 'entry_date, cost'),
       ]);
@@ -70,7 +70,7 @@ export function useProjectStats(projectId: string | undefined) {
         entry_date: string; rating: number | null; cost: number | null; restaurant_id: string | null; food_item: { name: string } | null;
       }[];
       const drinkRows = (drinks.data ?? []) as unknown as {
-        entry_date: string; rating: number | null; cost: number | null; drink_type: string; count_05l: number; count_033l: number; quantity: number; drink_item: { name: string } | null;
+        entry_date: string; rating: number | null; cost: number | null; drink_type: string; count_033l: number; count_04l: number; count_05l: number; count_0568l: number; count_06l: number; quantity: number; drink_item: { name: string } | null;
       }[];
       const activityRows = (activities.data ?? []) as unknown as {
         entry_date: string; rating: number | null; cost: number | null; activity_item: { name: string } | null;
@@ -107,13 +107,15 @@ export function useProjectStats(projectId: string | undefined) {
       const drinkCounts = new Map<string, number>();
       const drinkRatings = new Map<string, number[]>();
       for (const d of drinkRows) {
+        const beerTotal =
+          d.count_033l + d.count_04l + d.count_05l + d.count_0568l + d.count_06l;
         if (d.drink_type === 'beer') {
           total05 += d.count_05l;
           total033 += d.count_033l;
-          totalBeers += d.count_05l + d.count_033l;
+          totalBeers += beerTotal;
         }
         const name = d.drink_item?.name;
-        const qty = d.drink_type === 'beer' ? d.count_05l + d.count_033l || d.quantity : d.quantity;
+        const qty = d.drink_type === 'beer' ? beerTotal || d.quantity : d.quantity;
         if (name) drinkCounts.set(name, (drinkCounts.get(name) ?? 0) + qty);
         if (d.rating != null && name) {
           const arr = drinkRatings.get(name) ?? [];
