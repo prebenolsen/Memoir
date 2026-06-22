@@ -66,13 +66,13 @@ function UsernameCard() {
   return (
     <Card className="space-y-2 p-4">
       <p className="text-sm text-text-muted">
-        Your username lets friends find you. It must be unique.
+        Create your username.
       </p>
       <div className="flex gap-2">
         <Input
           value={value}
           onChange={(e) => setValue(e.target.value)}
-          placeholder="username"
+          placeholder=""
           autoCapitalize="none"
           autoCorrect="off"
         />
@@ -107,7 +107,7 @@ function FriendsCard() {
           <Input
             value={identifier}
             onChange={(e) => setIdentifier(e.target.value)}
-            placeholder="username or email"
+            placeholder=""
             autoCapitalize="none"
             autoCorrect="off"
             onKeyDown={(e) => e.key === 'Enter' && submitAdd()}
