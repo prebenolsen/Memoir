@@ -10,7 +10,7 @@ type State =
   | { status: 'error'; message: string }
   | { status: 'ready'; places: NearbyPlace[]; radius: number };
 
-const BASE_RADIUS = 750;
+const BASE_RADIUS = 200;
 
 function formatDistance(m: number): string {
   return m < 1000 ? `${m} m` : `${(m / 1000).toFixed(1)} km`;
@@ -47,7 +47,7 @@ export function NearbyRestaurantPicker({
   }, [open, run]);
 
   return (
-    <Sheet open={open} onClose={onClose} title="Nearby places">
+    <Sheet open={open} onClose={onClose} title="Find nearby restaurants">
       {state.status === 'loading' && (
         <div className="py-10 text-center text-sm text-text-muted">
           <MapPin className="mx-auto mb-2 animate-pulse text-primary" size={24} />

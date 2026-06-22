@@ -16,6 +16,7 @@ import { newId, titleCase } from '@/lib/format';
 import { MEAL_TYPES, FOOD_SOURCES, type FoodEntry, type MealType, type FoodSource } from '@/types/db';
 import { useEditingEntry } from './useEditingEntry';
 import { NearbyRestaurantPicker } from './NearbyRestaurantPicker';
+import { MapRestaurantPicker } from './MapRestaurantPicker';
 import type { NearbyPlace } from '@/lib/nearbyPlaces';
 
 export function FoodEntrySheet({
@@ -38,6 +39,7 @@ export function FoodEntrySheet({
   const [restaurant, setRestaurant] = useState<ComboValue | null>(null);
   const [pickedPlace, setPickedPlace] = useState<NearbyPlace | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [mapPickerOpen, setMapPickerOpen] = useState(false);
   const [showCourses, setShowCourses] = useState(false);
   const [starter, setStarter] = useState('');
   const [main, setMain] = useState('');
@@ -200,15 +202,26 @@ export function FoodEntrySheet({
                 }}
                 placeholder="Where?"
               />
-              <Button
-                variant="secondary"
-                size="sm"
-                type="button"
-                onClick={() => setPickerOpen(true)}
-              >
-                <MapPin size={16} />
-                Find location
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  type="button"
+                  onClick={() => setPickerOpen(true)}
+                >
+                  <MapPin size={16} />
+                  Find nearby restaurants
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  type="button"
+                  onClick={() => setMapPickerOpen(true)}
+                >
+                  <MapPin size={16} />
+                  Find restaurants
+                </Button>
+              </div>
             </div>
           </Field>
         )}
@@ -250,6 +263,15 @@ export function FoodEntrySheet({
       <NearbyRestaurantPicker
         open={pickerOpen}
         onClose={() => setPickerOpen(false)}
+        onSelect={(place) => {
+          setRestaurant({ id: null, name: place.name });
+          setPickedPlace(place);
+          if (place.source !== source) setSource(place.source);
+        }}
+      />
+      <MapRestaurantPicker
+        open={mapPickerOpen}
+        onClose={() => setMapPickerOpen(false)}
         onSelect={(place) => {
           setRestaurant({ id: null, name: place.name });
           setPickedPlace(place);

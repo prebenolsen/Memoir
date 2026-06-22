@@ -71,7 +71,7 @@ function formatAddress(tags: OverpassTags): string | null {
 export async function findNearbyRestaurants(
   latitude: number,
   longitude: number,
-  { radius = 750 }: { radius?: number } = {},
+  { radius = 200 }: { radius?: number } = {},
 ): Promise<NearbyPlace[]> {
   const filter = '["amenity"~"^(restaurant|cafe|fast_food)$"]["name"]';
   const around = `(around:${radius},${latitude},${longitude})`;

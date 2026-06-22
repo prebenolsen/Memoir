@@ -11,6 +11,15 @@ This project uses [Semantic Versioning](https://semver.org/) (`MAJOR.MINOR.PATCH
 The current version is tracked in [`VERSION.md`](VERSION.md) and shown at the bottom
 of the in-app **Settings** screen.
 
+## [4.0.0] - 2026-06-22
+
+### Added
+- **Find restaurants by map.** A new "Find restaurants" button opens an interactive map you can pan and zoom to any location in the world. A pin stays fixed at the centre; tap "Search here" to find restaurants and cafes within 200 m of that spot. Designed for planning ahead or searching somewhere you are not currently at.
+
+### Changed
+- **Smaller nearby radius.** "Find nearby restaurants" (formerly "Find location") now searches within 200 m instead of 750 m, keeping results tightly relevant to your current position.
+- **Renamed button.** The GPS-based location button is now labelled "Find nearby restaurants" for clarity.
+
 ## [3.3.0] - 2026-06-22
 
 ### Changed
