@@ -141,7 +141,7 @@ export function DrinkEntrySheet({
   const card = (text: string, active: boolean) => (
     <span
       className={cn(
-        'rounded-md px-1.5 py-0.5 text-xs font-medium tabular-nums text-text',
+        'rounded-md px-2 py-1 text-[15px] font-medium tabular-nums text-text',
         active ? 'bg-primary/12' : 'bg-surface-alt',
       )}
     >
@@ -316,7 +316,7 @@ export function DrinkEntrySheet({
             trailing={nameCards}
             inputClassName={cn(
               tracksAbv && 'placeholder:italic',
-              isBeer ? 'pr-32' : isWine ? 'pr-20' : '',
+              isBeer ? 'pr-36' : isWine ? 'pr-24' : '',
             )}
           />
         </Field>
