@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   UtensilsCrossed,
@@ -10,7 +10,13 @@ import {
   Trash2,
 } from 'lucide-react';
 import { useProject } from '@/context/ProjectProvider';
-import { useProjectStats, type NamedCount, type NamedRating } from '@/hooks/useStats';
+import {
+  useProjectStats,
+  useProjectDateBounds,
+  type NamedCount,
+  type NamedRating,
+  type WineStyleStat,
+} from '@/hooks/useStats';
 import { useEntryMutations } from '@/hooks/useEntryMutations';
 import { useConfirmDelete } from '@/hooks/useConfirmDelete';
 import { useQuickAdd } from '@/lib/quickAdd';
@@ -19,7 +25,7 @@ import { Card, SectionTitle } from '@/components/ui/Card';
 import { StatCard } from '@/components/ui/StatCard';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { formatMoney, formatDate, titleCase } from '@/lib/format';
-import type { ExpenseCategory, PurchaseEntry } from '@/types/db';
+import type { ExpenseCategory, PurchaseEntry, WineStyle } from '@/types/db';
 
 function RankList({ rows, kind }: { rows: (NamedCount | NamedRating)[]; kind: 'count' | 'rating' }) {
   if (!rows.length) return <p className="px-4 py-3 text-sm text-text-muted">No data yet.</p>;
@@ -72,15 +78,57 @@ const CAT_COLORS: Record<ExpenseCategory, string> = {
   other: 'bg-text-muted',
 };
 
+const WINE_COLORS: Record<WineStyle, string> = {
+  red: 'bg-[#7b2d3a]',
+  white: 'bg-[#d8c879]',
+  rose: 'bg-[#e6a6b0]',
+  sparkling: 'bg-[#efd98a]',
+};
+
+/** Litres with at most one decimal and no trailing ".0" (e.g. "3", "2.5"). */
+function fmtLitres(n: number): string {
+  return (Math.round(n * 10) / 10).toLocaleString();
+}
+
+/** Vertical bar graph of wine glasses per style. Expects only styles with >0. */
+function WineBars({ data }: { data: WineStyleStat[] }) {
+  const max = Math.max(...data.map((d) => d.glasses), 1);
+  return (
+    <div className="flex items-end justify-around gap-3 pt-2" style={{ height: 160 }}>
+      {data.map((d) => (
+        <div key={d.style} className="flex flex-1 flex-col items-center justify-end gap-1.5">
+          <span className="text-sm font-semibold tabular-nums text-text">{d.glasses}</span>
+          <div
+            className={`w-full max-w-[44px] rounded-t-md ${WINE_COLORS[d.style]}`}
+            style={{ height: `${Math.max(6, (d.glasses / max) * 110)}px` }}
+          />
+          <span className="text-xs text-text-muted">{d.label}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function StatsScreen() {
   const { project, isEverything, viewProjectId, settings } = useProject();
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
   const { data: stats, isLoading } = useProjectStats(viewProjectId, from || undefined, to || undefined);
   const { data: purchases = [] } = usePurchases(viewProjectId, from || undefined, to || undefined);
+  const { data: bounds } = useProjectDateBounds(viewProjectId);
   const { remove } = useEntryMutations();
   const confirmDelete = useConfirmDelete();
   const openAdd = useQuickAdd((s) => s.open);
+
+  // Seed the date range to the project's full span (earliest → latest entry).
+  // Re-seeds when the viewed project changes; the user can still narrow or Clear.
+  const seededFor = useRef<string | null | undefined>(undefined);
+  useEffect(() => {
+    if (!bounds || seededFor.current === viewProjectId) return;
+    seededFor.current = viewProjectId;
+    setFrom(bounds.min ?? '');
+    setTo(bounds.max ?? '');
+  }, [bounds, viewProjectId]);
 
   if (isLoading || !stats)
     return <p className="py-8 text-center text-sm text-text-muted">Loading…</p>;
@@ -226,11 +274,46 @@ export function StatsScreen() {
       {stats.drinkEntries > 0 && (
       <section>
         <SectionTitle icon={<Wine size={15} />}>Alcohol</SectionTitle>
-        <div className="mb-3 grid grid-cols-3 gap-3">
-          <StatCard label="Beers" value={stats.totalBeers} />
-          <StatCard label="0.5l" value={stats.total05} />
-          <StatCard label="0.33l" value={stats.total033} />
-        </div>
+
+        {stats.totalBeers > 0 && (
+          <div className="mb-3 grid grid-cols-2 gap-3">
+            <StatCard
+              label="Beers"
+              value={stats.totalBeers}
+              sub={`${stats.totalBeers === 1 ? 'glass' : 'glasses'} in total`}
+            />
+            <StatCard label="Litres of beer" value={`${fmtLitres(stats.totalBeerLitres)} L`} accent />
+          </div>
+        )}
+
+        {stats.beerSizes.length > 0 && (
+          <Card className="mb-3 p-4">
+            <p className="mb-3 text-xs font-medium uppercase tracking-wide text-text-muted">
+              By size
+            </p>
+            <div className="space-y-1.5">
+              {stats.beerSizes.map((s) => (
+                <div key={s.key} className="flex items-center justify-between text-sm">
+                  <span className="font-medium">{s.short}</span>
+                  <span className="text-text-muted">
+                    <span className="text-text">{s.units}</span>{' '}
+                    {s.units === 1 ? 'glass' : 'glasses'} · <span className="text-text">{fmtLitres(s.litres)} L</span>
+                  </span>
+                </div>
+              ))}
+            </div>
+          </Card>
+        )}
+
+        {stats.wineGlasses.length > 0 && (
+          <Card className="mb-3 p-4">
+            <p className="text-xs font-medium uppercase tracking-wide text-text-muted">
+              Wine glasses by type
+            </p>
+            <WineBars data={stats.wineGlasses} />
+          </Card>
+        )}
+
         <Card>
           <p className="px-4 pt-3 text-xs font-medium uppercase tracking-wide text-text-muted">
             Most consumed

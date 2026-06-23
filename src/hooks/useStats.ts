@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
-import type { ExpenseCategory } from '@/types/db';
+import { BEER_SIZES, WINE_STYLES } from '@/types/db';
+import type { ExpenseCategory, WineStyle } from '@/types/db';
 
 export interface NamedCount {
   name: string;
@@ -9,6 +10,19 @@ export interface NamedCount {
 export interface NamedRating {
   name: string;
   rating: number;
+}
+/** One beer serving size with how many were drunk and the litres that totals. */
+export interface BeerSizeStat {
+  key: string;
+  short: string;
+  units: number;
+  litres: number;
+}
+/** Glasses of a single wine style, for the by-type bar graph. */
+export interface WineStyleStat {
+  style: WineStyle;
+  label: string;
+  glasses: number;
 }
 
 export interface ProjectStats {
@@ -19,10 +33,11 @@ export interface ProjectStats {
   topRatedFoods: NamedRating[];
   avgFoodRating: number | null;
   // Alcohol
-  totalBeers: number;
-  total05: number;
-  total033: number;
   drinkEntries: number;
+  totalBeers: number;
+  totalBeerLitres: number;
+  beerSizes: BeerSizeStat[];
+  wineGlasses: WineStyleStat[];
   mostConsumed: NamedCount[];
   topRatedDrinks: NamedRating[];
   // Activities
@@ -78,7 +93,7 @@ export function useProjectStats(
           'memoir_food_entries',
           'entry_date, rating, cost, restaurant_id, food_item:memoir_food_items(name)',
         ),
-        p('memoir_drink_entries', 'entry_date, rating, cost, drink_type, count_033l, count_04l, count_05l, count_0568l, count_06l, quantity, drink_item:memoir_drink_items(name)'),
+        p('memoir_drink_entries', 'entry_date, rating, cost, drink_type, wine_style, count_033l, count_04l, count_05l, count_0568l, count_06l, quantity, drink_item:memoir_drink_items(name)'),
         p('memoir_activity_entries', 'entry_date, rating, cost, activity_item:memoir_activity_items(name)'),
         p('memoir_purchase_entries', 'entry_date, cost'),
       ]);
@@ -88,7 +103,7 @@ export function useProjectStats(
         entry_date: string; rating: number | null; cost: number | null; restaurant_id: string | null; food_item: { name: string } | null;
       }[];
       const drinkRows = (drinks.data ?? []) as unknown as {
-        entry_date: string; rating: number | null; cost: number | null; drink_type: string; count_033l: number; count_04l: number; count_05l: number; count_0568l: number; count_06l: number; quantity: number; drink_item: { name: string } | null;
+        entry_date: string; rating: number | null; cost: number | null; drink_type: string; wine_style: WineStyle | null; count_033l: number; count_04l: number; count_05l: number; count_0568l: number; count_06l: number; quantity: number; drink_item: { name: string } | null;
       }[];
       const activityRows = (activities.data ?? []) as unknown as {
         entry_date: string; rating: number | null; cost: number | null; activity_item: { name: string } | null;
@@ -120,17 +135,28 @@ export function useProjectStats(
 
       // Alcohol
       let totalBeers = 0;
-      let total05 = 0;
-      let total033 = 0;
+      let totalBeerLitres = 0;
+      const beerSizeUnits = new Map<string, number>(); // BeerSize.key -> glasses
+      const wineGlassesByStyle = new Map<WineStyle, number>();
       const drinkCounts = new Map<string, number>();
       const drinkRatings = new Map<string, number[]>();
       for (const d of drinkRows) {
         const beerTotal =
           d.count_033l + d.count_04l + d.count_05l + d.count_0568l + d.count_06l;
         if (d.drink_type === 'beer') {
-          total05 += d.count_05l;
-          total033 += d.count_033l;
           totalBeers += beerTotal;
+          for (const s of BEER_SIZES) {
+            const units = d[s.column];
+            if (units) {
+              beerSizeUnits.set(s.key, (beerSizeUnits.get(s.key) ?? 0) + units);
+              totalBeerLitres += units * s.liters;
+            }
+          }
+        } else if (d.drink_type === 'wine' && d.wine_style) {
+          wineGlassesByStyle.set(
+            d.wine_style,
+            (wineGlassesByStyle.get(d.wine_style) ?? 0) + d.quantity,
+          );
         }
         const name = d.drink_item?.name;
         const qty = d.drink_type === 'beer' ? beerTotal || d.quantity : d.quantity;
@@ -171,16 +197,28 @@ export function useProjectStats(
         byCategory.food + byCategory.alcohol + byCategory.activities + byCategory.purchases + byCategory.other;
       const activeDays = days.size;
 
+      // Beer sizes (smallest first) and wine styles, each dropping anything with none.
+      const beerSizes: BeerSizeStat[] = BEER_SIZES.filter((s) => beerSizeUnits.get(s.key)).map(
+        (s) => {
+          const units = beerSizeUnits.get(s.key)!;
+          return { key: s.key, short: s.short, units, litres: units * s.liters };
+        },
+      );
+      const wineGlasses: WineStyleStat[] = WINE_STYLES.filter(
+        (w) => wineGlassesByStyle.get(w.value),
+      ).map((w) => ({ style: w.value, label: w.label, glasses: wineGlassesByStyle.get(w.value)! }));
+
       return {
         foodEntries: foodRows.length,
         restaurantsVisited: restaurants.size,
         mostEaten: topCounts(foodCounts),
         topRatedFoods: topRatings(foodRatings),
         avgFoodRating: foodRatingN ? foodRatingSum / foodRatingN : null,
-        totalBeers,
-        total05,
-        total033,
         drinkEntries: drinkRows.length,
+        totalBeers,
+        totalBeerLitres,
+        beerSizes,
+        wineGlasses,
         mostConsumed: topCounts(drinkCounts),
         topRatedDrinks: topRatings(drinkRatings),
         activitiesCompleted: activityRows.length,
@@ -190,6 +228,45 @@ export function useProjectStats(
         dailyAverage: activeDays ? totalSpent / activeDays : 0,
         activeDays,
       };
+    },
+  });
+}
+
+/**
+ * Earliest and latest entry dates recorded for a project (across food, drinks,
+ * activities and purchases), ignoring any active date filter. Used to seed the
+ * Stats date range to the project's full span. Returns nulls when empty.
+ *   - undefined → loading, query disabled
+ *   - null      → "Everything" mode, all projects included
+ *   - string    → specific project filter
+ */
+export function useProjectDateBounds(projectId: string | null | undefined) {
+  return useQuery({
+    queryKey: ['stats', 'bounds', projectId],
+    enabled: projectId !== undefined,
+    queryFn: async (): Promise<{ min: string | null; max: string | null }> => {
+      const tables = [
+        'memoir_food_entries',
+        'memoir_drink_entries',
+        'memoir_activity_entries',
+        'memoir_purchase_entries',
+      ];
+      const edge = (table: string, ascending: boolean) => {
+        let q = supabase.from(table).select('entry_date');
+        if (projectId !== null) q = q.eq('project_id', projectId!);
+        return q.order('entry_date', { ascending }).limit(1);
+      };
+      const results = await Promise.all(tables.flatMap((t) => [edge(t, true), edge(t, false)]));
+      let min: string | null = null;
+      let max: string | null = null;
+      for (const r of results) {
+        if (r.error) throw r.error;
+        const d = (r.data?.[0] as { entry_date: string } | undefined)?.entry_date;
+        if (!d) continue;
+        if (min === null || d < min) min = d;
+        if (max === null || d > max) max = d;
+      }
+      return { min, max };
     },
   });
 }

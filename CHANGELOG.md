@@ -11,6 +11,13 @@ This project uses [Semantic Versioning](https://semver.org/) (`MAJOR.MINOR.PATCH
 The current version is tracked in [`VERSION.md`](VERSION.md) and shown at the bottom
 of the in-app **Profile** screen.
 
+## [9.2.0] - 2026-06-23
+
+### Changed
+- **Friendlier alcohol stats** — the Alcohol section now leads with how many beers you had and the total litres, instead of fixed 0.5l / 0.33l counters. Below that, a "By size" breakdown shows how many glasses of each beer size you drank and the litres each adds up to.
+- **Wine glasses by type** — wine now gets a vertical bar graph showing how many glasses of each style (red, white, rosé, sparkling) you had over the period. Styles with no glasses are left out of the graph.
+- **Stats date range defaults to your data** — the From/To range now starts pre-filled with the earliest and latest entry dates in the current view, so the stats span your whole project out of the box. Narrow it as before, or use Clear for all time.
+
 ## [9.1.0] - 2026-06-23
 
 ### Changed
