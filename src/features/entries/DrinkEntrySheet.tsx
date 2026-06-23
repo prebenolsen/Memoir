@@ -114,7 +114,7 @@ export function DrinkEntrySheet({
       setDrink(preFill?.name ? { id: null, name: preFill.name } : null);
       const sizeKey = preFill?.beerSizeKey ?? BEER_SIZES[0].key;
       setBeerSize(sizeKey);
-      setBeerCount(0);
+      setBeerCount(1);
       setQuantity(1);
       setRating(null);
       setCost(null);
@@ -277,20 +277,18 @@ export function DrinkEntrySheet({
       }
     >
       <div className="space-y-4">
-        <Field label="Type">
-          <div className="space-y-2">
-            <SegmentedControl
-              value={drinkType}
-              onChange={changeType}
-              options={DRINK_TYPES.map((t) => ({ value: t, label: titleCase(t) }))}
-            />
-            {isWine && (
-              <SegmentedControl value={wineStyle} onChange={setWineStyle} options={WINE_STYLES} />
-            )}
-          </div>
-        </Field>
+        <div className="space-y-2">
+          <SegmentedControl
+            value={drinkType}
+            onChange={changeType}
+            options={DRINK_TYPES.map((t) => ({ value: t, label: titleCase(t) }))}
+          />
+          {isWine && (
+            <SegmentedControl value={wineStyle} onChange={setWineStyle} options={WINE_STYLES} />
+          )}
+        </div>
 
-        <Field label="Drink" optional>
+        <Field label="What did you drink?">
           <Combobox
             table="memoir_drink_items"
             value={drink}
@@ -341,12 +339,12 @@ export function DrinkEntrySheet({
         )}
 
         {tracksAbv ? (
-          <Field label="ABV (%)" optional>
+          <Field label="ABV (%)">
             <AbvInput value={abv} onChange={setAbv} defaultValue={DEFAULT_ABV[drinkType] ?? 12.5} />
           </Field>
         ) : (
           <div aria-hidden className="invisible">
-            <Field label="ABV (%)" optional>
+            <Field label="ABV (%)">
               <div className="rounded-xl border border-border bg-surface-alt/50 p-3.5">
                 <div className="h-11" />
               </div>
@@ -354,12 +352,12 @@ export function DrinkEntrySheet({
           </div>
         )}
 
-        <Field label="Rating" optional>
+        <Field label="Rating">
           <RatingInput value={rating} onChange={setRating} scale={settings.rating_scale} />
         </Field>
 
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Cost" optional>
+          <Field label="Cost">
             <CurrencyInput value={cost} onChange={setCost} currency={settings.currency} />
           </Field>
           <Field label="Date">
@@ -367,11 +365,11 @@ export function DrinkEntrySheet({
           </Field>
         </div>
 
-        <Field label="Notes" optional>
+        <Field label="Notes">
           <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} />
         </Field>
 
-        <Field label="Location" optional>
+        <Field label="Location">
           <div className="space-y-2">
             {hasLocation && (
               <div className="flex items-center justify-between rounded-xl bg-surface-alt px-3.5 py-2.5">

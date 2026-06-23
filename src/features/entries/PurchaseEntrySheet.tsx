@@ -80,7 +80,7 @@ export function PurchaseEntrySheet({
       }
     >
       <div className="space-y-4">
-        <Field label="Item">
+        <Field label="What did you buy?">
           <Input
             value={itemName}
             onChange={(e) => setItemName(e.target.value)}
@@ -98,7 +98,7 @@ export function PurchaseEntrySheet({
         </Field>
 
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Cost" optional>
+          <Field label="Cost">
             <CurrencyInput value={cost} onChange={setCost} currency={settings.currency} />
           </Field>
           <Field label="Date">
@@ -106,7 +106,7 @@ export function PurchaseEntrySheet({
           </Field>
         </div>
 
-        <Field label="Notes" optional>
+        <Field label="Notes">
           <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} />
         </Field>
       </div>

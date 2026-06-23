@@ -11,6 +11,20 @@ This project uses [Semantic Versioning](https://semver.org/) (`MAJOR.MINOR.PATCH
 The current version is tracked in [`VERSION.md`](VERSION.md) and shown at the bottom
 of the in-app **Profile** screen.
 
+## [11.2.0] - 2026-06-23
+
+### Changed
+- **Simpler Add activity form.** The activity field is now asked as "What did you do?", and the separate "Description" box has been removed — use Notes instead.
+- **Clearer Add purchase form.** The "Item" field now reads "What did you buy?".
+- **Less clutter.** The grey "optional" labels have been removed from the Add activity and Add purchase forms.
+
+## [11.1.0] - 2026-06-23
+
+### Changed
+- **Cleaner Add food form.** The "Meal" and "Source" headings are gone (the buttons speak for themselves), and the food field is now asked as "What did you eat?" with a "Steak" example. Logging separate courses is now a "Courses" button right next to the food box — tap it to swap the single food line for Starter / Main course / Dessert fields, and tap again to go back.
+- **Cleaner Add drink form.** The "Type" heading is gone and the drink field now reads "What did you drink?". New drinks start at an amount of 1, and changing the size (e.g. litres) keeps the count at 1 instead of resetting it.
+- **Less clutter.** The grey "optional" labels have been removed throughout the Add food and Add drink forms.
+
 ## [11.0.0] - 2026-06-23
 
 ### Added

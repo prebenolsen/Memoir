@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ChevronDown, ChevronUp, MapPin } from 'lucide-react';
+import { MapPin, UtensilsCrossed } from 'lucide-react';
 import { Sheet } from '@/components/ui/Sheet';
 import { Button } from '@/components/ui/Button';
 import { Field, Input, Textarea } from '@/components/ui/Input';
@@ -109,7 +109,8 @@ export function FoodEntrySheet({
     };
   }, [editing]);
 
-  const canSave = !!project && (source === 'home' ? !!food?.name : !!restaurant?.name);
+  const hasFood = !!food?.name || (showCourses && !!(starter || main || dessert));
+  const canSave = !!project && (source === 'home' ? hasFood : !!restaurant?.name);
 
   const submit = async () => {
     if (!project || busy) return;
@@ -165,33 +166,65 @@ export function FoodEntrySheet({
       }
     >
       <div className="space-y-4">
-        <Field label="Meal">
-          <SegmentedControl
-            value={mealType}
-            onChange={setMealType}
-            options={MEAL_TYPES.map((m) => ({ value: m, label: titleCase(m) }))}
-          />
-        </Field>
+        <SegmentedControl
+          value={mealType}
+          onChange={setMealType}
+          options={MEAL_TYPES.map((m) => ({ value: m, label: titleCase(m) }))}
+        />
 
-        <Field label="Source">
-          <SegmentedControl
-            value={source}
-            onChange={setSource}
-            options={FOOD_SOURCES.map((s) => ({ value: s, label: titleCase(s) }))}
-          />
-        </Field>
+        <SegmentedControl
+          value={source}
+          onChange={setSource}
+          options={FOOD_SOURCES.map((s) => ({ value: s, label: titleCase(s) }))}
+        />
 
-        <Field label="Food" optional>
-          <Combobox
-            table="memoir_food_items"
-            value={food}
-            onChange={setFood}
-            placeholder="e.g. Paella"
-          />
+        <Field label="What did you eat?">
+          <div className="flex items-start gap-2">
+            <div className="flex-1">
+              {showCourses ? (
+                <div className="space-y-3">
+                  <Input
+                    value={starter}
+                    onChange={(e) => setStarter(e.target.value)}
+                    placeholder="Starter"
+                  />
+                  <Input
+                    value={main}
+                    onChange={(e) => setMain(e.target.value)}
+                    placeholder="Main course"
+                  />
+                  <Input
+                    value={dessert}
+                    onChange={(e) => setDessert(e.target.value)}
+                    placeholder="Dessert"
+                  />
+                </div>
+              ) : (
+                <Combobox
+                  table="memoir_food_items"
+                  value={food}
+                  onChange={setFood}
+                  placeholder="e.g. Steak"
+                />
+              )}
+            </div>
+            <Button
+              variant={showCourses ? 'primary' : 'secondary'}
+              size="sm"
+              type="button"
+              className="shrink-0"
+              onClick={() => setShowCourses((v) => !v)}
+              aria-pressed={showCourses}
+              title="Multiple courses"
+            >
+              <UtensilsCrossed size={16} />
+              Courses
+            </Button>
+          </div>
         </Field>
 
         {source !== 'home' && (
-          <Field label={source === 'cafe' ? 'Cafe' : 'Restaurant'} optional>
+          <Field label={source === 'cafe' ? 'Cafe' : 'Restaurant'}>
             <div className="space-y-2">
               <Combobox
                 table="memoir_restaurants"
@@ -226,28 +259,12 @@ export function FoodEntrySheet({
           </Field>
         )}
 
-        <button
-          type="button"
-          onClick={() => setShowCourses((v) => !v)}
-          className="flex items-center gap-1 text-sm font-medium text-primary"
-        >
-          {showCourses ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-          Courses (starter / main / dessert)
-        </button>
-        {showCourses && (
-          <div className="space-y-3">
-            <Input value={starter} onChange={(e) => setStarter(e.target.value)} placeholder="Starter" />
-            <Input value={main} onChange={(e) => setMain(e.target.value)} placeholder="Main course" />
-            <Input value={dessert} onChange={(e) => setDessert(e.target.value)} placeholder="Dessert" />
-          </div>
-        )}
-
-        <Field label="Rating" optional>
+        <Field label="Rating">
           <RatingInput value={rating} onChange={setRating} scale={settings.rating_scale} />
         </Field>
 
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Cost" optional>
+          <Field label="Cost">
             <CurrencyInput value={cost} onChange={setCost} currency={settings.currency} />
           </Field>
           <Field label="Date">
@@ -255,7 +272,7 @@ export function FoodEntrySheet({
           </Field>
         </div>
 
-        <Field label="Notes" optional>
+        <Field label="Notes">
           <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} />
         </Field>
       </div>

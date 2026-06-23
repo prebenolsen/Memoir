@@ -29,7 +29,6 @@ export function ActivityEntrySheet({
 
   const [entryDate, setEntryDate] = useState(date);
   const [activity, setActivity] = useState<ComboValue | null>(null);
-  const [description, setDescription] = useState('');
   const [rating, setRating] = useState<number | null>(null);
   const [cost, setCost] = useState<number | null>(null);
   const [notes, setNotes] = useState('');
@@ -39,7 +38,6 @@ export function ActivityEntrySheet({
     if (!open) return;
     if (editing) {
       setEntryDate(editing.entry_date);
-      setDescription(editing.description ?? '');
       setRating(editing.rating);
       setCost(editing.cost);
       setNotes(editing.notes ?? '');
@@ -55,7 +53,6 @@ export function ActivityEntrySheet({
     } else if (!editId) {
       setEntryDate(date);
       setActivity(null);
-      setDescription('');
       setRating(null);
       setCost(null);
       setNotes('');
@@ -73,7 +70,7 @@ export function ActivityEntrySheet({
         project_id: project.id,
         entry_date: entryDate,
         activity_item_id,
-        description: description || null,
+        description: null,
         rating,
         cost,
         notes: notes || null,
@@ -96,7 +93,7 @@ export function ActivityEntrySheet({
       }
     >
       <div className="space-y-4">
-        <Field label="Activity">
+        <Field label="What did you do?">
           <Combobox
             table="memoir_activity_items"
             value={activity}
@@ -105,21 +102,12 @@ export function ActivityEntrySheet({
           />
         </Field>
 
-        <Field label="Description" optional>
-          <Textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            rows={2}
-            placeholder="What did you do?"
-          />
-        </Field>
-
-        <Field label="Rating" optional>
+        <Field label="Rating">
           <RatingInput value={rating} onChange={setRating} scale={settings.rating_scale} />
         </Field>
 
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Cost" optional>
+          <Field label="Cost">
             <CurrencyInput value={cost} onChange={setCost} currency={settings.currency} />
           </Field>
           <Field label="Date">
@@ -127,7 +115,7 @@ export function ActivityEntrySheet({
           </Field>
         </div>
 
-        <Field label="Notes" optional>
+        <Field label="Notes">
           <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} />
         </Field>
       </div>
