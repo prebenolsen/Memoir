@@ -10,6 +10,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { Input } from '@/components/ui/Input';
 import { titleCase } from '@/lib/format';
 import { ItemDetailSheet } from './ItemDetailSheet';
+import { BeverageThumb } from './BeverageThumb';
 
 type SortKey = 'most' | 'rated' | 'name';
 
@@ -30,8 +31,16 @@ export function ItemListView({
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState<SortKey>('most');
 
+  // Food, drink and restaurant items that have never been logged (0× consumed /
+  // 0 visits) are hidden — only activities keep their un-logged rows, which the
+  // user can remove explicitly from the detail sheet.
+  const visibleItems = useMemo(
+    () => (kind === 'activity' ? items : items.filter((i) => i.count > 0)),
+    [items, kind],
+  );
+
   const shown = useMemo(() => {
-    let list = items;
+    let list = visibleItems;
     if (query.trim()) {
       const q = query.toLowerCase();
       list = list.filter((i) => i.name.toLowerCase().includes(q));
@@ -41,10 +50,10 @@ export function ItemListView({
       if (sort === 'rated') return (b.avg_rating ?? -1) - (a.avg_rating ?? -1);
       return b.count - a.count;
     });
-  }, [items, query, sort]);
+  }, [visibleItems, query, sort]);
 
   if (isLoading) return <p className="py-8 text-center text-sm text-text-muted">Loading…</p>;
-  if (items.length === 0)
+  if (visibleItems.length === 0)
     return <EmptyState icon={emptyIcon} title={`No ${kind} items yet`} subtitle={emptyText} />;
 
   return (
@@ -74,30 +83,57 @@ export function ItemListView({
         ))}
       </div>
 
-      <Card>
-        {shown.map((item) => (
-          <div key={item.id} className="border-t border-border first:border-t-0">
-            <ListRow
-              title={item.name}
-              subtitle={
-                countLabel(item.count) +
-                (kind === 'restaurant' && item.extra?.source
-                  ? ` · ${titleCase(String(item.extra.source))}`
-                  : '')
-              }
-              right={<RatingBadge value={item.avg_rating} scale={settings.rating_scale} />}
-              chevron
-              onClick={() => setSelected(item)}
-            />
-          </div>
-        ))}
-        {shown.length === 0 && (
-          <div className="px-4 py-6 text-center text-sm text-text-muted">
-            <Database className="mx-auto mb-1 opacity-50" size={20} />
-            No matches.
-          </div>
-        )}
-      </Card>
+      {kind === 'drink' ? (
+        // Beverages show an Open Food Facts photo to the left of each row, so
+        // every drink gets its own (shortened) card sitting beside the thumbnail.
+        <div className="space-y-2">
+          {shown.map((item) => (
+            <div key={item.id} className="flex items-center gap-3">
+              <BeverageThumb name={item.name} />
+              <Card className="min-w-0 flex-1 overflow-hidden">
+                <ListRow
+                  title={item.name}
+                  subtitle={countLabel(item.count)}
+                  right={<RatingBadge value={item.avg_rating} scale={settings.rating_scale} />}
+                  chevron
+                  onClick={() => setSelected(item)}
+                />
+              </Card>
+            </div>
+          ))}
+          {shown.length === 0 && (
+            <Card className="px-4 py-6 text-center text-sm text-text-muted">
+              <Database className="mx-auto mb-1 opacity-50" size={20} />
+              No matches.
+            </Card>
+          )}
+        </div>
+      ) : (
+        <Card>
+          {shown.map((item) => (
+            <div key={item.id} className="border-t border-border first:border-t-0">
+              <ListRow
+                title={item.name}
+                subtitle={
+                  countLabel(item.count) +
+                  (kind === 'restaurant' && item.extra?.source
+                    ? ` · ${titleCase(String(item.extra.source))}`
+                    : '')
+                }
+                right={<RatingBadge value={item.avg_rating} scale={settings.rating_scale} />}
+                chevron
+                onClick={() => setSelected(item)}
+              />
+            </div>
+          ))}
+          {shown.length === 0 && (
+            <div className="px-4 py-6 text-center text-sm text-text-muted">
+              <Database className="mx-auto mb-1 opacity-50" size={20} />
+              No matches.
+            </div>
+          )}
+        </Card>
+      )}
 
       <ItemDetailSheet kind={kind} item={selected} onClose={() => setSelected(null)} />
     </div>

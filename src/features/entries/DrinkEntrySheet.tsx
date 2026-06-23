@@ -15,7 +15,7 @@ import { useProject } from '@/context/ProjectProvider';
 import { useEntryMutations } from '@/hooks/useEntryMutations';
 import { resolveItem } from '@/hooks/useItems';
 import { supabase } from '@/lib/supabase';
-import { newId, titleCase } from '@/lib/format';
+import { newId, titleCase, formatBeerWineName } from '@/lib/format';
 import {
   BEER_SIZES,
   COCKTAIL_SUGGESTIONS,
@@ -164,6 +164,13 @@ export function DrinkEntrySheet({
             ? activeBeerSize.emptyName
             : null;
         selection = fallback ? { id: null, name: fallback } : null;
+      } else if ((isBeer || isWine) && drink && !drink.id) {
+        // Keep manually typed beer/wine names in the canonical shape so they match
+        // scanned entries — e.g. "Hansa Pilsner 0.33l (4.7 %)" / "Barolo (14 %)".
+        selection = {
+          id: null,
+          name: formatBeerWineName(drink.name, abv, isBeer ? activeBeerSize.short : null),
+        };
       }
 
       const drink_item_id = await resolveItem('memoir_drink_items', selection, {
@@ -198,23 +205,23 @@ export function DrinkEntrySheet({
       onClose={onClose}
       title={editId ? 'Edit drink' : 'Add drink'}
       footer={
-        <Button block onClick={submit} disabled={!canSave || busy}>
-          {editId ? 'Save changes' : 'Add drink'}
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="secondary"
+            type="button"
+            className="basis-2/5"
+            onClick={() => setScannerOpen(true)}
+          >
+            <ScanLine size={16} />
+            Scan
+          </Button>
+          <Button className="basis-3/5" onClick={submit} disabled={!canSave || busy}>
+            {editId ? 'Save changes' : 'Add drink'}
+          </Button>
+        </div>
       }
     >
       <div className="space-y-4">
-        <Button
-          variant="secondary"
-          size="sm"
-          type="button"
-          className="w-full"
-          onClick={() => setScannerOpen(true)}
-        >
-          <ScanLine size={16} />
-          Scan barcode
-        </Button>
-
         <Field label="Type">
           <div className="space-y-2">
             <SegmentedControl
