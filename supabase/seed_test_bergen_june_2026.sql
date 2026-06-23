@@ -180,17 +180,21 @@ begin
     (v_user_id, v_project_id, '2026-06-13', 'breakfast', 'cafe',    NULL,        NULL,           NULL, 'Skillingsbolle & coffee', NULL, 8, 110.00, 'Cinnamon bun by the fish market');
 
   -- --------------------------------------------------------------------------
-  -- Drink entries (history) — count_05l / count_033l track bottle/glass sizes
+  -- Drink entries (history) — count_* columns track the various glass/bottle
+  -- sizes (0.33 / 0.4 / 0.5 / 0.568 / 0.6 L); abv and city/country record the
+  -- strength and where it was drunk. wine_style stays null (these are all beer).
   -- --------------------------------------------------------------------------
   insert into memoir_drink_entries
-    (user_id, project_id, entry_date, drink_item_id, drink_type, count_05l, count_033l, quantity, rating, cost, notes)
+    (user_id, project_id, entry_date, drink_item_id, drink_type, abv,
+     count_033l, count_04l, count_05l, count_0568l, count_06l,
+     quantity, rating, cost, city, country, notes)
   values
-    (v_user_id, v_project_id, '2026-06-08', d_hansa,  'beer', 2, 0, 2, 7, 196.00, 'With dinner'),
-    (v_user_id, v_project_id, '2026-06-09', d_7fjell, 'beer', 1, 0, 1, 9, 119.00, 'At the brewery taproom'),
-    (v_user_id, v_project_id, '2026-06-09', d_hansa,  'beer', 1, 0, 1, 7, 98.00,  NULL),
-    (v_user_id, v_project_id, '2026-06-11', d_kinn,   'beer', 0, 2, 2, 8, 178.00, 'With the seafood'),
-    (v_user_id, v_project_id, '2026-06-12', d_7fjell, 'beer', 1, 0, 1, 9, 125.00, NULL),
-    (v_user_id, v_project_id, '2026-06-13', d_voss,   'beer', 1, 0, 1, 6, 95.00,  'Nightcap');
+    (v_user_id, v_project_id, '2026-06-08', d_hansa,  'beer', 4.5, 0, 0, 2, 0, 0, 2, 7, 196.00, 'Bergen', 'Norway', 'With dinner'),
+    (v_user_id, v_project_id, '2026-06-09', d_7fjell, 'beer', 6.5, 0, 1, 0, 0, 0, 1, 9, 119.00, 'Bergen', 'Norway', 'At the brewery taproom'),
+    (v_user_id, v_project_id, '2026-06-09', d_hansa,  'beer', 4.5, 0, 0, 1, 0, 0, 1, 7, 98.00,  'Bergen', 'Norway', NULL),
+    (v_user_id, v_project_id, '2026-06-11', d_kinn,   'beer', 4.7, 2, 0, 0, 0, 0, 2, 8, 178.00, 'Bergen', 'Norway', 'With the seafood'),
+    (v_user_id, v_project_id, '2026-06-12', d_7fjell, 'beer', 6.5, 0, 1, 0, 0, 0, 1, 9, 125.00, 'Bergen', 'Norway', NULL),
+    (v_user_id, v_project_id, '2026-06-13', d_voss,   'beer', 4.5, 0, 0, 1, 0, 0, 1, 6, 95.00,  'Bergen', 'Norway', 'Nightcap');
 
   -- --------------------------------------------------------------------------
   -- Activity entries (history)
