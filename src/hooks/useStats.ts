@@ -47,13 +47,29 @@ function topRatings(map: Map<string, number[]>, n = 5): NamedRating[] {
     .slice(0, n);
 }
 
-export function useProjectStats(projectId: string | undefined) {
+/**
+ * Compute aggregate stats for a project, or for everything ever recorded.
+ * - undefined → loading, query disabled
+ * - null      → "Everything" mode, all projects included
+ * - string    → specific project filter
+ * Optional `from`/`to` (YYYY-MM-DD) bound the entry dates inclusively.
+ */
+export function useProjectStats(
+  projectId: string | null | undefined,
+  from?: string,
+  to?: string,
+) {
   return useQuery({
-    queryKey: ['stats', projectId],
-    enabled: !!projectId,
+    queryKey: ['stats', projectId, from, to],
+    enabled: projectId !== undefined,
     queryFn: async (): Promise<ProjectStats> => {
-      const p = (table: string, select: string) =>
-        supabase.from(table).select(select).eq('project_id', projectId!);
+      const p = (table: string, select: string) => {
+        let q = supabase.from(table).select(select);
+        if (projectId !== null) q = q.eq('project_id', projectId!);
+        if (from) q = q.gte('entry_date', from);
+        if (to) q = q.lte('entry_date', to);
+        return q;
+      };
 
       const [food, drinks, activities, purchases] = await Promise.all([
         p(

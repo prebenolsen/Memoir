@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   UtensilsCrossed,
@@ -44,16 +45,19 @@ function RankList({ rows, kind }: { rows: (NamedCount | NamedRating)[]; kind: 'c
   );
 }
 
-function usePurchases(projectId: string | undefined) {
+function usePurchases(projectId: string | null | undefined, from?: string, to?: string) {
   return useQuery({
-    queryKey: ['expenses', 'purchases', projectId],
-    enabled: !!projectId,
+    queryKey: ['expenses', 'purchases', projectId, from, to],
+    enabled: projectId !== undefined,
     queryFn: async () => {
-      const { data, error } = await supabase
+      let q = supabase
         .from('memoir_purchase_entries')
         .select('*')
-        .eq('project_id', projectId!)
         .order('entry_date', { ascending: false });
+      if (projectId !== null) q = q.eq('project_id', projectId!);
+      if (from) q = q.gte('entry_date', from);
+      if (to) q = q.lte('entry_date', to);
+      const { data, error } = await q;
       if (error) throw error;
       return data as PurchaseEntry[];
     },
@@ -69,34 +73,74 @@ const CAT_COLORS: Record<ExpenseCategory, string> = {
 };
 
 export function StatsScreen() {
-  const { project, isEverything, settings } = useProject();
-  const { data: stats, isLoading } = useProjectStats(project?.id);
-  const { data: purchases = [] } = usePurchases(project?.id);
+  const { project, isEverything, viewProjectId, settings } = useProject();
+  const [from, setFrom] = useState('');
+  const [to, setTo] = useState('');
+  const { data: stats, isLoading } = useProjectStats(viewProjectId, from || undefined, to || undefined);
+  const { data: purchases = [] } = usePurchases(viewProjectId, from || undefined, to || undefined);
   const { remove } = useEntryMutations();
   const confirmDelete = useConfirmDelete();
   const openAdd = useQuickAdd((s) => s.open);
-
-  if (isEverything) {
-    return (
-      <div className="py-16 text-center text-sm text-text-muted">
-        <p className="mb-1 font-medium text-text">Select a project to view stats</p>
-        <p>Statistics are shown per project. Choose one from the selector above.</p>
-      </div>
-    );
-  }
 
   if (isLoading || !stats)
     return <p className="py-8 text-center text-sm text-text-muted">Loading…</p>;
 
   const cur = settings.currency;
   const hasData = stats.totalSpent > 0 || stats.activeDays > 0;
+  const dateInputClass =
+    'w-full rounded-xl border border-border bg-surface h-11 px-3.5 text-[15px] text-text ' +
+    'focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition';
 
   return (
     <div className="space-y-5">
       <div>
         <p className="text-sm text-text-muted">Statistics for</p>
-        <h2 className="font-serif text-xl font-semibold">{project?.name}</h2>
+        <h2 className="font-serif text-xl font-semibold">
+          {isEverything ? 'Everything' : project?.name}
+        </h2>
       </div>
+
+      {/* Date range filter */}
+      <Card className="p-3">
+        <div className="mb-2 flex items-center justify-between">
+          <p className="text-xs font-medium uppercase tracking-wide text-text-muted">
+            Date range
+          </p>
+          {(from || to) && (
+            <button
+              onClick={() => {
+                setFrom('');
+                setTo('');
+              }}
+              className="text-sm font-medium text-primary"
+            >
+              Clear
+            </button>
+          )}
+        </div>
+        <div className="flex items-end gap-3">
+          <label className="flex-1">
+            <span className="mb-1 block text-xs text-text-muted">From</span>
+            <input
+              type="date"
+              value={from}
+              max={to || undefined}
+              onChange={(e) => setFrom(e.target.value)}
+              className={dateInputClass}
+            />
+          </label>
+          <label className="flex-1">
+            <span className="mb-1 block text-xs text-text-muted">To</span>
+            <input
+              type="date"
+              value={to}
+              min={from || undefined}
+              onChange={(e) => setTo(e.target.value)}
+              className={dateInputClass}
+            />
+          </label>
+        </div>
+      </Card>
 
       {!hasData && (
         <EmptyState

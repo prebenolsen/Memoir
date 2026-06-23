@@ -11,6 +11,12 @@ This project uses [Semantic Versioning](https://semver.org/) (`MAJOR.MINOR.PATCH
 The current version is tracked in [`VERSION.md`](VERSION.md) and shown at the bottom
 of the in-app **Profile** screen.
 
+## [9.0.0] - 2026-06-23
+
+### Added
+- **Stats for Everything** — selecting the "Everything" view on the Stats tab now shows aggregate statistics across every project you have, instead of asking you to pick one. It totals all food, drinks, activities and purchases ever recorded.
+- **Stats date range** — a "Date range" filter at the top of the Stats tab lets you set a From and/or To date to narrow every statistic to that window. Leave both blank for all time. This works in any view and is especially handy for "Everything".
+
 ## [8.0.0] - 2026-06-23
 
 ### Added
