@@ -189,7 +189,9 @@ export function QuickAddFab() {
             ) : recentEntries.length === 0 ? (
               <div className={pillClass}>No recent entries yet.</div>
             ) : (
-              recentEntries.map((entry, i) => {
+              // Hook gives newest-first; the column stacks upward from the FAB,
+              // so render reversed to keep the newest entry nearest the button.
+              [...recentEntries].reverse().map((entry, i) => {
                 const Icon = KIND_ICON[entry.kind];
                 return (
                   <button

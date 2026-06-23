@@ -95,9 +95,18 @@ export function useRecentEntries(enabled = true, limit = 5) {
           });
         }),
       );
+      // Collapse re-logs of the same drink into a single, most-recent entry so
+      // the list never shows the same label twice.
+      const seen = new Set<string>();
       return perSource
         .flat()
         .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+        .filter((e) => {
+          const key = e.label.trim().toLowerCase();
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        })
         .slice(0, limit);
     },
   });

@@ -19,8 +19,10 @@ function FriendRequestDot() {
 
 export function AppShell() {
   const { pathname } = useLocation();
-  // Project switching is per-day work, so it belongs on the Journal tab only.
-  const showProjectSwitcher = pathname === '/today';
+  // Project context applies across the Journal, Explore and Stats tabs, so the
+  // switcher is available on all three.
+  const showProjectSwitcher =
+    pathname === '/today' || pathname === '/explore' || pathname === '/stats';
 
   return (
     <div className="mx-auto flex h-full max-w-md flex-col bg-bg">

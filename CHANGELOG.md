@@ -11,6 +11,16 @@ This project uses [Semantic Versioning](https://semver.org/) (`MAJOR.MINOR.PATCH
 The current version is tracked in [`VERSION.md`](VERSION.md) and shown at the bottom
 of the in-app **Profile** screen.
 
+## [14.2.0] - 2026-06-23
+
+### Changed
+- **"Add recent" no longer repeats drinks, and lists newest first.** Re-logging the same drink several times used to fill the list with duplicates — now each drink appears only once, showing its most recent version. The list is also ordered so the newest entry sits closest to the + button, where it's easiest to reach.
+
+## [14.1.0] - 2026-06-23
+
+### Changed
+- **Switch projects from Explore and Stats too.** The project selector in the header is no longer limited to the Journal tab — it now appears on Explore and Stats as well, so you can change which project (or "Everything") you're viewing without going back to Journal first. Both screens update to the chosen project automatically.
+
 ## [14.0.0] - 2026-06-23
 
 ### Added
