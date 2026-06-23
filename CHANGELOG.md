@@ -11,6 +11,11 @@ This project uses [Semantic Versioning](https://semver.org/) (`MAJOR.MINOR.PATCH
 The current version is tracked in [`VERSION.md`](VERSION.md) and shown at the bottom
 of the in-app **Profile** screen.
 
+## [15.0.1] - 2026-06-23
+
+### Changed
+- **Add drink** — the location buttons ("Use my location" and "Find nearby") now sit above the Rating, so you can set where you're drinking before scoring it.
+
 ## [15.0.0] - 2026-06-23
 
 ### Added

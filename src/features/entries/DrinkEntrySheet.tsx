@@ -367,28 +367,6 @@ export function DrinkEntrySheet({
           </div>
         )}
 
-        <Field label="Rating">
-          <RatingInput value={rating} onChange={setRating} scale={settings.rating_scale} />
-        </Field>
-
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="Cost">
-            <CurrencyInput
-              value={cost}
-              onChange={setCost}
-              currency={settings.currency}
-              onCurrencyChange={(c) => updateSettings({ currency: c })}
-            />
-          </Field>
-          <Field label="Date">
-            <DateField value={entryDate} onChange={setEntryDate} />
-          </Field>
-        </div>
-
-        <Field label="Notes">
-          <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} />
-        </Field>
-
         <Field label="Location">
           <div className="space-y-2">
             {hasLocation && (
@@ -433,6 +411,28 @@ export function DrinkEntrySheet({
               </Button>
             </div>
           </div>
+        </Field>
+
+        <Field label="Rating">
+          <RatingInput value={rating} onChange={setRating} scale={settings.rating_scale} />
+        </Field>
+
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Cost">
+            <CurrencyInput
+              value={cost}
+              onChange={setCost}
+              currency={settings.currency}
+              onCurrencyChange={(c) => updateSettings({ currency: c })}
+            />
+          </Field>
+          <Field label="Date">
+            <DateField value={entryDate} onChange={setEntryDate} />
+          </Field>
+        </div>
+
+        <Field label="Notes">
+          <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} />
         </Field>
       </div>
 
