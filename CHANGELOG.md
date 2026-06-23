@@ -11,6 +11,31 @@ This project uses [Semantic Versioning](https://semver.org/) (`MAJOR.MINOR.PATCH
 The current version is tracked in [`VERSION.md`](VERSION.md) and shown at the bottom
 of the in-app **Profile** screen.
 
+## [8.0.0] - 2026-06-23
+
+### Added
+- **Everything view** — a new "Everything" option at the top of the project switcher shows entries from all your projects in one combined Journal view. Everything is not a project; it is a global filter. New entries added while in Everything mode are saved to the default project. Stats remain per-project — selecting Everything on the Stats tab prompts you to pick a project.
+- **Drink location** — drink entries now record where you were drinking. Two buttons appear in the Add/Edit drink sheet: "Use my location" uses your device GPS and reverse-geocodes it to fill in city and country automatically (great for drinking at home, on the beach, or abroad); "Find nearby" shows a list of bars and pubs within 500 m so you can confirm the venue — the city and country are filled from whichever venue you pick. Location is always optional and can be cleared.
+
+### Changed
+- **Default project name** — newly created accounts get a default project called "Everyday Life" instead of "Everyday".
+- **SQL migrations** — all incremental `ALTER TABLE` migrations have been consolidated into a single clean `0001_init.sql` that creates the complete schema from scratch, making fresh deployments simpler. Existing databases should apply `0006_drink_location.sql` to pick up the new city/country columns and the `memoir_delete_account` function.
+
+## [7.3.0] - 2026-06-23
+
+### Added
+- **Self-service sign-up** — anyone can now create a Memoir account from the login screen. Sign-in and sign-up are clearly separated: sign-in is the default view, with a "New to Memoir?" divider and a "Create account" button below. The sign-up form has email, password, and confirm-password fields with client-side match validation. After submitting, a "Check your email" confirmation screen is shown with the address used, so the user knows exactly what to look for. Supabase sends the confirmation email; the account activates on click.
+
+## [7.2.0] - 2026-06-23
+
+### Added
+- **Delete my account** — a danger-styled button in the Account section lets a user permanently erase their profile, all projects, every entry, and all settings after confirming a plain-language warning. Calls the `memoir_delete_account` server-side RPC which removes the auth record; no recovery is possible once confirmed.
+
+## [7.1.1] - 2026-06-23
+
+### Fixed
+- **Sign out button** — changed from ghost to secondary variant to match the other buttons in the Data section.
+
 ## [7.1.0] - 2026-06-23
 
 ### Changed

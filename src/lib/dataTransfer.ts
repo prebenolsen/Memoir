@@ -98,3 +98,13 @@ export async function deleteProject(projectId: string): Promise<void> {
   const { error } = await supabase.from('memoir_projects').delete().eq('id', projectId);
   if (error) throw error;
 }
+
+/**
+ * Permanently delete the signed-in user's account and all their data.
+ * Delegates to a SECURITY DEFINER RPC so it can remove the auth.users row,
+ * which is not accessible from the client SDK.
+ */
+export async function deleteAccount(): Promise<void> {
+  const { error } = await supabase.rpc('memoir_delete_account');
+  if (error) throw error;
+}

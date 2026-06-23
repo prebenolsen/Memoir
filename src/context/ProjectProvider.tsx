@@ -8,12 +8,27 @@ import type { Project, Settings } from '@/types/db';
 
 interface ProjectContextValue {
   projects: Project[];
+  /** Currently displayed project. null = "Everything" view or still loading. */
   project: Project | null;
+  /**
+   * The project used for new entries. When viewing "Everything", this is the
+   * default project (so entries always belong to a real project).
+   */
+  activeProject: Project | null;
+  /** True when the user has explicitly chosen the "Everything" view. */
+  isEverything: boolean;
+  /**
+   * Ready-to-use project ID for useDay:
+   *   undefined = still loading (query should be disabled)
+   *   null      = Everything mode (query all projects)
+   *   string    = specific project
+   */
+  viewProjectId: string | null | undefined;
   /** Settings with the active project's override applied. */
   settings: Settings;
-  date: string; // active experience date (YYYY-MM-DD)
+  date: string;
   loading: boolean;
-  setProject: (id: string) => void;
+  setProject: (id: string | null) => void;
   setDate: (iso: string) => void;
   createProject: (input: {
     name: string;
@@ -45,11 +60,13 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
   });
 
   const [projectId, setProjectId] = useState<string | null>(null);
+  const [isEverythingMode, setIsEverythingMode] = useState(false);
   const [date, setDateState] = useState<string>(todayISO());
 
   // Initialise selection once projects + settings are known.
   useEffect(() => {
     if (!projects.length) return;
+    if (isEverythingMode) return;
     if (projectId && projects.some((p) => p.id === projectId)) return;
     const remembered =
       settings.remember_last_project && settings.last_project_id
@@ -57,7 +74,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
         : undefined;
     const fallback = projects.find((p) => p.is_default) ?? projects[0];
     setProjectId((remembered ?? fallback).id);
-  }, [projects, projectId, settings.remember_last_project, settings.last_project_id]);
+  }, [projects, projectId, isEverythingMode, settings.remember_last_project, settings.last_project_id]);
 
   // Restore last date once on load if the user opted in.
   useEffect(() => {
@@ -67,9 +84,15 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settings.remember_last_date]);
 
-  const setProject = (id: string) => {
-    setProjectId(id);
-    if (settings.remember_last_project) void updateSettings({ last_project_id: id });
+  const setProject = (id: string | null) => {
+    if (id === null) {
+      setIsEverythingMode(true);
+      setProjectId(null);
+    } else {
+      setIsEverythingMode(false);
+      setProjectId(id);
+      if (settings.remember_last_project) void updateSettings({ last_project_id: id });
+    }
   };
 
   const setDate = (iso: string) => {
@@ -102,6 +125,18 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     [projects, projectId],
   );
 
+  // For new entries: the selected project, or the default if in Everything mode.
+  const activeProject = useMemo(
+    () => project ?? projects.find((p) => p.is_default) ?? projects[0] ?? null,
+    [project, projects],
+  );
+
+  const viewProjectId: string | null | undefined = isLoading
+    ? undefined
+    : isEverythingMode
+      ? null
+      : projectId;
+
   const mergedSettings = useMemo(
     () => effectiveSettings(settings, project?.settings_override),
     [settings, project?.settings_override],
@@ -110,6 +145,9 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
   const value: ProjectContextValue = {
     projects,
     project,
+    activeProject,
+    isEverything: isEverythingMode,
+    viewProjectId,
     settings: mergedSettings,
     date,
     loading: isLoading,

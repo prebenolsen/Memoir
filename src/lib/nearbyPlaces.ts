@@ -1,5 +1,5 @@
 /**
- * Nearby restaurant/cafe lookup via the OpenStreetMap Overpass API.
+ * Nearby place lookups via the OpenStreetMap Overpass API.
  * Free, no API key, CORS-friendly — suits this client-only app.
  */
 import type { FoodSource } from '@/types/db';
@@ -114,4 +114,68 @@ export async function findNearbyRestaurants(
   }
   places.sort((a, b) => a.distanceMeters - b.distanceMeters);
   return places.slice(0, 25);
+}
+
+// ---------------------------------------------------------------------------
+// Nearby venue lookup (bars, pubs, etc.) for drink location tagging
+// ---------------------------------------------------------------------------
+
+export interface NearbyVenue {
+  osmId: string;
+  name: string;
+  amenityType: string;
+  address: string | null;
+  latitude: number;
+  longitude: number;
+  distanceMeters: number;
+}
+
+/**
+ * Find bars, pubs and similar venues within `radius` metres of the given
+ * coordinates, sorted by distance and capped at 25 results.
+ */
+export async function findNearbyVenues(
+  latitude: number,
+  longitude: number,
+  { radius = 500 }: { radius?: number } = {},
+): Promise<NearbyVenue[]> {
+  const filter = '["amenity"~"^(bar|pub|biergarten|nightclub|brewery|cafe)$"]["name"]';
+  const around = `(around:${radius},${latitude},${longitude})`;
+  const query = `[out:json][timeout:25];(node${filter}${around};way${filter}${around};);out center 60;`;
+
+  let res: Response;
+  try {
+    res = await fetch(OVERPASS_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: `data=${encodeURIComponent(query)}`,
+    });
+  } catch {
+    throw new NearbyError('network', 'Could not reach the places service. Check your connection.');
+  }
+
+  if (res.status === 429)
+    throw new NearbyError('rate_limited', 'Too many lookups right now — try again in a moment.');
+  if (!res.ok)
+    throw new NearbyError('server', 'The places service is unavailable right now.');
+
+  const json = (await res.json()) as { elements?: OverpassElement[] };
+  const venues: NearbyVenue[] = [];
+  for (const el of json.elements ?? []) {
+    const name = el.tags?.name;
+    const lat = el.lat ?? el.center?.lat;
+    const lon = el.lon ?? el.center?.lon;
+    if (!name || lat == null || lon == null) continue;
+    venues.push({
+      osmId: `${el.type}/${el.id}`,
+      name,
+      amenityType: el.tags?.amenity ?? 'bar',
+      address: formatAddress(el.tags ?? {}),
+      latitude: lat,
+      longitude: lon,
+      distanceMeters: haversineMeters(latitude, longitude, lat, lon),
+    });
+  }
+  venues.sort((a, b) => a.distanceMeters - b.distanceMeters);
+  return venues.slice(0, 25);
 }

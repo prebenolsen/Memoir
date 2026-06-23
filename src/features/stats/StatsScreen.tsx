@@ -69,12 +69,21 @@ const CAT_COLORS: Record<ExpenseCategory, string> = {
 };
 
 export function StatsScreen() {
-  const { project, settings } = useProject();
+  const { project, isEverything, settings } = useProject();
   const { data: stats, isLoading } = useProjectStats(project?.id);
   const { data: purchases = [] } = usePurchases(project?.id);
   const { remove } = useEntryMutations();
   const confirmDelete = useConfirmDelete();
   const openAdd = useQuickAdd((s) => s.open);
+
+  if (isEverything) {
+    return (
+      <div className="py-16 text-center text-sm text-text-muted">
+        <p className="mb-1 font-medium text-text">Select a project to view stats</p>
+        <p>Statistics are shown per project. Choose one from the selector above.</p>
+      </div>
+    );
+  }
 
   if (isLoading || !stats)
     return <p className="py-8 text-center text-sm text-text-muted">Loading…</p>;

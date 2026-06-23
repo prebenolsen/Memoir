@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ScanLine } from 'lucide-react';
+import { MapPin, ScanLine, X } from 'lucide-react';
 import { Sheet } from '@/components/ui/Sheet';
 import { Button } from '@/components/ui/Button';
 import { Field, Textarea } from '@/components/ui/Input';
@@ -16,6 +16,8 @@ import { useEntryMutations } from '@/hooks/useEntryMutations';
 import { resolveItem } from '@/hooks/useItems';
 import { supabase } from '@/lib/supabase';
 import { newId, titleCase, formatBeerWineName } from '@/lib/format';
+import { getCurrentPosition, reverseGeocode, GeoError } from '@/lib/geo';
+import type { NearbyVenue } from '@/lib/nearbyPlaces';
 import {
   BEER_SIZES,
   COCKTAIL_SUGGESTIONS,
@@ -32,6 +34,7 @@ import type { DrinkPreFill } from '@/lib/quickAdd';
 import { type BarcodeProduct } from '@/lib/barcodeProduct';
 import { useEditingEntry } from './useEditingEntry';
 import { BarcodeScanner } from './BarcodeScanner';
+import { NearbyVenuePicker } from './NearbyVenuePicker';
 
 export function DrinkEntrySheet({
   open,
@@ -44,7 +47,7 @@ export function DrinkEntrySheet({
   editId: string | null;
   preFill?: DrinkPreFill | null;
 }) {
-  const { project, date, settings } = useProject();
+  const { activeProject: project, date, settings } = useProject();
   const { save } = useEntryMutations();
   const { data: editing } = useEditingEntry<DrinkEntry>('memoir_drink_entries', editId);
 
@@ -53,15 +56,19 @@ export function DrinkEntrySheet({
   const [wineStyle, setWineStyle] = useState<WineStyle>('red');
   const [abv, setAbv] = useState<number | null>(null);
   const [drink, setDrink] = useState<ComboValue | null>(null);
-  // Beer is one size + an amount; the size dropdown defaults to 0.33l.
   const [beerSize, setBeerSize] = useState<string>(BEER_SIZES[0].key);
   const [beerCount, setBeerCount] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [rating, setRating] = useState<number | null>(null);
   const [cost, setCost] = useState<number | null>(null);
   const [notes, setNotes] = useState('');
+  const [city, setCity] = useState<string | null>(null);
+  const [country, setCountry] = useState<string | null>(null);
+  const [geoLoading, setGeoLoading] = useState(false);
+  const [geoError, setGeoError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [scannerOpen, setScannerOpen] = useState(false);
+  const [venuePickerOpen, setVenuePickerOpen] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -70,7 +77,6 @@ export function DrinkEntrySheet({
       setDrinkType(editing.drink_type);
       setWineStyle(editing.wine_style ?? 'red');
       setAbv(editing.abv);
-      // Collapse to the first recorded size (entries now hold a single size).
       const recorded = BEER_SIZES.find((s) => editing[s.column] > 0) ?? BEER_SIZES[0];
       setBeerSize(recorded.key);
       setBeerCount(editing[recorded.column] ?? 0);
@@ -78,6 +84,9 @@ export function DrinkEntrySheet({
       setRating(editing.rating);
       setCost(editing.cost);
       setNotes(editing.notes ?? '');
+      setCity(editing.city ?? null);
+      setCountry(editing.country ?? null);
+      setGeoError(null);
       setDrink(null);
       if (editing.drink_item_id) {
         void supabase
@@ -100,6 +109,9 @@ export function DrinkEntrySheet({
       setRating(null);
       setCost(null);
       setNotes('');
+      setCity(null);
+      setCountry(null);
+      setGeoError(null);
     }
   }, [open, editing, editId, date, preFill]);
 
@@ -107,35 +119,24 @@ export function DrinkEntrySheet({
   const isWine = drinkType === 'wine';
   const isCocktail = drinkType === 'cocktail';
   const tracksAbv = isBeer || isWine;
-  // Beer requires at least one unit; wine/cocktail/spirit/other default quantity to 1.
   const canSave = !!project && (!isBeer || beerCount > 0);
 
   const nameEmpty = !drink?.name?.trim();
-
-  // The selected size drives the beer placeholder and the auto-filled name.
   const activeBeerSize = BEER_SIZES.find((s) => s.key === beerSize) ?? BEER_SIZES[0];
-
-  // True when the name is blank or still one of the generated size defaults — i.e.
-  // not something the user typed themselves, so we may keep it in sync with the size.
   const beerNameIsAuto = nameEmpty || BEER_SIZES.some((s) => s.emptyName === drink?.name);
 
-  // Bumping the amount up while the name is blank fills it with the size's default
-  // so the entry reads e.g. "0.33l of beer".
   const changeBeerCount = (value: number) => {
     const prev = beerCount;
     setBeerCount(value);
     if (value > prev && nameEmpty) setDrink({ id: null, name: activeBeerSize.emptyName });
   };
 
-  // Switching size keeps an auto-derived name in sync (but never overwrites a name
-  // the user typed); the placeholder follows the size regardless.
   const changeBeerSize = (key: string) => {
     setBeerSize(key);
     const next = BEER_SIZES.find((s) => s.key === key) ?? BEER_SIZES[0];
     if (!nameEmpty && beerNameIsAuto) setDrink({ id: null, name: next.emptyName });
   };
 
-  // Changing type resets ABV so the wheel re-seeds at the new type's default.
   const changeType = (t: DrinkType) => {
     setDrinkType(t);
     setAbv(null);
@@ -150,12 +151,46 @@ export function DrinkEntrySheet({
     if (p.beerSizeKey) setBeerSize(p.beerSizeKey);
   };
 
+  const applyGpsLocation = async (lat: number, lon: number) => {
+    setGeoLoading(true);
+    setGeoError(null);
+    try {
+      const info = await reverseGeocode(lat, lon);
+      setCity(info.city);
+      setCountry(info.country);
+    } catch (err) {
+      setGeoError(err instanceof GeoError ? err.message : 'Could not determine location.');
+    } finally {
+      setGeoLoading(false);
+    }
+  };
+
+  const useMyLocation = async () => {
+    setGeoLoading(true);
+    setGeoError(null);
+    try {
+      const { latitude, longitude } = await getCurrentPosition();
+      await applyGpsLocation(latitude, longitude);
+    } catch (err) {
+      setGeoError(err instanceof GeoError ? err.message : 'Could not get your location.');
+      setGeoLoading(false);
+    }
+  };
+
+  const onVenuePicked = (venue: NearbyVenue) => {
+    void applyGpsLocation(venue.latitude, venue.longitude);
+  };
+
+  const clearLocation = () => {
+    setCity(null);
+    setCountry(null);
+    setGeoError(null);
+  };
+
   const submit = async () => {
     if (!project || busy) return;
     setBusy(true);
     try {
-      // Fall back to a generated name when the field is left blank, so beers and
-      // wines still read meaningfully ("A glass of red", "0.33l of beer").
       let selection = drink;
       if (nameEmpty) {
         const fallback = isWine
@@ -165,8 +200,6 @@ export function DrinkEntrySheet({
             : null;
         selection = fallback ? { id: null, name: fallback } : null;
       } else if ((isBeer || isWine) && drink && !drink.id) {
-        // Keep manually typed beer/wine names in the canonical shape so they match
-        // scanned entries — e.g. "Hansa Pilsner 0.33l (4.7 %)" / "Barolo (14 %)".
         selection = {
           id: null,
           name: formatBeerWineName(drink.name, abv, isBeer ? activeBeerSize.short : null),
@@ -176,7 +209,6 @@ export function DrinkEntrySheet({
       const drink_item_id = await resolveItem('memoir_drink_items', selection, {
         drink_type: drinkType,
       });
-      // A beer entry holds a single size: its column gets the amount, the rest 0.
       const sizeColumns = Object.fromEntries(
         BEER_SIZES.map((s) => [s.column, isBeer && s.key === beerSize ? beerCount : 0]),
       );
@@ -192,12 +224,16 @@ export function DrinkEntrySheet({
         rating,
         cost,
         notes: notes || null,
+        city: city || null,
+        country: country || null,
       });
       onClose();
     } finally {
       setBusy(false);
     }
   };
+
+  const hasLocation = !!(city || country);
 
   return (
     <Sheet
@@ -285,8 +321,6 @@ export function DrinkEntrySheet({
             <AbvInput value={abv} onChange={setAbv} defaultValue={DEFAULT_ABV[drinkType] ?? 12.5} />
           </Field>
         ) : (
-          // Reserve the ABV field's footprint so cocktail/spirit/other keep the same
-          // sheet height as beer/wine and the fields below stay in a fixed position.
           <div aria-hidden className="invisible">
             <Field label="ABV (%)" optional>
               <div className="rounded-xl border border-border bg-surface-alt/50 p-3.5">
@@ -312,12 +346,64 @@ export function DrinkEntrySheet({
         <Field label="Notes" optional>
           <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} />
         </Field>
+
+        <Field label="Location" optional>
+          <div className="space-y-2">
+            {hasLocation && (
+              <div className="flex items-center justify-between rounded-xl bg-surface-alt px-3.5 py-2.5">
+                <span className="flex items-center gap-2 text-[15px]">
+                  <MapPin size={15} className="text-primary" />
+                  <span>
+                    {[city, country].filter(Boolean).join(', ')}
+                  </span>
+                </span>
+                <button
+                  type="button"
+                  onClick={clearLocation}
+                  className="text-text-muted hover:text-text"
+                  aria-label="Clear location"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            )}
+            {geoError && <p className="text-xs text-danger">{geoError}</p>}
+            <div className="flex gap-2">
+              <Button
+                variant="secondary"
+                size="sm"
+                type="button"
+                onClick={useMyLocation}
+                disabled={geoLoading}
+              >
+                <MapPin size={16} />
+                {geoLoading ? 'Locating…' : 'Use my location'}
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                type="button"
+                onClick={() => setVenuePickerOpen(true)}
+                disabled={geoLoading}
+              >
+                <MapPin size={16} />
+                Find nearby
+              </Button>
+            </div>
+          </div>
+        </Field>
       </div>
 
       <BarcodeScanner
         open={scannerOpen}
         onClose={() => setScannerOpen(false)}
         onProduct={applyScannedProduct}
+      />
+
+      <NearbyVenuePicker
+        open={venuePickerOpen}
+        onClose={() => setVenuePickerOpen(false)}
+        onSelect={onVenuePicked}
       />
     </Sheet>
   );

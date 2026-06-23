@@ -32,6 +32,33 @@ export function distanceMeters(aLat: number, aLon: number, bLat: number, bLon: n
   return Math.round(2 * R * Math.asin(Math.sqrt(h)));
 }
 
+export interface LocationInfo {
+  city: string | null;
+  country: string | null;
+}
+
+/**
+ * Reverse-geocode coordinates to a human-readable city and country using
+ * the Nominatim API (OpenStreetMap, free, no key required).
+ */
+export async function reverseGeocode(latitude: number, longitude: number): Promise<LocationInfo> {
+  const url =
+    `https://nominatim.openstreetmap.org/reverse` +
+    `?lat=${latitude}&lon=${longitude}&format=json&addressdetails=1`;
+  let res: Response;
+  try {
+    res = await fetch(url, { headers: { 'Accept-Language': 'en' } });
+  } catch {
+    throw new GeoError('unavailable', 'Could not reach the location service.');
+  }
+  if (!res.ok) throw new GeoError('unavailable', 'Location service returned an error.');
+  const data = (await res.json()) as { address?: Record<string, string> };
+  const addr = data.address ?? {};
+  const city =
+    addr.city ?? addr.town ?? addr.village ?? addr.hamlet ?? addr.suburb ?? null;
+  return { city: city ?? null, country: addr.country ?? null };
+}
+
 export function getCurrentPosition(): Promise<Coords> {
   return new Promise((resolve, reject) => {
     if (!('geolocation' in navigator)) {

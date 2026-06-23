@@ -23,7 +23,7 @@ import { Toggle } from '@/components/ui/Toggle';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { toast } from '@/components/ui/Toast';
-import { exportAll, exportProject, importData, deleteProject } from '@/lib/dataTransfer';
+import { exportAll, exportProject, importData, deleteProject, deleteAccount } from '@/lib/dataTransfer';
 import versionRaw from '../../../VERSION.md?raw';
 import type { Currency, DateFormat, FirstDayOfWeek, RatingScale, Theme } from '@/types/db';
 
@@ -189,7 +189,7 @@ function FriendsCard() {
 
 export function ProfileScreen() {
   const { settings, update } = useSettings();
-  const { project, projects, refetchProjects, setProject } = useProject();
+  const { activeProject, projects, refetchProjects, setProject } = useProject();
   const { user, signOut } = useAuth();
   const qc = useQueryClient();
   const navigate = useNavigate();
@@ -206,9 +206,9 @@ export function ProfileScreen() {
   };
 
   const doExportProject = async () => {
-    if (!project) return;
+    if (!activeProject) return;
     try {
-      await exportProject(project.id, project.name);
+      await exportProject(activeProject.id, activeProject.name);
       toast('Project exported');
     } catch {
       toast('Export failed', 'error');
@@ -232,21 +232,40 @@ export function ProfileScreen() {
     }
   };
 
+  const doDeleteAccount = async () => {
+    if (
+      !window.confirm(
+        'Delete your account?\n\nThis permanently erases your profile, all projects, every entry, and all settings. There is no undo and no recovery.',
+      )
+    )
+      return;
+    setBusy(true);
+    try {
+      await deleteAccount();
+      await signOut();
+      navigate('/');
+    } catch {
+      toast('Could not delete account — please try again or contact support', 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const doDeleteProject = async () => {
-    if (!project) return;
-    if (project.is_default) {
+    if (!activeProject) return;
+    if (activeProject.is_default) {
       toast('The default project cannot be deleted', 'error');
       return;
     }
     if (
       settings.confirm_before_delete &&
-      !window.confirm(`Delete project "${project.name}" and all its entries? This cannot be undone.`)
+      !window.confirm(`Delete project "${activeProject.name}" and all its entries? This cannot be undone.`)
     )
       return;
     setBusy(true);
     try {
-      await deleteProject(project.id);
-      const next = projects.find((p) => p.id !== project.id);
+      await deleteProject(activeProject.id);
+      const next = projects.find((p) => p.id !== activeProject.id);
       if (next) setProject(next.id);
       refetchProjects();
       await qc.invalidateQueries();
@@ -350,7 +369,7 @@ export function ProfileScreen() {
 
       <GroupTitle>Data</GroupTitle>
       <Card className="space-y-2 p-4">
-        <Button block variant="secondary" onClick={doExportProject} disabled={busy}>
+        <Button block variant="secondary" onClick={doExportProject} disabled={busy || !activeProject}>
           <Download size={18} /> Export current project
         </Button>
         <Button block variant="secondary" onClick={doExportAll} disabled={busy}>
@@ -366,15 +385,18 @@ export function ProfileScreen() {
           className="hidden"
           onChange={onImportFile}
         />
-        <Button block variant="danger" onClick={doDeleteProject} disabled={busy || !!project?.is_default}>
+        <Button block variant="danger" onClick={doDeleteProject} disabled={busy || !activeProject || activeProject.is_default}>
           <Trash2 size={18} /> Delete current project
         </Button>
       </Card>
 
       <GroupTitle>Account</GroupTitle>
-      <Card className="p-4">
-        <Button block variant="ghost" onClick={() => signOut().then(() => navigate('/'))}>
+      <Card className="space-y-2 p-4">
+        <Button block variant="secondary" onClick={() => signOut().then(() => navigate('/'))}>
           <LogOut size={18} /> Sign out
+        </Button>
+        <Button block variant="danger" onClick={doDeleteAccount} disabled={busy}>
+          <Trash2 size={18} /> Delete my account
         </Button>
       </Card>
 

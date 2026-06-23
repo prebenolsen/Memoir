@@ -81,8 +81,8 @@ function alcoholSummary(d: DayData) {
 }
 
 export function TodayScreen() {
-  const { project, date, setDate, settings } = useProject();
-  const { data, isLoading } = useDay(project?.id, date);
+  const { viewProjectId, date, setDate, settings } = useProject();
+  const { data, isLoading } = useDay(viewProjectId, date);
   const { remove } = useEntryMutations();
   const confirmDelete = useConfirmDelete();
   const openAdd = useQuickAdd((s) => s.open);

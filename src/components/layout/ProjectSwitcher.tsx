@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Check, ChevronDown, FolderPlus, Plus } from 'lucide-react';
+import { Check, ChevronDown, FolderOpen, FolderPlus, Plus } from 'lucide-react';
 import { useProject } from '@/context/ProjectProvider';
 import { Sheet } from '@/components/ui/Sheet';
 import { Button } from '@/components/ui/Button';
@@ -9,13 +9,15 @@ import { toast } from '@/components/ui/Toast';
 import { cn } from '@/lib/cn';
 
 export function ProjectSwitcher() {
-  const { projects, project, setProject, createProject } = useProject();
+  const { projects, project, isEverything, loading, setProject, createProject } = useProject();
   const [open, setOpen] = useState(false);
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState('');
   const [start, setStart] = useState('');
   const [end, setEnd] = useState('');
   const [busy, setBusy] = useState(false);
+
+  const label = loading ? '…' : (project?.name ?? 'Everything');
 
   const submit = async () => {
     if (!name.trim()) return;
@@ -45,7 +47,7 @@ export function ProjectSwitcher() {
         onClick={() => setOpen(true)}
         className="flex items-center gap-1.5 rounded-full bg-surface-alt px-3 py-1.5 text-sm font-medium text-text"
       >
-        <span className="max-w-[10rem] truncate">{project?.name ?? 'Project'}</span>
+        <span className="max-w-[10rem] truncate">{label}</span>
         <ChevronDown size={16} className="text-text-muted" />
       </button>
 
@@ -60,6 +62,24 @@ export function ProjectSwitcher() {
       >
         {!creating ? (
           <div className="space-y-1">
+            {/* Everything — global view across all projects */}
+            <button
+              onClick={() => {
+                setProject(null);
+                setOpen(false);
+              }}
+              className="flex w-full items-center justify-between rounded-xl px-3.5 py-3 text-left hover:bg-surface-alt"
+            >
+              <span className="flex items-center gap-2">
+                <FolderOpen size={16} className="text-text-muted" />
+                <span className="text-[15px] font-medium">Everything</span>
+                <span className="rounded-full bg-surface-alt px-2 py-0.5 text-xs text-text-muted">
+                  all projects
+                </span>
+              </span>
+              {isEverything && <Check size={18} className="text-primary" />}
+            </button>
+
             {projects.map((p) => (
               <button
                 key={p.id}
@@ -77,9 +97,12 @@ export function ProjectSwitcher() {
                     </span>
                   )}
                 </span>
-                {project?.id === p.id && <Check size={18} className="text-primary" />}
+                {!isEverything && project?.id === p.id && (
+                  <Check size={18} className="text-primary" />
+                )}
               </button>
             ))}
+
             <button
               onClick={() => setCreating(true)}
               className="mt-2 flex w-full items-center gap-2 rounded-xl border border-dashed border-border px-3.5 py-3 text-[15px] font-medium text-primary"

@@ -23,7 +23,7 @@ export function ActivityEntrySheet({
   onClose: () => void;
   editId: string | null;
 }) {
-  const { project, date, settings } = useProject();
+  const { activeProject: project, date, settings } = useProject();
   const { save } = useEntryMutations();
   const { data: editing } = useEditingEntry<ActivityEntry>('memoir_activity_entries', editId);
 

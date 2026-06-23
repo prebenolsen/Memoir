@@ -25,18 +25,26 @@ export interface DayData {
   purchases: PurchaseEntry[];
 }
 
-export function useDay(projectId: string | undefined, date: string) {
+/**
+ * Fetch all entries for a given day.
+ * - undefined → loading, query disabled
+ * - null      → "Everything" mode, all projects shown
+ * - string    → specific project filter
+ */
+export function useDay(projectId: string | null | undefined, date: string) {
   return useQuery({
     queryKey: ['day', projectId, date],
-    enabled: !!projectId,
+    enabled: projectId !== undefined,
     queryFn: async (): Promise<DayData> => {
-      const base = (table: string, select: string) =>
-        supabase
+      const base = (table: string, select: string) => {
+        let q = supabase
           .from(table)
           .select(select)
-          .eq('project_id', projectId!)
           .eq('entry_date', date)
           .order('created_at');
+        if (projectId !== null) q = q.eq('project_id', projectId!);
+        return q;
+      };
 
       const [food, drinks, activities, purchases] = await Promise.all([
         base(
