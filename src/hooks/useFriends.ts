@@ -3,11 +3,12 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthProvider';
 import type { Friendship } from '@/types/db';
 
-/** A friendship row resolved to the *other* person's id + username. */
+/** A friendship row resolved to the *other* person's id + username/email. */
 export interface FriendEdge {
   friendshipId: string;
   userId: string;
   username: string | null;
+  email: string | null;
 }
 
 interface FriendLists {
@@ -34,20 +35,21 @@ export function useFriends() {
 
       // Resolve the other party's username in one lookup.
       const otherIds = friendships.map((f) => (f.requester_id === me ? f.addressee_id : f.requester_id));
-      const nameById = new Map<string, string | null>();
+      const profileById = new Map<string, { username: string | null; email: string | null }>();
       if (otherIds.length) {
         const { data: profiles } = await supabase
           .from('memoir_profiles')
-          .select('user_id, username')
+          .select('user_id, username, email')
           .in('user_id', otherIds);
-        (profiles ?? []).forEach((p: { user_id: string; username: string | null }) =>
-          nameById.set(p.user_id, p.username),
+        (profiles ?? []).forEach((p: { user_id: string; username: string | null; email: string | null }) =>
+          profileById.set(p.user_id, { username: p.username, email: p.email }),
         );
       }
 
       const edge = (f: Friendship): FriendEdge => {
         const otherId = f.requester_id === me ? f.addressee_id : f.requester_id;
-        return { friendshipId: f.id, userId: otherId, username: nameById.get(otherId) ?? null };
+        const p = profileById.get(otherId);
+        return { friendshipId: f.id, userId: otherId, username: p?.username ?? null, email: p?.email ?? null };
       };
 
       return {

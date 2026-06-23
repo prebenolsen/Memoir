@@ -11,6 +11,23 @@ This project uses [Semantic Versioning](https://semver.org/) (`MAJOR.MINOR.PATCH
 The current version is tracked in [`VERSION.md`](VERSION.md) and shown at the bottom
 of the in-app **Profile** screen.
 
+## [7.1.0] - 2026-06-23
+
+### Changed
+- **Rating scale** — default for new accounts is now 1–5 (was 1–10).
+- **Profile icon badge** — a gold dot appears on the profile icon in the header whenever there is an incoming friend request.
+- **Friends list** — users who have no username are now shown by their email address instead of "unknown".
+- **Explore** — "Top rated nearby" renamed to "My nearby favorites" to make clear the list shows your own data filtered by location.
+
+### Fixed
+- **Sign-in button** — corrected a missing Tailwind height class (`h-13` → `h-14`) that left the button unstyled and visually undersized.
+
+## [7.0.1] - 2026-06-23
+
+### Fixed
+- **Drink entries** — the Add button is now greyed out until at least one beer (or other unit) has been counted; saving a 0-amount entry is no longer possible.
+- **Food entries** — the Add button now requires the correct field per source: the food name for home meals, and the restaurant/cafe name for restaurant or cafe meals.
+
 ## [7.0.0] - 2026-06-23
 
 ### Added

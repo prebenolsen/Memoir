@@ -117,7 +117,7 @@ function FavoritesSection({
           </button>
         }
       >
-        {coords ? 'Top rated nearby' : 'Your favorites'}
+        {coords ? 'My nearby favorites' : 'Your favorites'}
       </SectionTitle>
       <Card>
         {isLoading ? (

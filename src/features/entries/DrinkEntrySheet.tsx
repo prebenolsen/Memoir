@@ -107,8 +107,8 @@ export function DrinkEntrySheet({
   const isWine = drinkType === 'wine';
   const isCocktail = drinkType === 'cocktail';
   const tracksAbv = isBeer || isWine;
-  // The drink name is optional — beers/wines fall back to a generated default.
-  const canSave = !!project;
+  // Beer requires at least one unit; wine/cocktail/spirit/other default quantity to 1.
+  const canSave = !!project && (!isBeer || beerCount > 0);
 
   const nameEmpty = !drink?.name?.trim();
 

@@ -128,7 +128,7 @@ function FriendsCard() {
               key={f.friendshipId}
               className="flex items-center justify-between gap-2 border-t border-border px-4 py-3"
             >
-              <span className="truncate text-[15px]">@{f.username ?? 'unknown'}</span>
+              <span className="truncate text-[15px]">{f.username ? `@${f.username}` : (f.email ?? 'unknown')}</span>
               <div className="flex gap-2">
                 <Button size="sm" onClick={() => acceptRequest(f.friendshipId).then(() => toast('Friend added'))}>
                   <Check size={16} /> Accept
@@ -155,7 +155,7 @@ function FriendsCard() {
                 key={f.friendshipId}
                 className="flex items-center justify-between gap-2 border-t border-border px-4 py-3 first:border-t-0"
               >
-                <span className="truncate text-[15px]">@{f.username ?? 'unknown'}</span>
+                <span className="truncate text-[15px]">{f.username ? `@${f.username}` : (f.email ?? 'unknown')}</span>
                 <button
                   onClick={() => removeFriend(f.friendshipId)}
                   className="text-sm text-text-muted hover:text-danger"
@@ -170,7 +170,7 @@ function FriendsCard() {
                 className="flex items-center justify-between gap-2 border-t border-border px-4 py-3 first:border-t-0"
               >
                 <span className="truncate text-[15px] text-text-muted">
-                  @{f.username ?? 'unknown'} · pending
+                  {f.username ? `@${f.username}` : (f.email ?? 'unknown')} · pending
                 </span>
                 <button
                   onClick={() => removeFriend(f.friendshipId)}

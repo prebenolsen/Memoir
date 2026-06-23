@@ -6,7 +6,16 @@ import { QuickAddFab } from './QuickAddFab';
 import { SyncBanner } from './SyncBanner';
 import { Toaster } from '@/components/ui/Toast';
 import { GlobalAddSheets } from '@/features/entries/GlobalAddSheets';
+import { useFriends } from '@/hooks/useFriends';
 import { cn } from '@/lib/cn';
+
+function FriendRequestDot() {
+  const { incoming } = useFriends();
+  if (!incoming.length) return null;
+  return (
+    <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full border-2 border-bg bg-accent" />
+  );
+}
 
 export function AppShell() {
   const { pathname } = useLocation();
@@ -25,12 +34,13 @@ export function AppShell() {
             aria-label="Profile"
             className={({ isActive }) =>
               cn(
-                'grid h-9 w-9 place-items-center rounded-full border border-border transition',
+                'relative grid h-9 w-9 place-items-center rounded-full border border-border transition',
                 isActive ? 'bg-primary text-primary-fg' : 'text-text-muted hover:bg-surface-alt',
               )
             }
           >
             <User size={18} />
+            <FriendRequestDot />
           </NavLink>
         </div>
       </header>

@@ -14,7 +14,7 @@ const DEFAULTS: Settings = {
   user_id: '',
   date_format: 'DD.MM.YYYY',
   currency: 'NOK',
-  rating_scale: 10,
+  rating_scale: 5,
   first_day_of_week: 'monday',
   theme: 'system',
   remember_last_project: true,

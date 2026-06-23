@@ -150,6 +150,7 @@ export type FriendshipStatus = 'pending' | 'accepted';
 export interface Profile {
   user_id: string;
   username: string | null;
+  email: string | null;
   created_at: string;
 }
 

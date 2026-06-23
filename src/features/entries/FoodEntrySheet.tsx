@@ -109,7 +109,7 @@ export function FoodEntrySheet({
     };
   }, [editing]);
 
-  const canSave = !!project && (!!food?.name || !!main || !!restaurant?.name);
+  const canSave = !!project && (source === 'home' ? !!food?.name : !!restaurant?.name);
 
   const submit = async () => {
     if (!project || busy) return;
