@@ -14,7 +14,8 @@ of the in-app **Profile** screen.
 ## [9.3.0] - 2026-06-23
 
 ### Changed
-- **Size & ABV cards on the drink name.** When adding a beer or wine, the name field now shows small cards on the right for the serving size and strength (ABV). You only type the drink's name — e.g. "Estrella Damm" — and the cards mirror the size and ABV you set in the fields below, updating live as you change them, as a reminder to get them right. Until you set the ABV, its card shows the typical default (4.7 % for beer, 12.5 % for wine) in a muted style.
+- **Size & ABV cards on the drink name.** When adding a beer or wine, the name field now shows small cards on the right for the serving size and strength (ABV). You only type the drink's name — e.g. "Estrella Damm" — and the cards mirror the size and ABV you set in the fields below, updating live as you change them, as a reminder to get them right. Until you set the ABV, its card shows the typical default (4.7 % for beer, 12.5 % for wine).
+- **Simpler blank beer name.** Leaving a beer's name blank now just records it as "Beer" (the size is already tracked separately) instead of size-specific labels like "0.33l of beer". The name field shows "Beer" in italics as a hint, so it's clear that's the default until you type a real name.
 - **Cleaner, more consistent drink names.** Beer and wine are now stored under just their product name, with the size and strength kept as separate details rather than baked into the name. This means the same beer is one entry in your list no matter which size you logged it as, and names always read cleanly (e.g. "Hansa Pilsner" instead of "Hansa Pilsner 0.33l (4.7 %)").
 - **Tidier barcode scans.** Scanning a bottle now strips any size or percentage out of the product name, so a scanned Hansa Pilsner fills in as "Hansa Pilsner" with its size and ABV shown on the cards — not "Hansa Pilsner, 4.7 %".
 

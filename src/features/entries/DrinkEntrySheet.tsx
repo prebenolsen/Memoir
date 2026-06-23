@@ -21,6 +21,7 @@ import { getCurrentPosition, reverseGeocode, GeoError } from '@/lib/geo';
 import type { NearbyVenue } from '@/lib/nearbyPlaces';
 import {
   BEER_SIZES,
+  BEER_EMPTY_NAME,
   COCKTAIL_SUGGESTIONS,
   DEFAULT_ABV,
   DRINK_NAME_PLACEHOLDERS,
@@ -132,47 +133,30 @@ export function DrinkEntrySheet({
 
   const nameEmpty = !drink?.name?.trim();
   const activeBeerSize = BEER_SIZES.find((s) => s.key === beerSize) ?? BEER_SIZES[0];
-  const beerNameIsAuto = nameEmpty || BEER_SIZES.some((s) => s.emptyName === drink?.name);
 
   // Visual-only cards shown inside the name input: they mirror the size and ABV
   // set in the fields below (live), reminding the user to correct them there.
-  // The ABV card is muted while it still shows the type's default (unset).
-  const card = (text: string, tone: 'size' | 'abv' | 'hint') => (
+  // Text matches the input colour for readability; the ABV card picks up a tint
+  // once a value is set (it shows the type's default, untinted, until then).
+  const card = (text: string, active: boolean) => (
     <span
       className={cn(
-        'rounded-md px-1.5 py-0.5 text-xs font-medium tabular-nums',
-        tone === 'size' && 'bg-surface-alt text-text-muted',
-        tone === 'abv' && 'bg-primary/12 text-primary',
-        tone === 'hint' && 'bg-surface-alt text-text-muted/50',
+        'rounded-md px-1.5 py-0.5 text-xs font-medium tabular-nums text-text',
+        active ? 'bg-primary/12' : 'bg-surface-alt',
       )}
     >
       {text}
     </span>
   );
-  const abvCard = card(
-    `${formatAbv(abv ?? DEFAULT_ABV[drinkType] ?? 0)} %`,
-    abv != null ? 'abv' : 'hint',
-  );
+  const abvCard = card(`${formatAbv(abv ?? DEFAULT_ABV[drinkType] ?? 0)} %`, abv != null);
   const nameCards = isBeer ? (
     <>
-      {card(activeBeerSize.short, 'size')}
+      {card(activeBeerSize.short, false)}
       {abvCard}
     </>
   ) : isWine ? (
     abvCard
   ) : null;
-
-  const changeBeerCount = (value: number) => {
-    const prev = beerCount;
-    setBeerCount(value);
-    if (value > prev && nameEmpty) setDrink({ id: null, name: activeBeerSize.emptyName });
-  };
-
-  const changeBeerSize = (key: string) => {
-    setBeerSize(key);
-    const next = BEER_SIZES.find((s) => s.key === key) ?? BEER_SIZES[0];
-    if (!nameEmpty && beerNameIsAuto) setDrink({ id: null, name: next.emptyName });
-  };
 
   const changeType = (t: DrinkType) => {
     setDrinkType(t);
@@ -230,18 +214,14 @@ export function DrinkEntrySheet({
     try {
       let selection = drink;
       if (nameEmpty) {
-        const fallback = isWine
-          ? WINE_EMPTY_NAMES[wineStyle]
-          : isBeer
-            ? activeBeerSize.emptyName
-            : null;
+        const fallback = isWine ? WINE_EMPTY_NAMES[wineStyle] : isBeer ? BEER_EMPTY_NAME : null;
         selection = fallback ? { id: null, name: fallback } : null;
       } else if ((isBeer || isWine) && drink && !drink.id) {
         // Store only the clean product name; size and ABV are saved on the entry
         // (count columns + abv) and recomposed for display, so the same beer is
         // a single reusable item regardless of how it was served.
         const clean = baseDrinkName(drink.name);
-        const fallback = isWine ? WINE_EMPTY_NAMES[wineStyle] : activeBeerSize.emptyName;
+        const fallback = isWine ? WINE_EMPTY_NAMES[wineStyle] : BEER_EMPTY_NAME;
         selection = { id: null, name: clean || fallback };
       }
 
@@ -318,14 +298,14 @@ export function DrinkEntrySheet({
             match={{ drink_type: drinkType }}
             placeholder={
               isBeer
-                ? activeBeerSize.emptyName
+                ? BEER_EMPTY_NAME
                 : isWine
                   ? WINE_EMPTY_NAMES[wineStyle]
                   : DRINK_NAME_PLACEHOLDERS[drinkType]
             }
             suggestions={
               isBeer
-                ? BEER_SIZES.map((s) => s.emptyName)
+                ? [BEER_EMPTY_NAME]
                 : isWine
                   ? [WINE_EMPTY_NAMES[wineStyle]]
                   : isCocktail
@@ -334,7 +314,10 @@ export function DrinkEntrySheet({
             }
             pinSuggestions={isBeer || isWine}
             trailing={nameCards}
-            inputClassName={isBeer ? 'pr-32' : isWine ? 'pr-20' : undefined}
+            inputClassName={cn(
+              tracksAbv && 'placeholder:italic',
+              isBeer ? 'pr-32' : isWine ? 'pr-20' : '',
+            )}
           />
         </Field>
 
@@ -343,10 +326,10 @@ export function DrinkEntrySheet({
             <div className="flex items-center justify-between gap-3 rounded-xl border border-border bg-surface-alt/50 p-3.5">
               <Select
                 value={beerSize}
-                onChange={changeBeerSize}
+                onChange={setBeerSize}
                 options={BEER_SIZES.map((s) => ({ value: s.key, label: s.label }))}
               />
-              <Stepper value={beerCount} onChange={changeBeerCount} />
+              <Stepper value={beerCount} onChange={setBeerCount} />
             </div>
           </Field>
         ) : (

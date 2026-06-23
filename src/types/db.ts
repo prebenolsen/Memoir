@@ -240,8 +240,6 @@ export interface BeerSize {
   label: string;
   /** Compact label for summaries, e.g. "0.5l". */
   short: string;
-  /** Name applied to the drink when the name field is left blank. */
-  emptyName: string;
 }
 
 /**
@@ -249,12 +247,18 @@ export interface BeerSize {
  * stepper. The 0.33l bottle is the default the size dropdown starts on.
  */
 export const BEER_SIZES: BeerSize[] = [
-  { key: '033', column: 'count_033l', liters: 0.33, label: '0.33l', short: '0.33l', emptyName: '0.33l of beer' },
-  { key: '04', column: 'count_04l', liters: 0.4, label: '0.4l', short: '0.4l', emptyName: '0.4l of beer' },
-  { key: '05', column: 'count_05l', liters: 0.5, label: '0.5l', short: '0.5l', emptyName: '0.5l of beer' },
-  { key: '0568', column: 'count_0568l', liters: 0.568, label: '0.568l (pint)', short: '0.568l', emptyName: 'A pint of beer' },
-  { key: '06', column: 'count_06l', liters: 0.6, label: '0.6l', short: '0.6l', emptyName: '0.6l of beer' },
+  { key: '033', column: 'count_033l', liters: 0.33, label: '0.33l', short: '0.33l' },
+  { key: '04', column: 'count_04l', liters: 0.4, label: '0.4l', short: '0.4l' },
+  { key: '05', column: 'count_05l', liters: 0.5, label: '0.5l', short: '0.5l' },
+  { key: '0568', column: 'count_0568l', liters: 0.568, label: '0.568l (pint)', short: '0.568l' },
+  { key: '06', column: 'count_06l', liters: 0.6, label: '0.6l', short: '0.6l' },
 ];
+
+/**
+ * Name applied to a beer when the name field is left blank. The serving size is
+ * stored separately (count columns), so the blank-name fallback is just "Beer".
+ */
+export const BEER_EMPTY_NAME = 'Beer';
 
 /** Name applied to a wine when the name field is left blank, per style. */
 export const WINE_EMPTY_NAMES: Record<WineStyle, string> = {

@@ -1,5 +1,5 @@
 import { format, parseISO } from 'date-fns';
-import { BEER_SIZES, WINE_EMPTY_NAMES } from '@/types/db';
+import { BEER_EMPTY_NAME, WINE_EMPTY_NAMES } from '@/types/db';
 import type { Currency, DateFormat, RatingScale, Settings } from '@/types/db';
 
 // ISO date helpers (entry_date is a plain YYYY-MM-DD string, no timezone).
@@ -144,7 +144,7 @@ export function drinkSearchTerm(name: string): string {
 
 /** Auto-generated fallback drink names (e.g. "0.33l of beer", "A glass of red"). */
 const GENERIC_DRINK_NAMES = new Set<string>([
-  ...BEER_SIZES.map((s) => s.emptyName.toLowerCase()),
+  BEER_EMPTY_NAME.toLowerCase(),
   ...Object.values(WINE_EMPTY_NAMES).map((n) => n.toLowerCase()),
 ]);
 
