@@ -24,6 +24,7 @@ export function useEntryMutations() {
     void qc.invalidateQueries({ queryKey: ['itemDetail'] });
     void qc.invalidateQueries({ queryKey: ['stats'] });
     void qc.invalidateQueries({ queryKey: ['expenses'] });
+    void qc.invalidateQueries({ queryKey: ['recentEntries'] });
   };
 
   const save = async (

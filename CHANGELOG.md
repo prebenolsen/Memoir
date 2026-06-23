@@ -11,6 +11,24 @@ This project uses [Semantic Versioning](https://semver.org/) (`MAJOR.MINOR.PATCH
 The current version is tracked in [`VERSION.md`](VERSION.md) and shown at the bottom
 of the in-app **Profile** screen.
 
+## [13.1.0] - 2026-06-23
+
+### Changed
+- **Switch currency right from the Cost field.** The currency symbol (e.g. "kr") next to any Cost field is now a button — tap it to pick NOK, EUR, USD or Other. Your choice becomes the new default for all entries going forward, and stays until you change it again here or in Settings.
+
+## [13.0.0] - 2026-06-23
+
+### Added
+- **One-tap "Add recent".** The + menu now has an "Add recent" button (with a time-of-day emoji) on the far left. Tap it to swap the four "Add …" options for your last 5 logged entries — tapping any one instantly re-logs it onto the current day, no form, no extra steps. While in this mode the + button becomes a back button to cancel and return to the normal menu.
+
+## [12.0.0] - 2026-06-23
+
+### Added
+- **Friends' favorite beverages on Explore.** The "Friends" tab now shares your friends' top-rated drinks, the same way it already shared their restaurants.
+
+### Changed
+- **Explore is now focused on Restaurants and Beverages.** The "Activities" tab has been removed from the Explore page; activities are still tracked everywhere else.
+
 ## [11.3.0] - 2026-06-23
 
 ### Changed

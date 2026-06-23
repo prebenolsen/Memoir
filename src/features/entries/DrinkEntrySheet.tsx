@@ -12,6 +12,7 @@ import { DateField } from '@/components/ui/DateField';
 import { Stepper } from '@/components/ui/Stepper';
 import { AbvInput } from '@/components/ui/AbvInput';
 import { useProject } from '@/context/ProjectProvider';
+import { useSettings } from '@/context/SettingsProvider';
 import { useEntryMutations } from '@/hooks/useEntryMutations';
 import { resolveItem } from '@/hooks/useItems';
 import { supabase } from '@/lib/supabase';
@@ -50,6 +51,7 @@ export function DrinkEntrySheet({
   preFill?: DrinkPreFill | null;
 }) {
   const { activeProject: project, date, settings } = useProject();
+  const { update: updateSettings } = useSettings();
   const { save } = useEntryMutations();
   const { data: editing } = useEditingEntry<DrinkEntry>('memoir_drink_entries', editId);
 
@@ -358,7 +360,12 @@ export function DrinkEntrySheet({
 
         <div className="grid grid-cols-2 gap-3">
           <Field label="Cost">
-            <CurrencyInput value={cost} onChange={setCost} currency={settings.currency} />
+            <CurrencyInput
+              value={cost}
+              onChange={setCost}
+              currency={settings.currency}
+              onCurrencyChange={(c) => updateSettings({ currency: c })}
+            />
           </Field>
           <Field label="Date">
             <DateField value={entryDate} onChange={setEntryDate} />

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { MapPin, User, Users, Store, Wine, Ticket, Compass } from 'lucide-react';
+import { MapPin, User, Users, Store, Wine, Compass } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { Card, SectionTitle } from '@/components/ui/Card';
@@ -12,12 +12,12 @@ import { ItemListView } from '@/features/items/ItemListView';
 import { useProject } from '@/context/ProjectProvider';
 import { useItemList, type ItemWithStats } from '@/hooks/useItems';
 import { useLatestEntries } from '@/hooks/useLatestEntries';
-import { useFriendFavorites } from '@/hooks/useFriendFavorites';
+import { useFriendFavorites, useFriendDrinkFavorites } from '@/hooks/useFriendFavorites';
 import { getCurrentPosition, distanceMeters, type Coords, GeoError } from '@/lib/geo';
 import { formatDate } from '@/lib/format';
 import type { RatingScale } from '@/types/db';
 
-type ExploreKind = 'restaurant' | 'drink' | 'activity';
+type ExploreKind = 'restaurant' | 'drink';
 type Category = 'all' | ExploreKind;
 type Mode = 'nearby' | 'mine' | 'friends';
 
@@ -26,10 +26,9 @@ const NEARBY_RADIUS_M = 5_000;
 const KIND_META: Record<ExploreKind, { label: string; icon: LucideIcon; countLabel: (n: number) => string }> = {
   restaurant: { label: 'Restaurants', icon: Store, countLabel: (n) => `${n} visit${n === 1 ? '' : 's'}` },
   drink: { label: 'Beverages', icon: Wine, countLabel: (n) => `${n}× consumed` },
-  activity: { label: 'Activities', icon: Ticket, countLabel: (n) => `Done ${n}×` },
 };
 
-const ORDER: ExploreKind[] = ['restaurant', 'drink', 'activity'];
+const ORDER: ExploreKind[] = ['restaurant', 'drink'];
 
 function formatDistance(m: number): string {
   return m < 1000 ? `${m} m` : `${(m / 1000).toFixed(1)} km`;
@@ -198,6 +197,37 @@ function FriendFavoritesSection({ scale, coords }: { scale: RatingScale; coords:
   );
 }
 
+/** Friends' top beverages (aggregated). Beverages have no location. */
+function FriendDrinkFavoritesSection({ scale }: { scale: RatingScale }) {
+  const { data: favs = [], isLoading, isError } = useFriendDrinkFavorites();
+  const rows = useMemo(() => favs.slice(0, 10), [favs]);
+
+  return (
+    <div>
+      <SectionTitle>Friends' favorites</SectionTitle>
+      <Card>
+        {isLoading ? (
+          <Empty>Loading…</Empty>
+        ) : isError ? (
+          <Empty>Friend favorites aren't available yet.</Empty>
+        ) : rows.length === 0 ? (
+          <Empty>Add friends to see their favorites.</Empty>
+        ) : (
+          rows.map((fav) => (
+            <div key={fav.drink_id} className="border-t border-border first:border-t-0">
+              <ListRow
+                title={fav.name}
+                subtitle={`@${fav.friend_username ?? 'friend'}`}
+                right={<RatingBadge value={fav.avg_rating} scale={scale} />}
+              />
+            </div>
+          ))
+        )}
+      </Card>
+    </div>
+  );
+}
+
 /** All the blocks shown for one category, depending on the active mode. */
 function CategorySection({
   kind,
@@ -225,7 +255,7 @@ function CategorySection({
         isRestaurant ? (
           <FriendFavoritesSection scale={scale} coords={null} />
         ) : (
-          <Empty>Friends' {label.toLowerCase()} aren't shared yet.</Empty>
+          <FriendDrinkFavoritesSection scale={scale} />
         )
       ) : mode === 'nearby' ? (
         isRestaurant ? (
@@ -293,7 +323,6 @@ export function ExploreScreen() {
           { value: 'all', label: 'All' },
           { value: 'restaurant', label: 'Restaurants' },
           { value: 'drink', label: 'Beverages' },
-          { value: 'activity', label: 'Activities' },
         ]}
       />
 

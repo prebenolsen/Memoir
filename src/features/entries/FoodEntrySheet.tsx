@@ -9,6 +9,7 @@ import { RatingInput } from '@/components/ui/RatingInput';
 import { CurrencyInput } from '@/components/ui/CurrencyInput';
 import { DateField } from '@/components/ui/DateField';
 import { useProject } from '@/context/ProjectProvider';
+import { useSettings } from '@/context/SettingsProvider';
 import { useEntryMutations } from '@/hooks/useEntryMutations';
 import { resolveItem } from '@/hooks/useItems';
 import { supabase } from '@/lib/supabase';
@@ -29,6 +30,7 @@ export function FoodEntrySheet({
   editId: string | null;
 }) {
   const { activeProject: project, date, settings } = useProject();
+  const { update: updateSettings } = useSettings();
   const { save } = useEntryMutations();
   const { data: editing } = useEditingEntry<FoodEntry>('memoir_food_entries', editId);
 
@@ -265,7 +267,12 @@ export function FoodEntrySheet({
 
         <div className="grid grid-cols-2 gap-3">
           <Field label="Cost">
-            <CurrencyInput value={cost} onChange={setCost} currency={settings.currency} />
+            <CurrencyInput
+              value={cost}
+              onChange={setCost}
+              currency={settings.currency}
+              onCurrencyChange={(c) => updateSettings({ currency: c })}
+            />
           </Field>
           <Field label="Date">
             <DateField value={entryDate} onChange={setEntryDate} />

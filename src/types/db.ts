@@ -178,6 +178,17 @@ export interface FriendFavorite {
   visits: number;
 }
 
+/** Aggregated beverage favorite shared by a friend (from the RPC). */
+export interface FriendDrinkFavorite {
+  friend_id: string;
+  friend_username: string | null;
+  drink_id: string;
+  name: string;
+  drink_type: DrinkType;
+  avg_rating: number | null;
+  count: number;
+}
+
 // Stat view rows
 export interface FoodItemStat {
   food_item_id: string;
