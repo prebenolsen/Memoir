@@ -1,1 +1,0 @@
--- Consolidated into 0001_init.sql (abv, wine_style on memoir_drink_entries).

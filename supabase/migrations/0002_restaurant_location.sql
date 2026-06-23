@@ -1,1 +1,0 @@
--- Consolidated into 0001_init.sql (latitude, longitude, address, osm_id on memoir_restaurants).
