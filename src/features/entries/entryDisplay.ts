@@ -1,4 +1,4 @@
-import { formatAbv, titleCase } from '@/lib/format';
+import { baseDrinkName, formatAbv, titleCase } from '@/lib/format';
 import { BEER_SIZES, wineStyleLabel } from '@/types/db';
 import type { DrinkEntryFull, FoodEntryFull, ActivityEntryFull } from '@/hooks/useDay';
 
@@ -17,7 +17,12 @@ export function foodSubtitle(e: FoodEntryFull): string {
 }
 
 export function drinkTitle(e: DrinkEntryFull): string {
-  return e.drink_item?.name || titleCase(e.drink_type);
+  const name = e.drink_item?.name;
+  if (!name) return titleCase(e.drink_type);
+  // Beer/wine size and ABV are shown separately (see drinkAmount), so strip any
+  // legacy baked-in suffix from the stored name for a clean, consistent title.
+  if (e.drink_type === 'beer' || e.drink_type === 'wine') return baseDrinkName(name) || name;
+  return name;
 }
 
 export function drinkAmount(e: DrinkEntryFull): string {

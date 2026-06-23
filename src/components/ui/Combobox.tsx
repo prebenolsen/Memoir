@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Check, Plus, Search } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
@@ -37,6 +37,13 @@ interface Props {
    * with `.eq`; null values are ignored.
    */
   match?: Record<string, string | null>;
+  /**
+   * Decorative content pinned inside the input on the right (visual-only, does
+   * not capture clicks) — used to surface the beer/wine size & ABV cards.
+   */
+  trailing?: ReactNode;
+  /** Extra classes for the input, e.g. right padding to clear `trailing`. */
+  inputClassName?: string;
 }
 
 interface Row {
@@ -60,6 +67,8 @@ export function Combobox({
   suggestions,
   pinSuggestions = false,
   match,
+  trailing,
+  inputClassName,
 }: Props) {
   const [text, setText] = useState(value?.name ?? '');
   const [open, setOpen] = useState(false);
@@ -137,8 +146,16 @@ export function Combobox({
           onChange={(e) => handleType(e.target.value)}
           onFocus={() => setOpen(true)}
           placeholder={placeholder}
-          className="w-full rounded-xl border border-border bg-surface h-11 pl-9 pr-3 text-[15px] text-text placeholder:text-text-muted/70 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition"
+          className={cn(
+            'w-full rounded-xl border border-border bg-surface h-11 pl-9 pr-3 text-[15px] text-text placeholder:text-text-muted/70 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition',
+            inputClassName,
+          )}
         />
+        {trailing && (
+          <div className="pointer-events-none absolute right-2 top-1/2 flex -translate-y-1/2 items-center gap-1">
+            {trailing}
+          </div>
+        )}
       </div>
 
       {open && (options.length > 0 || showCreate) && (

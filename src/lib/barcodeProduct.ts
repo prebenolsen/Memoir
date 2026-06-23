@@ -1,4 +1,5 @@
 import { BEER_SIZES, type DrinkType, type WineStyle } from '@/types/db';
+import { baseDrinkName } from './format';
 
 export interface BarcodeProduct {
   name: string;
@@ -75,7 +76,10 @@ export async function lookupBarcode(barcode: string): Promise<BarcodeProduct | n
   if (json.status !== 1 || !json.product) return null;
 
   const p = json.product;
-  const name = (p.product_name || p.product_name_en || '').trim();
+  // Strip any size / percentage the product database bakes into the name (e.g.
+  // "Hansa Pilsner 4,7 %" → "Hansa Pilsner"); those are surfaced as the ABV and
+  // size fields / input cards instead, so the stored name stays consistent.
+  const name = baseDrinkName((p.product_name || p.product_name_en || '').trim());
   if (!name) return null;
 
   const tags = p.categories_tags ?? [];

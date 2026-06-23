@@ -15,7 +15,8 @@ import { useProject } from '@/context/ProjectProvider';
 import { useEntryMutations } from '@/hooks/useEntryMutations';
 import { resolveItem } from '@/hooks/useItems';
 import { supabase } from '@/lib/supabase';
-import { newId, titleCase, formatBeerWineName } from '@/lib/format';
+import { newId, titleCase, baseDrinkName, formatAbv } from '@/lib/format';
+import { cn } from '@/lib/cn';
 import { getCurrentPosition, reverseGeocode, GeoError } from '@/lib/geo';
 import type { NearbyVenue } from '@/lib/nearbyPlaces';
 import {
@@ -94,7 +95,15 @@ export function DrinkEntrySheet({
           .select('id,name')
           .eq('id', editing.drink_item_id)
           .maybeSingle()
-          .then(({ data }) => data && setDrink({ id: data.id, name: data.name }));
+          .then(({ data }) => {
+            if (!data) return;
+            // Show the clean product name; size/ABV live in the cards & fields.
+            const name =
+              editing.drink_type === 'beer' || editing.drink_type === 'wine'
+                ? baseDrinkName(data.name) || data.name
+                : data.name;
+            setDrink({ id: data.id, name });
+          });
       }
     } else if (!editId) {
       setEntryDate(date);
@@ -124,6 +133,34 @@ export function DrinkEntrySheet({
   const nameEmpty = !drink?.name?.trim();
   const activeBeerSize = BEER_SIZES.find((s) => s.key === beerSize) ?? BEER_SIZES[0];
   const beerNameIsAuto = nameEmpty || BEER_SIZES.some((s) => s.emptyName === drink?.name);
+
+  // Visual-only cards shown inside the name input: they mirror the size and ABV
+  // set in the fields below (live), reminding the user to correct them there.
+  // The ABV card is muted while it still shows the type's default (unset).
+  const card = (text: string, tone: 'size' | 'abv' | 'hint') => (
+    <span
+      className={cn(
+        'rounded-md px-1.5 py-0.5 text-xs font-medium tabular-nums',
+        tone === 'size' && 'bg-surface-alt text-text-muted',
+        tone === 'abv' && 'bg-primary/12 text-primary',
+        tone === 'hint' && 'bg-surface-alt text-text-muted/50',
+      )}
+    >
+      {text}
+    </span>
+  );
+  const abvCard = card(
+    `${formatAbv(abv ?? DEFAULT_ABV[drinkType] ?? 0)} %`,
+    abv != null ? 'abv' : 'hint',
+  );
+  const nameCards = isBeer ? (
+    <>
+      {card(activeBeerSize.short, 'size')}
+      {abvCard}
+    </>
+  ) : isWine ? (
+    abvCard
+  ) : null;
 
   const changeBeerCount = (value: number) => {
     const prev = beerCount;
@@ -200,10 +237,12 @@ export function DrinkEntrySheet({
             : null;
         selection = fallback ? { id: null, name: fallback } : null;
       } else if ((isBeer || isWine) && drink && !drink.id) {
-        selection = {
-          id: null,
-          name: formatBeerWineName(drink.name, abv, isBeer ? activeBeerSize.short : null),
-        };
+        // Store only the clean product name; size and ABV are saved on the entry
+        // (count columns + abv) and recomposed for display, so the same beer is
+        // a single reusable item regardless of how it was served.
+        const clean = baseDrinkName(drink.name);
+        const fallback = isWine ? WINE_EMPTY_NAMES[wineStyle] : activeBeerSize.emptyName;
+        selection = { id: null, name: clean || fallback };
       }
 
       const drink_item_id = await resolveItem('memoir_drink_items', selection, {
@@ -294,6 +333,8 @@ export function DrinkEntrySheet({
                     : undefined
             }
             pinSuggestions={isBeer || isWine}
+            trailing={nameCards}
+            inputClassName={isBeer ? 'pr-32' : isWine ? 'pr-20' : undefined}
           />
         </Field>
 

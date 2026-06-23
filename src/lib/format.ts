@@ -112,40 +112,34 @@ export function formatAbv(v: number): string {
 }
 
 /**
- * Normalise a beer/wine name to a consistent shape so manually typed and scanned
- * entries always read the same:
- *   - wine:  "Barolo (14 %)"
- *   - beer:  "Hansa Pilsner 0.33l (4.7 %)"  (size is the compact BeerSize.short)
- * Any previously applied size / percentage suffix (current "(x %)" or legacy
- * ", x %") is stripped first and re-applied from the current values. When the
- * ABV is unknown no percentage is added (we never invent one).
+ * Reduce a beer/wine name to its clean product term by stripping any trailing
+ * serving size ("0.33l", "33cl", "330ml") and ABV percentage ("(4.7 %)",
+ * ", 4.7 %", " 4.7%") — in any order and possibly repeated. We store only this
+ * clean name on the reusable drink item; the size lives in the entry's count
+ * columns and the ABV in the entry's `abv` column, so the same beer is a single
+ * item no matter how it was served. Display (and the input cards) compose the
+ * size/percentage back from those fields, keeping every entry consistent.
  */
-export function formatBeerWineName(
-  name: string,
-  abv: number | null,
-  size?: string | null,
-): string {
-  let base = name.trim();
-  base = base.replace(/\s*\([\d.,]+\s*%\)\s*$/, '').trim(); // trailing "(4.7 %)"
-  base = base.replace(/,\s*[\d.,]+\s*%\s*$/, '').trim(); // legacy ", 4.7 %"
-  base = base.replace(/\s+\d+(?:[.,]\d+)?\s*l$/i, '').trim(); // trailing size "0.33l"
-  if (!base) return base;
-  const sizePart = size ? ` ${size}` : '';
-  const abvPart = abv != null ? ` (${formatAbv(abv)} %)` : '';
-  return `${base}${sizePart}${abvPart}`;
+export function baseDrinkName(name: string): string {
+  let s = name.trim();
+  let prev = '';
+  while (s && s !== prev) {
+    prev = s;
+    s = s
+      .replace(/\s*\(\s*[\d.,]+\s*%\s*\)\s*$/i, '') // "(4.7 %)"
+      .replace(/[,;]?\s*[\d.,]+\s*%\s*$/i, '') // ", 4.7 %" / " 4.7%"
+      .replace(/[,;]?\s*\d+(?:[.,]\d+)?\s*(?:l|cl|ml)\s*$/i, '') // " 0.33l" / " 33cl"
+      .trim();
+  }
+  return s;
 }
 
 /**
- * Reduce a stored drink name to a clean term for an Open Food Facts photo search:
- * drop the trailing size ("0.33l") and percentage ("(4.7 %)" / legacy ", 4.7 %")
- * suffixes so only the brand/product part is searched.
+ * Reduce a stored drink name to a clean term for an Open Food Facts photo search.
+ * Same stripping as {@link baseDrinkName} so brand/product matching is reliable.
  */
 export function drinkSearchTerm(name: string): string {
-  return name
-    .replace(/\s*\([\d.,]+\s*%\)\s*$/, '')
-    .replace(/,\s*[\d.,]+\s*%\s*$/, '')
-    .replace(/\s+\d+(?:[.,]\d+)?\s*l$/i, '')
-    .trim();
+  return baseDrinkName(name);
 }
 
 /** Auto-generated fallback drink names (e.g. "0.33l of beer", "A glass of red"). */
