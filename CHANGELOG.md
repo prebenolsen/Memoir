@@ -11,6 +11,16 @@ This project uses [Semantic Versioning](https://semver.org/) (`MAJOR.MINOR.PATCH
 The current version is tracked in [`VERSION.md`](VERSION.md) and shown at the bottom
 of the in-app **Profile** screen.
 
+## [14.0.0] - 2026-06-23
+
+### Added
+- **Move the + button to either bottom corner.** Press and hold the + button for half a second to pick it up, then drag it toward the opposite corner — a dashed target circle appears there and magnetically pulls the button in when you get close. Let go near the target and the button (and its whole menu) snaps to that side; let go too far away and it springs back. Your chosen corner is remembered. When the button lives on the left, the menu mirrors: "Add recent" moves to its right and the four "Add …" items flip so their text runs toward the screen edge, just like the default right-hand layout.
+
+## [13.2.0] - 2026-06-23
+
+### Changed
+- **"Add recent" is tidier and beverage-focused.** The "Add recent" button now sits attached to the left of the + button, aligned with it and matching the other menu items: a forest-green clock icon instead of the colored moon. It also now re-logs your recent *drinks* only.
+
 ## [13.1.0] - 2026-06-23
 
 ### Changed

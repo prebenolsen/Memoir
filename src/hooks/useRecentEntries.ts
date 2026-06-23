@@ -73,7 +73,8 @@ export function useRecentEntries(enabled = true, limit = 5) {
     enabled,
     queryFn: async (): Promise<RecentEntry[]> => {
       const perSource = await Promise.all(
-        SOURCES.map(async (s) => {
+        // "Add recent" is for beverages only — only re-log past drinks.
+        SOURCES.filter((s) => s.kind === 'drink').map(async (s) => {
           const { data, error } = await supabase
             .from(s.table)
             .select(s.select)
