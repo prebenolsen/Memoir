@@ -11,6 +11,11 @@ This project uses [Semantic Versioning](https://semver.org/) (`MAJOR.MINOR.PATCH
 The current version is tracked in [`VERSION.md`](VERSION.md) and shown at the bottom
 of the in-app **Profile** screen.
 
+## [9.1.0] - 2026-06-23
+
+### Changed
+- **Stats hide empty categories** — the Stats tab now only shows a section (Money, Food, Alcohol, Activities, Purchases) when it has at least one entry in the current view and date range. Categories with no entries are hidden instead of showing empty cards.
+
 ## [9.0.0] - 2026-06-23
 
 ### Added

@@ -13,6 +13,7 @@ export interface NamedRating {
 
 export interface ProjectStats {
   // Food
+  foodEntries: number;
   restaurantsVisited: number;
   mostEaten: NamedCount[];
   topRatedFoods: NamedRating[];
@@ -21,6 +22,7 @@ export interface ProjectStats {
   totalBeers: number;
   total05: number;
   total033: number;
+  drinkEntries: number;
   mostConsumed: NamedCount[];
   topRatedDrinks: NamedRating[];
   // Activities
@@ -170,6 +172,7 @@ export function useProjectStats(
       const activeDays = days.size;
 
       return {
+        foodEntries: foodRows.length,
         restaurantsVisited: restaurants.size,
         mostEaten: topCounts(foodCounts),
         topRatedFoods: topRatings(foodRatings),
@@ -177,6 +180,7 @@ export function useProjectStats(
         totalBeers,
         total05,
         total033,
+        drinkEntries: drinkRows.length,
         mostConsumed: topCounts(drinkCounts),
         topRatedDrinks: topRatings(drinkRatings),
         activitiesCompleted: activityRows.length,

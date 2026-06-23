@@ -151,6 +151,7 @@ export function StatsScreen() {
       )}
 
       {/* Money */}
+      {stats.totalSpent > 0 && (
       <section>
         <SectionTitle icon={<Wallet size={15} />}>Money</SectionTitle>
         <div className="grid grid-cols-2 gap-3">
@@ -192,8 +193,10 @@ export function StatsScreen() {
           </div>
         </Card>
       </section>
+      )}
 
       {/* Food */}
+      {stats.foodEntries > 0 && (
       <section>
         <SectionTitle icon={<UtensilsCrossed size={15} />}>Food</SectionTitle>
         <div className="mb-3 grid grid-cols-2 gap-3">
@@ -217,8 +220,10 @@ export function StatsScreen() {
           </div>
         </Card>
       </section>
+      )}
 
       {/* Alcohol */}
+      {stats.drinkEntries > 0 && (
       <section>
         <SectionTitle icon={<Wine size={15} />}>Alcohol</SectionTitle>
         <div className="mb-3 grid grid-cols-3 gap-3">
@@ -239,8 +244,10 @@ export function StatsScreen() {
           </div>
         </Card>
       </section>
+      )}
 
       {/* Activities */}
+      {stats.activitiesCompleted > 0 && (
       <section>
         <SectionTitle icon={<Ticket size={15} />}>Activities</SectionTitle>
         <div className="mb-3">
@@ -253,8 +260,10 @@ export function StatsScreen() {
           <RankList rows={stats.topRatedActivities} kind="rating" />
         </Card>
       </section>
+      )}
 
       {/* Purchases */}
+      {purchases.length > 0 && (
       <section>
         <SectionTitle
           icon={<ShoppingBag size={15} />}
@@ -270,9 +279,6 @@ export function StatsScreen() {
           Purchases
         </SectionTitle>
         <Card>
-          {purchases.length === 0 && (
-            <p className="px-4 py-5 text-center text-sm text-text-muted">No purchases logged.</p>
-          )}
           {purchases.map((pr) => (
             <div key={pr.id} className="flex items-center gap-2 border-t border-border px-4 first:border-t-0">
               <button
@@ -300,6 +306,7 @@ export function StatsScreen() {
           ))}
         </Card>
       </section>
+      )}
     </div>
   );
 }
