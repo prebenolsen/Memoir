@@ -9,22 +9,43 @@ This project uses [Semantic Versioning](https://semver.org/) (`MAJOR.MINOR.PATCH
 - **PATCH** — minor UI/UX fixes and polish.
 
 The current version is tracked in [`VERSION.md`](VERSION.md) and shown at the bottom
-of the in-app **Settings** screen.
+of the in-app **Profile** screen.
 
-## [6.0.0] - 2026-06-23
+## [7.0.0] - 2026-06-23
 
 ### Added
-- **Beverage photos.** The Alcohol list now shows a product photo to the left of each drink, pulled from Open Food Facts by name. Drinks with no matching photo (and generic entries like "0.33l of beer") show a placeholder instead.
-
-## [5.1.0] - 2026-06-22
+- **Beverage photos.** The Beverage list now shows a product photo to the left of each drink, pulled from Open Food Facts by name. Drinks with no matching photo (and generic entries like "0.33l of beer") show a placeholder instead.
+- **Delete activities.** Tap an activity to open it, then use the new "Delete" button to remove it and all of its history.
 
 ### Changed
 - **Cleaner item lists.** Food, drink, and restaurant items that have never been logged (0× consumed / 0 visits) are no longer shown — only items you've actually recorded appear.
 - **Consistent beer & wine names.** When you type a beer or wine name by hand, it's now stored in a consistent format so every entry reads the same way — wine as "Barolo (14 %)" and beer with its size as "Hansa Pilsner 0.33l (4.7 %)".
 - **Scan button moved.** In the Add/Edit drink sheet, the "Scan" button now sits at the bottom next to "Add drink" (40 / 60 split), with the add button given more room.
 
+## [6.0.0] - 2026-06-22
+
 ### Added
-- **Delete activities.** Tap an activity to open it, then use the new "Delete" button to remove it and all of its history.
+- **Explore tab.** Food, Alcohol and Activities are merged into one **Explore** tab
+  with sub-tabs for **Restaurants**, **Beverages** and **Activities**. Each category
+  shows your latest visits and your top-rated favorites at a glance, with a **See all**
+  link to the full searchable list.
+- **Nearby / Mine / Friends.** A filter at the top of Explore. **Nearby** (the default)
+  uses your location to surface the best-rated restaurants — yours and your friends' —
+  within 5 km; **Mine** shows everything you've logged; **Friends** shows your friends'
+  favorite restaurants.
+- **Profile page.** A new page opened from the person icon in the top-right of every
+  screen. Set a unique **username**, send and accept **friend requests** (by username
+  or login email), and manage your friends.
+- **Friends' favorite restaurants.** Once a friend request is accepted, you can see
+  each other's favorite places (name, location and rating) in Explore.
+
+### Changed
+- **Bottom navigation** is now **Journal · Explore · Stats**.
+- **Settings moved into Profile.** All settings (general, app behavior, data,
+  account) now live on the Profile page; the gear on the Stats screen is gone.
+
+> Requires the new database migration `supabase/migrations/0005_social_friends.sql`
+> to be run in the Supabase dashboard before usernames and friends work.
 
 ## [5.0.0] - 2026-06-22
 

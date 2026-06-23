@@ -7,11 +7,9 @@ import { ProjectProvider } from '@/context/ProjectProvider';
 import { AppShell } from '@/components/layout/AppShell';
 import { LoginScreen } from '@/features/auth/LoginScreen';
 import { TodayScreen } from '@/features/today/TodayScreen';
-import { FoodScreen } from '@/features/food/FoodScreen';
-import { AlcoholScreen } from '@/features/alcohol/AlcoholScreen';
-import { ActivitiesScreen } from '@/features/activities/ActivitiesScreen';
+import { ExploreScreen } from '@/features/explore/ExploreScreen';
 import { StatsScreen } from '@/features/stats/StatsScreen';
-import { SettingsScreen } from '@/features/settings/SettingsScreen';
+import { ProfileScreen } from '@/features/profile/ProfileScreen';
 
 function Protected() {
   const { session, loading } = useAuth();
@@ -28,11 +26,10 @@ function Protected() {
         <Routes>
           <Route element={<AppShell />}>
             <Route path="/today" element={<TodayScreen />} />
-            <Route path="/food" element={<FoodScreen />} />
-            <Route path="/alcohol" element={<AlcoholScreen />} />
-            <Route path="/activities" element={<ActivitiesScreen />} />
+            <Route path="/explore" element={<ExploreScreen />} />
             <Route path="/stats" element={<StatsScreen />} />
-            <Route path="/settings" element={<SettingsScreen />} />
+            <Route path="/profile" element={<ProfileScreen />} />
+            <Route path="/settings" element={<Navigate to="/profile" replace />} />
           </Route>
           <Route path="*" element={<Navigate to="/today" replace />} />
         </Routes>

@@ -1,22 +1,38 @@
-import { Outlet, useLocation } from 'react-router-dom';
+import { Outlet, useLocation, NavLink } from 'react-router-dom';
+import { User } from 'lucide-react';
 import { ProjectSwitcher } from './ProjectSwitcher';
 import { BottomNav } from './BottomNav';
 import { QuickAddFab } from './QuickAddFab';
 import { SyncBanner } from './SyncBanner';
 import { Toaster } from '@/components/ui/Toast';
 import { GlobalAddSheets } from '@/features/entries/GlobalAddSheets';
+import { cn } from '@/lib/cn';
 
 export function AppShell() {
   const { pathname } = useLocation();
-  // Project switching belongs on the four main tabs, but not on Stats/Settings.
-  const showProjectSwitcher = ['/today', '/food', '/alcohol', '/activities'].includes(pathname);
+  // Project switching is per-day work, so it belongs on the Journal tab only.
+  const showProjectSwitcher = pathname === '/today';
 
   return (
     <div className="mx-auto flex h-full max-w-md flex-col bg-bg">
       <SyncBanner />
-      <header className="z-30 flex items-center justify-between border-b border-border bg-bg/90 px-4 py-3 backdrop-blur">
+      <header className="z-30 flex items-center justify-between gap-2 border-b border-border bg-bg/90 px-4 py-3 backdrop-blur">
         <h1 className="font-serif text-xl font-semibold text-primary">Memoir</h1>
-        {showProjectSwitcher && <ProjectSwitcher />}
+        <div className="flex items-center gap-1.5">
+          {showProjectSwitcher && <ProjectSwitcher />}
+          <NavLink
+            to="/profile"
+            aria-label="Profile"
+            className={({ isActive }) =>
+              cn(
+                'grid h-9 w-9 place-items-center rounded-full border border-border transition',
+                isActive ? 'bg-primary text-primary-fg' : 'text-text-muted hover:bg-surface-alt',
+              )
+            }
+          >
+            <User size={18} />
+          </NavLink>
+        </div>
       </header>
 
       {/* Single, reliable scroll container so scrolling never gets stuck. */}

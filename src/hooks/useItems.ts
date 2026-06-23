@@ -126,7 +126,7 @@ const CONFIGS: Record<string, ItemListConfig> = {
     statView: 'memoir_restaurant_stats',
     statIdField: 'restaurant_id',
     countField: 'visits',
-    extraColumns: ['source'],
+    extraColumns: ['source', 'latitude', 'longitude', 'address'],
   },
   drink: {
     itemTable: 'memoir_drink_items',
