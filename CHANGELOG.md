@@ -11,6 +11,11 @@ This project uses [Semantic Versioning](https://semver.org/) (`MAJOR.MINOR.PATCH
 The current version is tracked in [`VERSION.md`](VERSION.md) and shown at the bottom
 of the in-app **Profile** screen.
 
+## [11.3.0] - 2026-06-23
+
+### Changed
+- **The day now starts at 6 AM in the Journal.** A night out that runs past midnight stays on the same day — beers (or anything else) you log between midnight and 6 AM are filed under the day the night began, not the next morning. This only affects which day new entries default to; you can still pick any date manually, and existing entries are untouched.
+
 ## [11.2.0] - 2026-06-23
 
 ### Changed

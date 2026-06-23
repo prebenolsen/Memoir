@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from './AuthProvider';
 import { useSettings } from './SettingsProvider';
-import { effectiveSettings, newId, todayISO } from '@/lib/format';
+import { effectiveSettings, logicalToday, newId } from '@/lib/format';
 import type { Currency, Project, Settings } from '@/types/db';
 
 interface ProjectContextValue {
@@ -63,7 +63,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
 
   const [projectId, setProjectId] = useState<string | null>(null);
   const [isEverythingMode, setIsEverythingMode] = useState(false);
-  const [date, setDateState] = useState<string>(todayISO());
+  const [date, setDateState] = useState<string>(logicalToday());
 
   // Initialise selection once projects + settings are known.
   useEffect(() => {

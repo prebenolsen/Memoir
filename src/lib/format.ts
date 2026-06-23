@@ -8,6 +8,21 @@ export function todayISO(): string {
   return toISODate(d);
 }
 
+/**
+ * The hour (local time) at which the journal rolls over to a new day. A night
+ * out that runs past midnight should stay on the same logical day, so we treat
+ * anything before this hour as still belonging to the previous calendar date.
+ */
+export const DAY_START_HOUR = 6;
+
+/**
+ * The current logical journal date. Between midnight and DAY_START_HOUR this is
+ * still yesterday, so late-night entries land on the day the night started.
+ */
+export function logicalToday(): string {
+  return toISODate(new Date(Date.now() - DAY_START_HOUR * 3600_000));
+}
+
 export function toISODate(d: Date): string {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, '0');
