@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { Hash, Star } from 'lucide-react';
+import { Hash, Star, Trash2 } from 'lucide-react';
 import { Sheet } from '@/components/ui/Sheet';
 import { Field, Textarea } from '@/components/ui/Input';
 import { RatingInput, RatingBadge } from '@/components/ui/RatingInput';
@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { useProject } from '@/context/ProjectProvider';
 import { useItemOccasions, entryEditKind } from '@/hooks/useItemDetail';
-import { updateItem, type ItemKind, type ItemWithStats } from '@/hooks/useItems';
+import { updateItem, deleteItem, type ItemKind, type ItemWithStats } from '@/hooks/useItems';
 import { useQuickAdd } from '@/lib/quickAdd';
 import { toast } from '@/components/ui/Toast';
 import { formatDate, formatMoney } from '@/lib/format';
@@ -53,15 +53,51 @@ export function ItemDetailSheet({
     }
   };
 
+  const handleDelete = async () => {
+    if (!window.confirm(`Delete "${item.name}" and all of its history? This can't be undone.`))
+      return;
+    setBusy(true);
+    try {
+      await deleteItem(kind, item.id);
+      await qc.invalidateQueries({ queryKey: ['itemList', kind] });
+      await qc.invalidateQueries({ queryKey: ['day'] });
+      await qc.invalidateQueries({ queryKey: ['stats'] });
+      toast('Deleted');
+      onClose();
+    } catch {
+      toast('Could not delete', 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
     <Sheet
       open={!!item}
       onClose={onClose}
       title={item.name}
       footer={
-        <Button block onClick={saveHeadline} disabled={busy}>
-          Save item
-        </Button>
+        kind === 'activity' ? (
+          <div className="flex gap-2">
+            <Button
+              variant="secondary"
+              type="button"
+              className="basis-2/5 text-danger"
+              onClick={handleDelete}
+              disabled={busy}
+            >
+              <Trash2 size={16} />
+              Delete
+            </Button>
+            <Button className="basis-3/5" onClick={saveHeadline} disabled={busy}>
+              Save item
+            </Button>
+          </div>
+        ) : (
+          <Button block onClick={saveHeadline} disabled={busy}>
+            Save item
+          </Button>
+        )
       }
     >
       <div className="space-y-4">

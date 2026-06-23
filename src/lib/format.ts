@@ -1,4 +1,5 @@
 import { format, parseISO } from 'date-fns';
+import { BEER_SIZES, WINE_EMPTY_NAMES } from '@/types/db';
 import type { Currency, DateFormat, RatingScale, Settings } from '@/types/db';
 
 // ISO date helpers (entry_date is a plain YYYY-MM-DD string, no timezone).
@@ -108,6 +109,57 @@ export function titleCase(s: string): string {
 export function formatAbv(v: number): string {
   const r = Math.round(v * 10) / 10;
   return Number.isInteger(r) ? String(r) : r.toFixed(1);
+}
+
+/**
+ * Normalise a beer/wine name to a consistent shape so manually typed and scanned
+ * entries always read the same:
+ *   - wine:  "Barolo (14 %)"
+ *   - beer:  "Hansa Pilsner 0.33l (4.7 %)"  (size is the compact BeerSize.short)
+ * Any previously applied size / percentage suffix (current "(x %)" or legacy
+ * ", x %") is stripped first and re-applied from the current values. When the
+ * ABV is unknown no percentage is added (we never invent one).
+ */
+export function formatBeerWineName(
+  name: string,
+  abv: number | null,
+  size?: string | null,
+): string {
+  let base = name.trim();
+  base = base.replace(/\s*\([\d.,]+\s*%\)\s*$/, '').trim(); // trailing "(4.7 %)"
+  base = base.replace(/,\s*[\d.,]+\s*%\s*$/, '').trim(); // legacy ", 4.7 %"
+  base = base.replace(/\s+\d+(?:[.,]\d+)?\s*l$/i, '').trim(); // trailing size "0.33l"
+  if (!base) return base;
+  const sizePart = size ? ` ${size}` : '';
+  const abvPart = abv != null ? ` (${formatAbv(abv)} %)` : '';
+  return `${base}${sizePart}${abvPart}`;
+}
+
+/**
+ * Reduce a stored drink name to a clean term for an Open Food Facts photo search:
+ * drop the trailing size ("0.33l") and percentage ("(4.7 %)" / legacy ", 4.7 %")
+ * suffixes so only the brand/product part is searched.
+ */
+export function drinkSearchTerm(name: string): string {
+  return name
+    .replace(/\s*\([\d.,]+\s*%\)\s*$/, '')
+    .replace(/,\s*[\d.,]+\s*%\s*$/, '')
+    .replace(/\s+\d+(?:[.,]\d+)?\s*l$/i, '')
+    .trim();
+}
+
+/** Auto-generated fallback drink names (e.g. "0.33l of beer", "A glass of red"). */
+const GENERIC_DRINK_NAMES = new Set<string>([
+  ...BEER_SIZES.map((s) => s.emptyName.toLowerCase()),
+  ...Object.values(WINE_EMPTY_NAMES).map((n) => n.toLowerCase()),
+]);
+
+/**
+ * True for the generated default names a blank beer/wine entry falls back to.
+ * These describe no real product, so we skip the photo lookup for them.
+ */
+export function isGenericDrinkName(name: string): boolean {
+  return GENERIC_DRINK_NAMES.has(name.trim().toLowerCase());
 }
 
 /**

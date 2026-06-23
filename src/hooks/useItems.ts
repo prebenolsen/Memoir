@@ -190,6 +190,28 @@ export async function updateItem(
   if (error) throw error;
 }
 
+/** Entry table + foreign key that points back to each reusable item. */
+const ENTRY_FK: Record<ItemKind, { table: string; fk: string }> = {
+  food: { table: 'memoir_food_entries', fk: 'food_item_id' },
+  restaurant: { table: 'memoir_food_entries', fk: 'restaurant_id' },
+  drink: { table: 'memoir_drink_entries', fk: 'drink_item_id' },
+  activity: { table: 'memoir_activity_entries', fk: 'activity_item_id' },
+};
+
+/**
+ * Delete a reusable item along with all of its logged occasions. The entry FK is
+ * `ON DELETE SET NULL`, so we remove the dependent entries first — otherwise they
+ * would linger as orphaned rows with no item.
+ */
+export async function deleteItem(kind: ItemKind, id: string): Promise<void> {
+  const cfg = CONFIGS[kind];
+  const ent = ENTRY_FK[kind];
+  const { error: entryErr } = await supabase.from(ent.table).delete().eq(ent.fk, id);
+  if (entryErr) throw entryErr;
+  const { error: itemErr } = await supabase.from(cfg.itemTable).delete().eq('id', id);
+  if (itemErr) throw itemErr;
+}
+
 export function itemConfig(kind: ItemKind) {
   return CONFIGS[kind];
 }

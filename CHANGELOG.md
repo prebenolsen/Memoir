@@ -11,6 +11,21 @@ This project uses [Semantic Versioning](https://semver.org/) (`MAJOR.MINOR.PATCH
 The current version is tracked in [`VERSION.md`](VERSION.md) and shown at the bottom
 of the in-app **Settings** screen.
 
+## [6.0.0] - 2026-06-23
+
+### Added
+- **Beverage photos.** The Alcohol list now shows a product photo to the left of each drink, pulled from Open Food Facts by name. Drinks with no matching photo (and generic entries like "0.33l of beer") show a placeholder instead.
+
+## [5.1.0] - 2026-06-22
+
+### Changed
+- **Cleaner item lists.** Food, drink, and restaurant items that have never been logged (0× consumed / 0 visits) are no longer shown — only items you've actually recorded appear.
+- **Consistent beer & wine names.** When you type a beer or wine name by hand, it's now stored in a consistent format so every entry reads the same way — wine as "Barolo (14 %)" and beer with its size as "Hansa Pilsner 0.33l (4.7 %)".
+- **Scan button moved.** In the Add/Edit drink sheet, the "Scan" button now sits at the bottom next to "Add drink" (40 / 60 split), with the add button given more room.
+
+### Added
+- **Delete activities.** Tap an activity to open it, then use the new "Delete" button to remove it and all of its history.
+
 ## [5.0.0] - 2026-06-22
 
 ### Added
