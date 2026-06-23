@@ -118,6 +118,8 @@ export interface DrinkEntry {
   notes: string | null;
   city: string | null;
   country: string | null;
+  latitude: number | null;
+  longitude: number | null;
   created_at: string;
 }
 

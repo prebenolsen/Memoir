@@ -9,6 +9,7 @@ import { LoginScreen } from '@/features/auth/LoginScreen';
 import { TodayScreen } from '@/features/today/TodayScreen';
 import { ExploreScreen } from '@/features/explore/ExploreScreen';
 import { StatsScreen } from '@/features/stats/StatsScreen';
+import { StatsDetailScreen } from '@/features/stats/StatsDetailScreen';
 import { ProfileScreen } from '@/features/profile/ProfileScreen';
 
 function Protected() {
@@ -28,6 +29,7 @@ function Protected() {
             <Route path="/today" element={<TodayScreen />} />
             <Route path="/explore" element={<ExploreScreen />} />
             <Route path="/stats" element={<StatsScreen />} />
+            <Route path="/stats/:category" element={<StatsDetailScreen />} />
             <Route path="/profile" element={<ProfileScreen />} />
             <Route path="/settings" element={<Navigate to="/profile" replace />} />
           </Route>

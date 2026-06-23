@@ -11,6 +11,23 @@ This project uses [Semantic Versioning](https://semver.org/) (`MAJOR.MINOR.PATCH
 The current version is tracked in [`VERSION.md`](VERSION.md) and shown at the bottom
 of the in-app **Profile** screen.
 
+## [15.0.0] - 2026-06-23
+
+### Added
+- **Beverages deep-dive — a whole new stats page.** The Statistics screen now has buttons for Restaurants, Beverages, Activity and Purchases just under the date range. Tap **Beverages** to open a dedicated page packed with charts and fun facts for the current project (or "Everything"), respecting the date range you've set:
+  - A headline summary, and totals for drinks, active days and average drinks per day.
+  - A "what you drink" breakdown by type, plus the existing beer (glasses, litres, by size) and wine (by style) visuals.
+  - A **when you drink** bar chart across the 24 hours of the day, with your peak hour and your earliest / latest drink (based on when each drink was logged).
+  - **Drinking sessions** — drinks are grouped into sessions (a gap of more than 3 hours starts a new one), showing your longest and biggest session, how many sessions you've had and your average drinks per session.
+  - **Cadence** — a per-day sparkline, your busiest day, plus your longest drinking streak and longest dry spell.
+  - A **leaderboard** of most-consumed and highest-rated drinks, how many different beers you've tried, your strongest pour and your average rating.
+  - **Spend** on drinks and cost per drink.
+  - A **map** of where you've been drinking, with a city/country breakdown.
+- **Drinks now remember where you logged them.** The "Use my location" and "Find nearby" buttons on the drink form now store the exact coordinates (not just the city), so your drinks appear as pins on the new Beverages map. Drinks logged before this update have no pin and are simply left off the map.
+
+### Changed
+- The other three deep-dives (Restaurants, Activity, Purchases) show a "coming soon" placeholder for now — Beverages is first.
+
 ## [14.2.0] - 2026-06-23
 
 ### Changed

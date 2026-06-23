@@ -68,6 +68,8 @@ export function DrinkEntrySheet({
   const [notes, setNotes] = useState('');
   const [city, setCity] = useState<string | null>(null);
   const [country, setCountry] = useState<string | null>(null);
+  const [lat, setLat] = useState<number | null>(null);
+  const [lon, setLon] = useState<number | null>(null);
   const [geoLoading, setGeoLoading] = useState(false);
   const [geoError, setGeoError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -90,6 +92,8 @@ export function DrinkEntrySheet({
       setNotes(editing.notes ?? '');
       setCity(editing.city ?? null);
       setCountry(editing.country ?? null);
+      setLat(editing.latitude ?? null);
+      setLon(editing.longitude ?? null);
       setGeoError(null);
       setDrink(null);
       if (editing.drink_item_id) {
@@ -123,6 +127,8 @@ export function DrinkEntrySheet({
       setNotes('');
       setCity(null);
       setCountry(null);
+      setLat(null);
+      setLon(null);
       setGeoError(null);
     }
   }, [open, editing, editId, date, preFill]);
@@ -174,11 +180,14 @@ export function DrinkEntrySheet({
     if (p.beerSizeKey) setBeerSize(p.beerSizeKey);
   };
 
-  const applyGpsLocation = async (lat: number, lon: number) => {
+  const applyGpsLocation = async (latitude: number, longitude: number) => {
     setGeoLoading(true);
     setGeoError(null);
+    // Keep the raw fix even if reverse geocoding fails — the map only needs coords.
+    setLat(latitude);
+    setLon(longitude);
     try {
-      const info = await reverseGeocode(lat, lon);
+      const info = await reverseGeocode(latitude, longitude);
       setCity(info.city);
       setCountry(info.country);
     } catch (err) {
@@ -207,6 +216,8 @@ export function DrinkEntrySheet({
   const clearLocation = () => {
     setCity(null);
     setCountry(null);
+    setLat(null);
+    setLon(null);
     setGeoError(null);
   };
 
@@ -247,6 +258,8 @@ export function DrinkEntrySheet({
         notes: notes || null,
         city: city || null,
         country: country || null,
+        latitude: lat,
+        longitude: lon,
       });
       onClose();
     } finally {

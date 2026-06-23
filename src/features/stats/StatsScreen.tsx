@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
   UtensilsCrossed,
@@ -8,7 +9,9 @@ import {
   ShoppingBag,
   Plus,
   Trash2,
+  ChevronRight,
 } from 'lucide-react';
+import { STATS_CATEGORIES } from './StatsDetailScreen';
 import { useProject } from '@/context/ProjectProvider';
 import {
   useProjectStats,
@@ -119,6 +122,15 @@ export function StatsScreen() {
   const { remove } = useEntryMutations();
   const confirmDelete = useConfirmDelete();
   const openAdd = useQuickAdd((s) => s.open);
+  const navigate = useNavigate();
+
+  const openCategory = (slug: string) => {
+    const qs = new URLSearchParams();
+    if (from) qs.set('from', from);
+    if (to) qs.set('to', to);
+    const q = qs.toString();
+    navigate(`/stats/${slug}${q ? `?${q}` : ''}`);
+  };
 
   // Seed the date range to the project's full span (earliest → latest entry).
   // Re-seeds when the viewed project changes; the user can still narrow or Clear.
@@ -189,6 +201,26 @@ export function StatsScreen() {
           </label>
         </div>
       </Card>
+
+      {/* Category deep-dives */}
+      <div className="grid grid-cols-2 gap-3">
+        {STATS_CATEGORIES.map((c) => (
+          <button
+            key={c.slug}
+            onClick={() => openCategory(c.slug)}
+            className="flex items-center gap-3 rounded-2xl border border-border bg-surface p-3.5 text-left shadow-soft transition active:scale-[0.99]"
+          >
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-accent/12 text-accent">
+              <c.icon size={18} />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-[15px] font-medium">{c.label}</span>
+              <span className="block text-xs text-text-muted">{c.ready ? 'Deep dive' : 'Soon'}</span>
+            </span>
+            <ChevronRight size={16} className="shrink-0 text-text-muted" />
+          </button>
+        ))}
+      </div>
 
       {!hasData && (
         <EmptyState
