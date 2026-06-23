@@ -32,7 +32,7 @@ export function toast(message: string, kind: ToastKind = 'success') {
 export function Toaster() {
   const toasts = useToast((s) => s.toasts);
   return (
-    <div className="pointer-events-none fixed inset-x-0 top-3 z-[60] flex flex-col items-center gap-2 px-4">
+    <div className="pointer-events-none fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+76px)] z-[60] flex flex-col items-center gap-2 px-4">
       {toasts.map((t) => (
         <div
           key={t.id}

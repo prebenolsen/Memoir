@@ -11,6 +11,14 @@ This project uses [Semantic Versioning](https://semver.org/) (`MAJOR.MINOR.PATCH
 The current version is tracked in [`VERSION.md`](VERSION.md) and shown at the bottom
 of the in-app **Profile** screen.
 
+## [10.0.0] - 2026-06-23
+
+### Added
+- **Barcode mode on the + button.** Tap the + button once to open the quick-add menu — the button turns into a barcode icon. Tap it again to jump straight into barcode scanning. The separate "Scan barcode" row is gone, so adding things by scan is now a quick double-tap.
+
+### Changed
+- **Pop-up messages moved to the bottom.** Confirmation pop-ups (like "Deleted") now appear at the bottom of the screen, just above the menu bar, instead of at the top.
+
 ## [9.3.0] - 2026-06-23
 
 ### Changed
