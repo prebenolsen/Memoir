@@ -5,17 +5,28 @@ import { Sheet } from '@/components/ui/Sheet';
 import { Button } from '@/components/ui/Button';
 import { Field, Input } from '@/components/ui/Input';
 import { DateField } from '@/components/ui/DateField';
+import { Select } from '@/components/ui/Select';
 import { toast } from '@/components/ui/Toast';
+import { useCurrencies } from '@/hooks/useCurrencies';
 import { cn } from '@/lib/cn';
+import type { Currency } from '@/types/db';
 
 export function ProjectSwitcher() {
-  const { projects, project, isEverything, loading, setProject, createProject } = useProject();
+  const { projects, project, isEverything, loading, settings, setProject, createProject } =
+    useProject();
+  const { currencies } = useCurrencies();
   const [open, setOpen] = useState(false);
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState('');
   const [start, setStart] = useState('');
   const [end, setEnd] = useState('');
+  const [currency, setCurrency] = useState<Currency>(settings.currency);
   const [busy, setBusy] = useState(false);
+
+  const startCreating = () => {
+    setCurrency(settings.currency);
+    setCreating(true);
+  };
 
   const label = loading ? '…' : (project?.name ?? 'Everything');
 
@@ -27,6 +38,7 @@ export function ProjectSwitcher() {
         name,
         start_date: start || null,
         end_date: end || null,
+        currency,
       });
       toast('Project created');
       setName('');
@@ -104,7 +116,7 @@ export function ProjectSwitcher() {
             ))}
 
             <button
-              onClick={() => setCreating(true)}
+              onClick={startCreating}
               className="mt-2 flex w-full items-center gap-2 rounded-xl border border-dashed border-border px-3.5 py-3 text-[15px] font-medium text-primary"
             >
               <FolderPlus size={18} />
@@ -129,6 +141,17 @@ export function ProjectSwitcher() {
                 <DateField value={end} onChange={setEnd} />
               </Field>
             </div>
+            <Field label="Currency">
+              <Select<Currency>
+                value={currency}
+                onChange={setCurrency}
+                options={currencies.map((c) => ({
+                  value: c.code as Currency,
+                  label: `${c.code} — ${c.name}`,
+                }))}
+                className="w-full"
+              />
+            </Field>
             <div className={cn('flex gap-2 pt-1')}>
               <Button variant="secondary" block onClick={() => setCreating(false)}>
                 Back

@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from './AuthProvider';
 import { useSettings } from './SettingsProvider';
 import { effectiveSettings, newId, todayISO } from '@/lib/format';
-import type { Project, Settings } from '@/types/db';
+import type { Currency, Project, Settings } from '@/types/db';
 
 interface ProjectContextValue {
   projects: Project[];
@@ -34,6 +34,8 @@ interface ProjectContextValue {
     name: string;
     start_date?: string | null;
     end_date?: string | null;
+    /** Currency for this project; stored as a settings override. */
+    currency?: Currency | null;
   }) => Promise<Project>;
   refetchProjects: () => void;
 }
@@ -108,6 +110,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
       start_date: input.start_date ?? null,
       end_date: input.end_date ?? null,
       is_default: false,
+      settings_override: input.currency ? { currency: input.currency } : null,
     };
     const { data, error } = await supabase
       .from('memoir_projects')

@@ -11,6 +11,12 @@ This project uses [Semantic Versioning](https://semver.org/) (`MAJOR.MINOR.PATCH
 The current version is tracked in [`VERSION.md`](VERSION.md) and shown at the bottom
 of the in-app **Profile** screen.
 
+## [11.0.0] - 2026-06-23
+
+### Added
+- **Pick a currency when you create a project.** The New project form now has a Currency field, so each trip or period can record its costs in its own currency (e.g. EUR for a Spain trip) without changing your global default. It starts on your usual currency, so you can ignore it when it doesn't matter.
+- **A currency reference database you update yourself.** Memoir now keeps a small shared table of currencies and their exchange rate to NOK, seeded with Norwegian krone, Euro, and US dollar. The currency picker is fed from this table. Rates are kept as full history (every past rate is preserved, the latest one is the live one), and you refresh them by running a one-line SQL command when you want — see [`supabase/CURRENCIES.md`](supabase/CURRENCIES.md) for the short how-to.
+
 ## [10.0.0] - 2026-06-23
 
 ### Added
