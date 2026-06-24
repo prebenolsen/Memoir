@@ -11,6 +11,47 @@ This project uses [Semantic Versioning](https://semver.org/) (`MAJOR.MINOR.PATCH
 The current version is tracked in [`VERSION.md`](VERSION.md) and shown at the bottom
 of the in-app **Profile** screen.
 
+## [17.11.0] - 2026-06-25
+
+### Added
+- **🏳️‍🌈 Pride theme (temporary, for June).** Settings → Theme now has a "Pride"
+  option that splashes animated rainbow stripes across the whole app, gives headings
+  a shimmering rainbow gradient, and floats unicorns, rainbows, and sparkles drifting
+  up the screen. It's a limited-time celebration and is self-contained so it can be
+  removed easily later.
+
+## [17.10.0] - 2026-06-25
+
+### Added
+- **Set your project's Home in Settings.** Profile now has a "Project home" section
+  showing the current project's home location, with a button to set or update it to
+  your current location (and clear it). Each project keeps its own home, so you can
+  relocate — or move to a new city on the same project — and just pick a new home.
+
+### Changed
+- **"Home" drinks reuse the saved home.** Once a project's home is set, choosing Home
+  for a drink uses it automatically with no extra tap or location prompt — until you
+  change it in Settings.
+
+## [17.9.1] - 2026-06-24
+
+### Changed
+- **Tidier rating labels.** The drink rating no longer shows the "How the drink itself
+  tasted" helper line. On Add food, the rating now carries a "Rate the venue" title to
+  match the drink form's labelled ratings.
+
+## [17.9.0] - 2026-06-24
+
+### Changed
+- **Clearer ratings on Add drink.** Rating the drink now sits right below ABV, above the
+  location section, with its own "Rate the drink" label so there's no confusion about
+  what you're scoring. When you drank at a venue, the separate "Rate the venue" rating is
+  labelled for the place itself, keeping the two scores distinct.
+- **One scale switch.** The 1–5 / 1–10 toggle now lives on the drink rating; the venue
+  rating follows the same scale instead of showing its own switch.
+- **"Store price" at home.** When the location is set to Home, the Cost field is labelled
+  "Store price" to reflect that you bought, rather than were served, the drink.
+
 ## [17.8.0] - 2026-06-24
 
 ### Changed

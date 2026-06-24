@@ -295,7 +295,9 @@ export function FoodEntrySheet({
           </Field>
         )}
 
-        <RatingField value={rating} onChange={setRating} />
+        <Field label="Rate the venue">
+          <RatingField value={rating} onChange={setRating} />
+        </Field>
 
         <div className="grid grid-cols-2 gap-3">
           <Field label="Cost">

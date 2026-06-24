@@ -148,12 +148,17 @@ export function DrinkEntrySheet({
       setVenue(null);
       setPickedVenue(null);
       setVenueRating(null);
-      setCity(null);
-      setCountry(null);
-      setLat(null);
-      setLon(null);
+      // Reuse this project's saved home so a "Home" drink needs no extra tap.
+      const hasHome = project?.home_latitude != null && project?.home_longitude != null;
+      setCity(hasHome ? (project?.home_city ?? null) : null);
+      setCountry(hasHome ? (project?.home_country ?? null) : null);
+      setLat(hasHome ? (project?.home_latitude ?? null) : null);
+      setLon(hasHome ? (project?.home_longitude ?? null) : null);
       setGeoError(null);
     }
+    // `project` is read for its saved home only; it's intentionally not a dep so a
+    // background refetch (e.g. after capturing home) never resets an open form.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, editing, editId, date, preFill]);
 
   // Load the linked venue's name when editing a venue-tagged drink.
@@ -496,6 +501,10 @@ export function DrinkEntrySheet({
           </div>
         )}
 
+        <Field label="Rate the drink">
+          <RatingField value={rating} onChange={setRating} />
+        </Field>
+
         <Field label="Where did you drink?">
           <div className="space-y-2">
             <SegmentedControl
@@ -586,15 +595,13 @@ export function DrinkEntrySheet({
         </Field>
 
         {locationKind === 'venue' && venue?.name?.trim() && (
-          <Field label="Rate the venue" hint="Separate from the drink rating above.">
-            <RatingField value={venueRating} onChange={setVenueRating} />
+          <Field label="Rate the venue" hint="The place itself — not the drink you rated above.">
+            <RatingField value={venueRating} onChange={setVenueRating} showScale={false} />
           </Field>
         )}
 
-        <RatingField value={rating} onChange={setRating} />
-
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Cost">
+          <Field label={locationKind === 'home' ? 'Store price' : 'Cost'}>
             <CurrencyInput
               value={cost}
               onChange={setCost}

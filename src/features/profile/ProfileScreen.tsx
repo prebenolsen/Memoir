@@ -10,6 +10,8 @@ import {
   Check,
   X,
   Users,
+  Home,
+  MapPin,
 } from 'lucide-react';
 import { useSettings } from '@/context/SettingsProvider';
 import { useProject } from '@/context/ProjectProvider';
@@ -203,6 +205,77 @@ function FriendsCard() {
   );
 }
 
+function ProjectHomeCard() {
+  const { activeProject, captureProjectHome, updateProjectHome } = useProject();
+  const [busy, setBusy] = useState(false);
+
+  const hasHome =
+    activeProject?.home_latitude != null && activeProject?.home_longitude != null;
+  const place = [activeProject?.home_city, activeProject?.home_country]
+    .filter(Boolean)
+    .join(', ');
+
+  const setHome = async () => {
+    if (!activeProject) return;
+    setBusy(true);
+    try {
+      await captureProjectHome(activeProject.id);
+      toast('Home updated');
+    } catch (e) {
+      toast((e as Error)?.message ?? 'Could not get your location', 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const clearHome = async () => {
+    if (!activeProject) return;
+    setBusy(true);
+    try {
+      await updateProjectHome(activeProject.id, {
+        latitude: null,
+        longitude: null,
+        city: null,
+        country: null,
+      });
+      toast('Home cleared');
+    } catch {
+      toast('Could not clear home', 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Card className="space-y-3 p-4">
+      <p className="text-sm text-text-muted">
+        Home for <span className="font-medium text-text">{activeProject?.name ?? '—'}</span>,
+        used when you mark a drink or meal as &ldquo;Home&rdquo;. Each project keeps its own —
+        set a new one here whenever you relocate, even within the same project.
+      </p>
+      <div className="flex items-center gap-2 rounded-xl bg-surface-alt px-3.5 py-2.5 text-[15px]">
+        <Home size={15} className="text-primary" />
+        {hasHome ? (
+          <span>{place || 'Saved location'}</span>
+        ) : (
+          <span className="text-text-muted">Not set yet</span>
+        )}
+      </div>
+      <div className="flex gap-2">
+        <Button variant="secondary" block onClick={setHome} disabled={busy || !activeProject}>
+          <MapPin size={16} />
+          {hasHome ? 'Update to current location' : 'Set to current location'}
+        </Button>
+        {hasHome && (
+          <Button variant="secondary" onClick={clearHome} disabled={busy} aria-label="Clear home">
+            <X size={16} />
+          </Button>
+        )}
+      </div>
+    </Card>
+  );
+}
+
 export function ProfileScreen() {
   const { settings, update } = useSettings();
   const { activeProject, projects, refetchProjects, setProject } = useProject();
@@ -356,6 +429,7 @@ export function ProfileScreen() {
               { value: 'light', label: 'Light' },
               { value: 'dark', label: 'Dark' },
               { value: 'system', label: 'System' },
+              { value: 'pride', label: '🏳️‍🌈 Pride' }, // PRIDE THEME (temporary)
             ]}
           />
         </Row>
@@ -382,6 +456,9 @@ export function ProfileScreen() {
           />
         </Row>
       </Card>
+
+      <GroupTitle>Project home</GroupTitle>
+      <ProjectHomeCard />
 
       <GroupTitle>Data</GroupTitle>
       <Card className="space-y-2 p-4">
