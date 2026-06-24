@@ -11,6 +11,14 @@ This project uses [Semantic Versioning](https://semver.org/) (`MAJOR.MINOR.PATCH
 The current version is tracked in [`VERSION.md`](VERSION.md) and shown at the bottom
 of the in-app **Profile** screen.
 
+## [17.7.0] - 2026-06-24
+
+### Added
+- **You now get a username automatically.** New accounts start with a username taken
+  from your email — the part before the "@" (so `thisismyemail281@gmail.com` becomes
+  `thisismyemail281`). If that name is already taken, your full email is used instead.
+  You can still change it anytime on the Profile screen.
+
 ## [17.6.0] - 2026-06-24
 
 ### Added

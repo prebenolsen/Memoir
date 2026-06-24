@@ -2,6 +2,33 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import type { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 
+/**
+ * Give a freshly added user a username derived from the local part of their
+ * email (everything before "@"). If that's already taken, fall back to their
+ * full email. Idempotent: skips users who already have a profile row.
+ */
+async function bootstrapProfile(user: User): Promise<void> {
+  const { data: profile } = await supabase
+    .from('memoir_profiles')
+    .select('user_id')
+    .eq('user_id', user.id)
+    .maybeSingle();
+  if (profile) return;
+
+  const email = user.email ?? '';
+  const localPart = email.split('@')[0];
+  const candidates = [localPart, email].filter((c) => c.length > 0);
+
+  for (const username of candidates) {
+    const { error } = await supabase
+      .from('memoir_profiles')
+      .insert({ user_id: user.id, username });
+    // 23505 = unique violation on lower(username); try the next candidate.
+    if (!error) return;
+    if (error.code !== '23505') return;
+  }
+}
+
 interface AuthContextValue {
   session: Session | null;
   user: User | null;
@@ -17,7 +44,8 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
  * Ensure a freshly added user has the rows the app expects:
  * a settings row and a default "Everyday" project. Idempotent.
  */
-async function bootstrapUser(userId: string): Promise<void> {
+async function bootstrapUser(user: User): Promise<void> {
+  const userId = user.id;
   const { data: settings } = await supabase
     .from('memoir_settings')
     .select('user_id')
@@ -37,6 +65,8 @@ async function bootstrapUser(userId: string): Promise<void> {
       .from('memoir_projects')
       .insert({ user_id: userId, name: 'Everyday Life', is_default: true });
   }
+
+  await bootstrapProfile(user);
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -48,13 +78,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     supabase.auth.getSession().then(async ({ data }) => {
       if (!active) return;
       setSession(data.session);
-      if (data.session?.user) await bootstrapUser(data.session.user.id).catch(() => {});
+      if (data.session?.user) await bootstrapUser(data.session.user).catch(() => {});
       setLoading(false);
     });
 
     const { data: sub } = supabase.auth.onAuthStateChange((_event, newSession) => {
       setSession(newSession);
-      if (newSession?.user) void bootstrapUser(newSession.user.id).catch(() => {});
+      if (newSession?.user) void bootstrapUser(newSession.user).catch(() => {});
     });
     return () => {
       active = false;
