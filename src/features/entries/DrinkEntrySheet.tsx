@@ -6,7 +6,7 @@ import { Field, Textarea } from '@/components/ui/Input';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { Select } from '@/components/ui/Select';
 import { Combobox, type ComboValue } from '@/components/ui/Combobox';
-import { RatingInput } from '@/components/ui/RatingInput';
+import { RatingField } from './RatingField';
 import { CurrencyInput } from '@/components/ui/CurrencyInput';
 import { DateField } from '@/components/ui/DateField';
 import { Stepper } from '@/components/ui/Stepper';
@@ -371,7 +371,7 @@ export function DrinkEntrySheet({
           </div>
         )}
 
-        <Field label="Location">
+        <Field label="Where did you drink?">
           <div className="space-y-2">
             {hasLocation && (
               <div className="flex items-center justify-between rounded-xl bg-surface-alt px-3.5 py-2.5">
@@ -417,9 +417,7 @@ export function DrinkEntrySheet({
           </div>
         </Field>
 
-        <Field label="Rating">
-          <RatingInput value={rating} onChange={setRating} scale={settings.rating_scale} />
-        </Field>
+        <RatingField value={rating} onChange={setRating} />
 
         <div className="grid grid-cols-2 gap-3">
           <Field label="Cost">

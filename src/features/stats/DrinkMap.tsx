@@ -44,16 +44,16 @@ export function DrinkMap({ points }: { points: MapPoint[] }) {
         zoomControl={false}
       >
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Tiles courtesy of <a href="https://www.cyclosm.org">CyclOSM</a>'
+          url="https://{s}.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png"
         />
         <FitPoints points={points} />
         {points.map((p) => (
           <CircleMarker
             key={p.id}
             center={[p.lat, p.lon]}
-            radius={7}
-            pathOptions={{ color: '#fff', weight: 2, fillColor: accent, fillOpacity: 0.9 }}
+            radius={8}
+            pathOptions={{ color: '#fff', weight: 3, fillColor: accent, fillOpacity: 1 }}
           >
             <Tooltip direction="top" offset={[0, -6]}>
               <span className="font-medium">{p.name}</span>

@@ -16,6 +16,7 @@ import { useProject } from '@/context/ProjectProvider';
 import { useAuth } from '@/context/AuthProvider';
 import { useProfile } from '@/features/profile/hooks/useProfile';
 import { useFriends } from '@/hooks/useFriends';
+import { FriendDetailSheet, type FriendRef } from '@/features/explore/FriendFavorites';
 import { useQueryClient } from '@tanstack/react-query';
 import { Card } from '@/components/ui/Card';
 import { Select } from '@/components/ui/Select';
@@ -85,9 +86,11 @@ function UsernameCard() {
 }
 
 function FriendsCard() {
+  const { settings } = useSettings();
   const { friends, incoming, outgoing, addFriend, adding, acceptRequest, removeFriend } =
     useFriends();
   const [identifier, setIdentifier] = useState('');
+  const [detail, setDetail] = useState<FriendRef | null>(null);
 
   const submitAdd = async () => {
     try {
@@ -155,10 +158,17 @@ function FriendsCard() {
                 key={f.friendshipId}
                 className="flex items-center justify-between gap-2 border-t border-border px-4 py-3 first:border-t-0"
               >
-                <span className="truncate text-[15px]">{f.username ? `@${f.username}` : (f.email ?? 'unknown')}</span>
+                <button
+                  onClick={() =>
+                    setDetail({ userId: f.userId, username: f.username, email: f.email })
+                  }
+                  className="min-w-0 flex-1 truncate text-left text-[15px]"
+                >
+                  {f.username ? `@${f.username}` : (f.email ?? 'unknown')}
+                </button>
                 <button
                   onClick={() => removeFriend(f.friendshipId)}
-                  className="text-sm text-text-muted hover:text-danger"
+                  className="shrink-0 text-sm text-text-muted hover:text-danger"
                 >
                   Remove
                 </button>
@@ -183,6 +193,12 @@ function FriendsCard() {
           </>
         )}
       </Card>
+
+      <FriendDetailSheet
+        friend={detail}
+        scale={settings.rating_scale}
+        onClose={() => setDetail(null)}
+      />
     </div>
   );
 }

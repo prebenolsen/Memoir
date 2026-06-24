@@ -6,7 +6,7 @@ import { Field, Input, Textarea } from '@/components/ui/Input';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { Select } from '@/components/ui/Select';
 import { Combobox, type ComboValue } from '@/components/ui/Combobox';
-import { RatingInput } from '@/components/ui/RatingInput';
+import { RatingField } from './RatingField';
 import { CurrencyInput } from '@/components/ui/CurrencyInput';
 import { DateField } from '@/components/ui/DateField';
 import { useProject } from '@/context/ProjectProvider';
@@ -260,7 +260,7 @@ export function FoodEntrySheet({
         </Field>
 
         {source !== 'home' && (
-          <Field label="Venue">
+          <Field label="Where did you eat?">
             <div className="space-y-2">
               <Combobox
                 table="memoir_venues"
@@ -269,7 +269,7 @@ export function FoodEntrySheet({
                   setVenue(v);
                   setPickedPlace(null);
                 }}
-                placeholder="Where?"
+                placeholder="e.g. Joe's Diner"
               />
               <div className="flex gap-2">
                 <Button
@@ -295,9 +295,7 @@ export function FoodEntrySheet({
           </Field>
         )}
 
-        <Field label="Rating">
-          <RatingInput value={rating} onChange={setRating} scale={settings.rating_scale} />
-        </Field>
+        <RatingField value={rating} onChange={setRating} />
 
         <div className="grid grid-cols-2 gap-3">
           <Field label="Cost">

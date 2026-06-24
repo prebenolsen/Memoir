@@ -11,6 +11,46 @@ This project uses [Semantic Versioning](https://semver.org/) (`MAJOR.MINOR.PATCH
 The current version is tracked in [`VERSION.md`](VERSION.md) and shown at the bottom
 of the in-app **Profile** screen.
 
+## [17.4.0] - 2026-06-24
+
+### Changed
+- **Quick rating-scale switch on every Add screen.** The star rating now has a small
+  1–5 / 1–10 toggle next to it, so you can change the scale on the spot. It updates
+  the same setting as Profile, so the two always agree. The redundant "Rating" label
+  is gone — the stars speak for themselves.
+- **Friendlier, consistent field wording.** The location questions now match the
+  "What did you…?" style used elsewhere: food asks **"Where did you eat?"** (with a
+  clearer example placeholder) and drinks ask **"Where did you drink?"**.
+
+## [17.3.0] - 2026-06-24
+
+### Added
+- **Browse an individual friend's favorites.** On Explore → Friends, your first few
+  friends now appear as buttons at the top; tap one to see just that friend's venues
+  and beverages with their ratings. A **See all friends** button opens the full list
+  when you have more than three.
+- **Friends are clickable on the Profile screen too.** Tap a friend in your friends
+  list to open the same view of their favorite venues and beverages.
+
+## [17.2.0] - 2026-06-24
+
+### Added
+- **Year-to-date drink comparison.** The Beverages deep-dive now shows how many
+  drinks you've logged so far this year against the same window last year, with the
+  difference called out.
+- **Most popular drinking months.** When viewing **Everything**, the Beverages
+  deep-dive adds a by-month chart that highlights which month of the year you drink
+  the most, summed across every year on record.
+
+## [17.1.0] - 2026-06-24
+
+### Changed
+- **The drink map now uses a cycle map background.** The map behind your drink
+  locations switched to the CyclOSM style, which shows streets, paths, and terrain
+  with more detail.
+- **Location dots are easier to spot.** The markers are slightly larger with a
+  thicker white outline so they stand out against the map.
+
 ## [17.0.1] - 2026-06-24
 
 ### Changed

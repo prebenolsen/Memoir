@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { BEER_SIZES, WINE_STYLES } from '@/types/db';
-import { DAY_START_HOUR } from '@/lib/format';
+import { DAY_START_HOUR, logicalToday } from '@/lib/format';
 import type { DrinkType, WineStyle } from '@/types/db';
 
 export interface NamedCount {
@@ -31,6 +31,20 @@ export interface TypeStat {
 export interface HourBucket {
   hour: number;
   servings: number;
+}
+/** Drinks logged in a given calendar month (0 = Jan), summed across all years. */
+export interface MonthBucket {
+  month: number;
+  servings: number;
+}
+/** Drinks logged so far this year against the same window a year ago. */
+export interface YtdComparison {
+  thisYear: number;
+  lastYear: number;
+  thisYearServings: number;
+  lastYearServings: number;
+  /** The day-of-year cutoff applied to both years, e.g. "24 Jun". */
+  throughLabel: string;
 }
 export interface DayCount {
   date: string;
@@ -85,6 +99,10 @@ export interface BeverageStats {
   // Time of day (sourced from when each drink was logged)
   hours: HourBucket[];
   peakHour: number | null;
+  // Across the year (by logical entry date)
+  monthly: MonthBucket[];
+  peakMonth: number | null;
+  ytd: YtdComparison | null;
   earliest: ClockExtreme | null;
   latest: ClockExtreme | null;
   // Per-day cadence
@@ -188,6 +206,9 @@ function compute(rows: DrinkRow[]): BeverageStats {
     totalSpent: 0,
     hours: Array.from({ length: 24 }, (_, hour) => ({ hour, servings: 0 })),
     peakHour: null,
+    monthly: Array.from({ length: 12 }, (_, month) => ({ month, servings: 0 })),
+    peakMonth: null,
+    ytd: null,
     earliest: null,
     latest: null,
     perDay: [],
@@ -229,7 +250,15 @@ function compute(rows: DrinkRow[]): BeverageStats {
   const uniqueNames = new Set<string>();
   const uniqueBeerNames = new Set<string>();
   const hours: HourBucket[] = Array.from({ length: 24 }, (_, hour) => ({ hour, servings: 0 }));
+  const monthly: MonthBucket[] = Array.from({ length: 12 }, (_, month) => ({ month, servings: 0 }));
   const perDayMap = new Map<string, number>();
+
+  // Year-to-date: count drinks up to today's month/day in this year vs last year.
+  const today = logicalToday();
+  const thisYear = Number(today.slice(0, 4));
+  const cutoffMd = today.slice(5); // "MM-DD"
+  let ytdThisServings = 0;
+  let ytdLastServings = 0;
   const placeMap = new Map<string, { servings: number; entries: number }>();
   const mapPoints: MapPoint[] = [];
   let earliest: ClockExtreme | null = null;
@@ -298,6 +327,14 @@ function compute(rows: DrinkRow[]): BeverageStats {
     }
 
     perDayMap.set(d.entry_date, (perDayMap.get(d.entry_date) ?? 0) + servings);
+
+    // Across the year — bucket by calendar month, and tally the YTD windows.
+    monthly[Number(d.entry_date.slice(5, 7)) - 1].servings += servings;
+    if (d.entry_date.slice(5) <= cutoffMd) {
+      const year = Number(d.entry_date.slice(0, 4));
+      if (year === thisYear) ytdThisServings += servings;
+      else if (year === thisYear - 1) ytdLastServings += servings;
+    }
 
     const place = [d.city, d.country].filter(Boolean).join(', ');
     if (place) {
@@ -381,6 +418,21 @@ function compute(rows: DrinkRow[]): BeverageStats {
   );
 
   const peakBucket = hours.reduce((best, h) => (h.servings > best.servings ? h : best), hours[0]);
+  const peakMonthBucket = monthly.reduce((best, m) => (m.servings > best.servings ? m : best), monthly[0]);
+
+  const ytd: YtdComparison | null =
+    ytdThisServings > 0 || ytdLastServings > 0
+      ? {
+          thisYear,
+          lastYear: thisYear - 1,
+          thisYearServings: ytdThisServings,
+          lastYearServings: ytdLastServings,
+          throughLabel: new Date(`${today}T00:00:00`).toLocaleDateString([], {
+            day: 'numeric',
+            month: 'short',
+          }),
+        }
+      : null;
 
   const byType: TypeStat[] = [...byTypeServings.entries()]
     .map(([type, servings]) => ({ type, servings, entries: byTypeEntries.get(type) ?? 0 }))
@@ -415,6 +467,9 @@ function compute(rows: DrinkRow[]): BeverageStats {
     totalSpent,
     hours,
     peakHour: peakBucket.servings > 0 ? peakBucket.hour : null,
+    monthly,
+    peakMonth: peakMonthBucket.servings > 0 ? peakMonthBucket.month : null,
+    ytd,
     earliest,
     latest,
     perDay,

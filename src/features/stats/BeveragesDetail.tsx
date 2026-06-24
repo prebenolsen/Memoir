@@ -2,6 +2,7 @@ import {
   Wine,
   Clock,
   CalendarDays,
+  CalendarRange,
   Flame,
   Trophy,
   MapPin,
@@ -71,6 +72,39 @@ function RankList({ rows, kind }: { rows: (NamedCount | NamedRating)[]; kind: 'c
   );
 }
 
+const MONTH_INITIALS = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];
+const MONTH_NAMES = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
+];
+
+/** Drinks per calendar month, summed across every year. */
+function MonthBars({ months, peak }: { months: { month: number; servings: number }[]; peak: number | null }) {
+  const max = Math.max(...months.map((m) => m.servings), 1);
+  return (
+    <div>
+      <div className="flex items-end gap-[3px]" style={{ height: 120 }}>
+        {months.map((m) => (
+          <div key={m.month} className="flex flex-1 flex-col items-center justify-end">
+            <div
+              className={`w-full rounded-t-sm ${m.month === peak ? 'bg-accent' : 'bg-accent/35'}`}
+              style={{ height: m.servings ? `${Math.max(4, (m.servings / max) * 110)}px` : 2 }}
+              title={`${MONTH_NAMES[m.month]} — ${m.servings} ${m.servings === 1 ? 'drink' : 'drinks'}`}
+            />
+          </div>
+        ))}
+      </div>
+      <div className="mt-1 flex gap-[3px] text-[10px] text-text-muted">
+        {months.map((m) => (
+          <span key={m.month} className="flex-1 text-center">
+            {MONTH_INITIALS[m.month]}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 /** A 24-hour distribution of when drinks were logged. */
 function HourBars({ hours, peak }: { hours: { hour: number; servings: number }[]; peak: number | null }) {
   const max = Math.max(...hours.map((h) => h.servings), 1);
@@ -117,10 +151,12 @@ export function BeveragesDetail({
   projectId,
   from,
   to,
+  isEverything,
 }: {
   projectId: string | null;
   from?: string;
   to?: string;
+  isEverything: boolean;
 }) {
   const { settings } = useProject();
   const cur = settings.currency;
@@ -288,6 +324,83 @@ export function BeveragesDetail({
           </p>
         </Card>
       </section>
+
+      {/* Across the year */}
+      {((isEverything && s.peakMonth != null) || s.ytd) && (
+        <section>
+          <SectionTitle icon={<CalendarRange size={15} />}>Across the year</SectionTitle>
+
+          {isEverything && s.peakMonth != null && (
+            <Card className="mb-3 p-4">
+              <p className="mb-3 text-xs font-medium uppercase tracking-wide text-text-muted">
+                Drinks by month
+              </p>
+              <MonthBars months={s.monthly} peak={s.peakMonth} />
+              <p className="mt-3 text-[15px] leading-relaxed text-text">
+                {MONTH_NAMES[s.peakMonth]} is your busiest month for drinking
+                <span className="text-text-muted"> — across every year on record.</span>
+              </p>
+            </Card>
+          )}
+
+          {s.ytd && (
+            <Card className="p-4">
+              <p className="mb-3 text-xs font-medium uppercase tracking-wide text-text-muted">
+                Year to date · through {s.ytd.throughLabel}
+              </p>
+              {(() => {
+                const ytd = s.ytd;
+                const max = Math.max(ytd.thisYearServings, ytd.lastYearServings, 1);
+                const delta = ytd.thisYearServings - ytd.lastYearServings;
+                const rows = [
+                  { year: ytd.thisYear, servings: ytd.thisYearServings, highlight: true },
+                  { year: ytd.lastYear, servings: ytd.lastYearServings, highlight: false },
+                ];
+                return (
+                  <>
+                    <div className="space-y-2.5">
+                      {rows.map((r) => (
+                        <div key={r.year}>
+                          <div className="mb-1 flex items-center justify-between text-sm">
+                            <span className="font-medium tabular-nums">{r.year}</span>
+                            <span className="text-text-muted">
+                              <span className="text-text">{r.servings}</span>{' '}
+                              {r.servings === 1 ? 'drink' : 'drinks'}
+                            </span>
+                          </div>
+                          <div className="h-2.5 overflow-hidden rounded-full bg-surface-alt">
+                            <div
+                              className={`h-full rounded-full ${r.highlight ? 'bg-accent' : 'bg-accent/35'}`}
+                              style={{ width: `${(r.servings / max) * 100}%` }}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="mt-3 text-[15px] leading-relaxed text-text">
+                      {delta === 0 ? (
+                        <>You’re drinking at exactly last year’s pace.</>
+                      ) : (
+                        <>
+                          That’s{' '}
+                          <strong className="text-accent">
+                            {Math.abs(delta)} {Math.abs(delta) === 1 ? 'drink' : 'drinks'}
+                          </strong>{' '}
+                          {delta > 0 ? 'more' : 'fewer'} than this point last year
+                          {ytd.lastYearServings > 0 && (
+                            <> ({Math.round((Math.abs(delta) / ytd.lastYearServings) * 100)}%)</>
+                          )}
+                          .
+                        </>
+                      )}
+                    </p>
+                  </>
+                );
+              })()}
+            </Card>
+          )}
+        </section>
+      )}
 
       {/* Sessions */}
       {s.sessionCount > 0 && (

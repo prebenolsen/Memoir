@@ -47,7 +47,7 @@ export function StatsDetailScreen() {
       {viewProjectId === undefined ? (
         <p className="py-8 text-center text-sm text-text-muted">Loading…</p>
       ) : meta?.slug === 'beverages' ? (
-        <BeveragesDetail projectId={viewProjectId} from={from} to={to} />
+        <BeveragesDetail projectId={viewProjectId} from={from} to={to} isEverything={isEverything} />
       ) : (
         <EmptyState
           icon={Construction}

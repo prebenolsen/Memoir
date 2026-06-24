@@ -3,7 +3,7 @@ import { Sheet } from '@/components/ui/Sheet';
 import { Button } from '@/components/ui/Button';
 import { Field, Textarea } from '@/components/ui/Input';
 import { Combobox, type ComboValue } from '@/components/ui/Combobox';
-import { RatingInput } from '@/components/ui/RatingInput';
+import { RatingField } from './RatingField';
 import { CurrencyInput } from '@/components/ui/CurrencyInput';
 import { DateField } from '@/components/ui/DateField';
 import { useProject } from '@/context/ProjectProvider';
@@ -108,9 +108,7 @@ export function ActivityEntrySheet({
           />
         </Field>
 
-        <Field label="Rating">
-          <RatingInput value={rating} onChange={setRating} scale={settings.rating_scale} />
-        </Field>
+        <RatingField value={rating} onChange={setRating} />
 
         <div className="grid grid-cols-2 gap-3">
           <Field label="Cost">

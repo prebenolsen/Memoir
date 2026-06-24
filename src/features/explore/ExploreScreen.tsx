@@ -13,6 +13,8 @@ import { useProject } from '@/context/ProjectProvider';
 import { useItemList, type ItemWithStats } from '@/hooks/useItems';
 import { useLatestEntries } from '@/features/explore/hooks/useLatestEntries';
 import { useFriendFavorites, useFriendDrinkFavorites } from '@/features/explore/hooks/useFriendFavorites';
+import { FriendsStrip, FriendDetailSheet, AllFriendsSheet, type FriendRef } from '@/features/explore/FriendFavorites';
+import { useFriends } from '@/hooks/useFriends';
 import { getCurrentPosition, distanceMeters, type Coords, GeoError } from '@/lib/geo';
 import { formatDate, titleCase } from '@/lib/format';
 import type { RatingScale } from '@/types/db';
@@ -312,6 +314,9 @@ export function ExploreScreen() {
   const [mode, setMode] = useState<Mode>('nearby');
   const [coords, setCoords] = useState<Coords | null>(null);
   const [seeAll, setSeeAll] = useState<ExploreKind | null>(null);
+  const [friendDetail, setFriendDetail] = useState<FriendRef | null>(null);
+  const [allFriendsOpen, setAllFriendsOpen] = useState(false);
+  const { friends } = useFriends();
 
   useEffect(() => {
     if (mode !== 'nearby' || coords) return;
@@ -365,6 +370,14 @@ export function ExploreScreen() {
         ))}
       </div>
 
+      {mode === 'friends' && (
+        <FriendsStrip
+          friends={friends}
+          onPick={setFriendDetail}
+          onSeeAll={() => setAllFriendsOpen(true)}
+        />
+      )}
+
       {mode === 'nearby' && !coords ? (
         <EmptyState icon={Compass} title="Finding places near you…" subtitle="Allow location to see what's good nearby." />
       ) : (
@@ -392,6 +405,21 @@ export function ExploreScreen() {
           />
         )}
       </Sheet>
+
+      <FriendDetailSheet
+        friend={friendDetail}
+        scale={scale}
+        onClose={() => setFriendDetail(null)}
+      />
+      <AllFriendsSheet
+        open={allFriendsOpen}
+        friends={friends}
+        onClose={() => setAllFriendsOpen(false)}
+        onPick={(f) => {
+          setAllFriendsOpen(false);
+          setFriendDetail(f);
+        }}
+      />
     </div>
   );
 }
