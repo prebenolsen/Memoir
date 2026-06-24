@@ -23,9 +23,10 @@ Nothing is ever overwritten or deleted, so the full price history stays queryabl
 
 ## One-time setup
 
-If you haven't already, run [`migrations/0002_currencies.sql`](migrations/0002_currencies.sql)
-once in the **Supabase dashboard → SQL Editor**. That creates the table, the helper
-function, and seeds NOK/EUR/USD with starting placeholder rates.
+If you haven't already, run [`migrations/0001_init.sql`](migrations/0001_init.sql)
+once in the **Supabase dashboard → SQL Editor**. That creates the currencies table,
+the helper function, and seeds NOK/EUR/USD with starting placeholder rates (along
+with the rest of the schema).
 
 ## Updating a rate (the normal case)
 

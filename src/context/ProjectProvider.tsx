@@ -37,6 +37,11 @@ interface ProjectContextValue {
     /** Currency for this project; stored as a settings override. */
     currency?: Currency | null;
   }) => Promise<Project>;
+  /** Persist a project's permanent home location (captured on the first "Home" drink). */
+  updateProjectHome: (
+    projectId: string,
+    home: { latitude: number; longitude: number; city: string | null; country: string | null },
+  ) => Promise<void>;
   refetchProjects: () => void;
 }
 
@@ -123,6 +128,20 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     return data as Project;
   };
 
+  const updateProjectHome: ProjectContextValue['updateProjectHome'] = async (projectId, home) => {
+    const { error } = await supabase
+      .from('memoir_projects')
+      .update({
+        home_latitude: home.latitude,
+        home_longitude: home.longitude,
+        home_city: home.city,
+        home_country: home.country,
+      })
+      .eq('id', projectId);
+    if (error) throw error;
+    await qc.invalidateQueries({ queryKey: ['projects', user?.id] });
+  };
+
   const project = useMemo(
     () => projects.find((p) => p.id === projectId) ?? null,
     [projects, projectId],
@@ -157,6 +176,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     setProject,
     setDate,
     createProject,
+    updateProjectHome,
     refetchProjects: () => void qc.invalidateQueries({ queryKey: ['projects', user?.id] }),
   };
 

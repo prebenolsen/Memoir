@@ -5,6 +5,8 @@ export type SnackType = 'ice_cream' | 'pastry' | 'cake' | 'candy' | 'dessert' | 
 export type FoodSource = 'home' | 'venue';
 export type DrinkType = 'beer' | 'wine' | 'cocktail' | 'spirit' | 'other';
 export type WineStyle = 'red' | 'white' | 'rose' | 'sparkling';
+/** Where a drink was had: at home, a raw GPS spot, or a named venue. */
+export type DrinkLocationKind = 'home' | 'location' | 'venue';
 export type PurchaseCategory = 'clothes' | 'souvenir' | 'electronics' | 'other';
 
 export type DateFormat = 'DD.MM.YYYY' | 'MM/DD/YYYY' | 'YYYY-MM-DD';
@@ -21,6 +23,11 @@ export interface Project {
   end_date: string | null;
   is_default: boolean;
   settings_override: Partial<Settings> | null;
+  /** Home coordinates remembered the first time a "Home" drink is logged. */
+  home_latitude: number | null;
+  home_longitude: number | null;
+  home_city: string | null;
+  home_country: string | null;
   created_at: string;
 }
 
@@ -108,6 +115,9 @@ export interface DrinkEntry {
   drink_type: DrinkType;
   wine_style: WineStyle | null;
   abv: number | null;
+  location_kind: DrinkLocationKind | null;
+  venue_id: string | null;
+  venue_rating: number | null;
   count_033l: number;
   count_04l: number;
   count_05l: number;
@@ -243,6 +253,12 @@ export function snackTypeLabel(t: SnackType): string {
   return SNACK_TYPES.find((s) => s.value === t)?.label ?? t;
 }
 export const DRINK_TYPES: DrinkType[] = ['beer', 'wine', 'cocktail', 'spirit', 'other'];
+
+export const DRINK_LOCATION_KINDS: { value: DrinkLocationKind; label: string }[] = [
+  { value: 'home', label: 'Home' },
+  { value: 'location', label: 'Location' },
+  { value: 'venue', label: 'Venue' },
+];
 
 export const WINE_STYLES: { value: WineStyle; label: string }[] = [
   { value: 'red', label: 'Red' },

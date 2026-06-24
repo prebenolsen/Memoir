@@ -11,6 +11,22 @@ This project uses [Semantic Versioning](https://semver.org/) (`MAJOR.MINOR.PATCH
 The current version is tracked in [`VERSION.md`](VERSION.md) and shown at the bottom
 of the in-app **Profile** screen.
 
+## [17.6.0] - 2026-06-24
+
+### Added
+- **"Where did you drink?" now has Home, Location, and Venue.** Adding a drink lets
+  you say exactly where you had it:
+  - **Home** — just tap it. The first time you use Home in a project, Memoir asks for
+    your location once and remembers it as that project's home, so every at-home drink
+    still shows up on your map without asking again.
+  - **Location** — a quick GPS pin for the beach, a park, anywhere with no name. Tap
+    **Use my location**.
+  - **Venue** — pick a bar or pub by name, from **Find nearby venues**, or from the
+    map with **Find venues** — the same place-finding you already have for food.
+- **Rate the venue, not just the drink.** When you tag a drink to a venue you can give
+  the venue its own rating, separate from the beer. These ratings blend with your food
+  visits, so each place's overall score reflects everywhere you've eaten *and* drunk.
+
 ## [17.5.0] - 2026-06-24
 
 ### Changed

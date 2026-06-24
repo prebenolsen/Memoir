@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { MapContainer, TileLayer, useMap, useMapEvents } from 'react-leaflet';
-import { MapPin, UtensilsCrossed, X } from 'lucide-react';
+import { MapPin, UtensilsCrossed, X, type LucideIcon } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 import { Sheet } from '@/components/ui/Sheet';
 import { Button } from '@/components/ui/Button';
@@ -8,8 +8,13 @@ import { getCurrentPosition, GeoError } from '@/lib/geo';
 import { findNearbyFoodVenues, NearbyError, type NearbyPlace } from '@/lib/nearbyPlaces';
 import type { Map as LeafletMap, LatLng } from 'leaflet';
 
-const RADIUS = 200;
 const DEFAULT_CENTER: [number, number] = [48.8566, 2.3522]; // Paris fallback
+
+type Finder = (
+  latitude: number,
+  longitude: number,
+  opts: { radius: number },
+) => Promise<NearbyPlace[]>;
 
 function formatDistance(m: number): string {
   return m < 1000 ? `${m} m` : `${(m / 1000).toFixed(1)} km`;
@@ -42,10 +47,21 @@ export function MapRestaurantPicker({
   open,
   onClose,
   onSelect,
+  find = findNearbyFoodVenues,
+  radius = 200,
+  title = 'Find venues',
+  Icon = UtensilsCrossed,
 }: {
   open: boolean;
   onClose: () => void;
   onSelect: (place: NearbyPlace) => void;
+  /** Place lookup to run on the searched map area. Defaults to food venues. */
+  find?: Finder;
+  /** Search radius in metres around the map centre. */
+  radius?: number;
+  title?: string;
+  /** Icon shown on each result row. */
+  Icon?: LucideIcon;
 }) {
   const centerRef = useRef<LatLng | null>(null);
   const mapRef = useRef<LeafletMap | null>(null);
@@ -68,7 +84,7 @@ export function MapRestaurantPicker({
     if (!center) return;
     setSearch({ status: 'loading' });
     try {
-      const places = await findNearbyFoodVenues(center.lat, center.lng, { radius: RADIUS });
+      const places = await find(center.lat, center.lng, { radius });
       setSearch({ status: 'ready', places });
     } catch (err) {
       const message =
@@ -77,12 +93,12 @@ export function MapRestaurantPicker({
           : 'Something went wrong finding venues.';
       setSearch({ status: 'error', message });
     }
-  }, []);
+  }, [find, radius]);
 
   const reset = useCallback(() => setSearch({ status: 'idle' }), []);
 
   return (
-    <Sheet open={open} onClose={onClose} title="Find venues">
+    <Sheet open={open} onClose={onClose} title={title}>
       {/* Map */}
       <div className="relative -mx-4 h-64 overflow-hidden">
         {open && (
@@ -116,7 +132,7 @@ export function MapRestaurantPicker({
 
       <div className="mt-3 flex gap-2">
         <Button block onClick={handleSearch} disabled={search.status === 'loading'}>
-          {search.status === 'loading' ? 'Searching…' : `Search here (${RADIUS} m)`}
+          {search.status === 'loading' ? 'Searching…' : `Search here (${radius} m)`}
         </Button>
         {search.status !== 'idle' && (
           <Button variant="secondary" onClick={reset} aria-label="Clear results">
@@ -131,7 +147,7 @@ export function MapRestaurantPicker({
 
       {search.status === 'ready' && search.places.length === 0 && (
         <p className="mt-4 text-center text-sm text-text-muted">
-          No venues found within {RADIUS} m of that spot.
+          No venues found within {radius} m of that spot.
         </p>
       )}
 
@@ -148,7 +164,7 @@ export function MapRestaurantPicker({
                 className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left hover:bg-surface-alt"
               >
                 <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-surface-alt text-text-muted">
-                  <UtensilsCrossed size={16} />
+                  <Icon size={16} />
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-[15px] font-medium text-text">

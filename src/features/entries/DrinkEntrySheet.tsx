@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { MapPin, ScanLine, X } from 'lucide-react';
+import { Beer, Home, MapPin, ScanLine, X } from 'lucide-react';
 import { Sheet } from '@/components/ui/Sheet';
 import { Button } from '@/components/ui/Button';
 import { Field, Textarea } from '@/components/ui/Input';
@@ -19,17 +19,19 @@ import { supabase } from '@/lib/supabase';
 import { combineDateTime, newId, nowTime, timeFromISO, titleCase, baseDrinkName, formatAbv } from '@/lib/format';
 import { cn } from '@/lib/cn';
 import { getCurrentPosition, reverseGeocode, GeoError } from '@/lib/geo';
-import type { NearbyVenue } from '@/lib/nearbyPlaces';
+import { findNearbyVenues, type NearbyPlace } from '@/lib/nearbyPlaces';
 import {
   BEER_SIZES,
   BEER_EMPTY_NAME,
   COCKTAIL_SUGGESTIONS,
   DEFAULT_ABV,
+  DRINK_LOCATION_KINDS,
   DRINK_NAME_PLACEHOLDERS,
   DRINK_TYPES,
   WINE_EMPTY_NAMES,
   WINE_STYLES,
   type DrinkEntry,
+  type DrinkLocationKind,
   type DrinkType,
   type WineStyle,
 } from '@/types/db';
@@ -38,6 +40,7 @@ import { type BarcodeProduct } from '@/lib/barcodeProduct';
 import { useEditingEntry } from './hooks/useEditingEntry';
 import { BarcodeScanner } from './BarcodeScanner';
 import { NearbyVenuePicker } from './NearbyVenuePicker';
+import { MapRestaurantPicker } from './MapRestaurantPicker';
 
 export function DrinkEntrySheet({
   open,
@@ -50,7 +53,7 @@ export function DrinkEntrySheet({
   editId: string | null;
   preFill?: DrinkPreFill | null;
 }) {
-  const { activeProject: project, date, settings } = useProject();
+  const { activeProject: project, date, settings, updateProjectHome } = useProject();
   const { update: updateSettings } = useSettings();
   const { save } = useEntryMutations();
   const { data: editing } = useEditingEntry<DrinkEntry>('memoir_drink_entries', editId);
@@ -67,6 +70,10 @@ export function DrinkEntrySheet({
   const [rating, setRating] = useState<number | null>(null);
   const [cost, setCost] = useState<number | null>(null);
   const [notes, setNotes] = useState('');
+  const [locationKind, setLocationKind] = useState<DrinkLocationKind>('home');
+  const [venue, setVenue] = useState<ComboValue | null>(null);
+  const [pickedVenue, setPickedVenue] = useState<NearbyPlace | null>(null);
+  const [venueRating, setVenueRating] = useState<number | null>(null);
   const [city, setCity] = useState<string | null>(null);
   const [country, setCountry] = useState<string | null>(null);
   const [lat, setLat] = useState<number | null>(null);
@@ -76,6 +83,7 @@ export function DrinkEntrySheet({
   const [busy, setBusy] = useState(false);
   const [scannerOpen, setScannerOpen] = useState(false);
   const [venuePickerOpen, setVenuePickerOpen] = useState(false);
+  const [mapPickerOpen, setMapPickerOpen] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -92,6 +100,14 @@ export function DrinkEntrySheet({
       setRating(editing.rating);
       setCost(editing.cost);
       setNotes(editing.notes ?? '');
+      // Older entries predate location_kind: infer from what they carry.
+      setLocationKind(
+        editing.location_kind ??
+          (editing.venue_id ? 'venue' : editing.latitude != null ? 'location' : 'home'),
+      );
+      setVenue(null);
+      setPickedVenue(null);
+      setVenueRating(editing.venue_rating ?? null);
       setCity(editing.city ?? null);
       setCountry(editing.country ?? null);
       setLat(editing.latitude ?? null);
@@ -128,6 +144,10 @@ export function DrinkEntrySheet({
       setRating(null);
       setCost(null);
       setNotes('');
+      setLocationKind('home');
+      setVenue(null);
+      setPickedVenue(null);
+      setVenueRating(null);
       setCity(null);
       setCountry(null);
       setLat(null);
@@ -135,6 +155,23 @@ export function DrinkEntrySheet({
       setGeoError(null);
     }
   }, [open, editing, editId, date, preFill]);
+
+  // Load the linked venue's name when editing a venue-tagged drink.
+  useEffect(() => {
+    if (!editing?.venue_id) return;
+    let cancelled = false;
+    void supabase
+      .from('memoir_venues')
+      .select('id,name')
+      .eq('id', editing.venue_id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!cancelled && data) setVenue({ id: data.id, name: data.name });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [editing]);
 
   const isBeer = drinkType === 'beer';
   const isWine = drinkType === 'wine';
@@ -212,16 +249,81 @@ export function DrinkEntrySheet({
     }
   };
 
-  const onVenuePicked = (venue: NearbyVenue) => {
-    void applyGpsLocation(venue.latitude, venue.longitude);
-  };
-
   const clearLocation = () => {
     setCity(null);
     setCountry(null);
     setLat(null);
     setLon(null);
     setGeoError(null);
+  };
+
+  // Apply the project's stored home, capturing & remembering it on first use.
+  const applyHome = async () => {
+    if (!project) return;
+    if (project.home_latitude != null && project.home_longitude != null) {
+      setLat(project.home_latitude);
+      setLon(project.home_longitude);
+      setCity(project.home_city);
+      setCountry(project.home_country);
+      return;
+    }
+    setGeoLoading(true);
+    setGeoError(null);
+    try {
+      const { latitude, longitude } = await getCurrentPosition();
+      let info = { city: null as string | null, country: null as string | null };
+      try {
+        info = await reverseGeocode(latitude, longitude);
+      } catch {
+        // Coordinates are enough; city/country are a nicety.
+      }
+      await updateProjectHome(project.id, { latitude, longitude, ...info });
+      setLat(latitude);
+      setLon(longitude);
+      setCity(info.city);
+      setCountry(info.country);
+    } catch (err) {
+      setGeoError(err instanceof GeoError ? err.message : 'Could not get your location.');
+    } finally {
+      setGeoLoading(false);
+    }
+  };
+
+  const changeLocationKind = (kind: DrinkLocationKind) => {
+    setLocationKind(kind);
+    setGeoError(null);
+    clearLocation();
+    if (kind === 'home') void applyHome();
+    if (kind !== 'venue') {
+      setVenue(null);
+      setPickedVenue(null);
+      setVenueRating(null);
+    }
+  };
+
+  // A venue chosen from the nearby list or map: name + coordinates in one tap.
+  const onVenuePicked = (place: NearbyPlace) => {
+    setVenue({ id: null, name: place.name });
+    setPickedVenue(place);
+    void applyGpsLocation(place.latitude, place.longitude);
+  };
+
+  // An existing saved venue picked from the combobox: pull its stored coordinates.
+  const onVenueChange = (v: ComboValue | null) => {
+    setVenue(v);
+    setPickedVenue(null);
+    clearLocation();
+    if (!v?.id) return;
+    void supabase
+      .from('memoir_venues')
+      .select('latitude,longitude')
+      .eq('id', v.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data?.latitude != null && data?.longitude != null) {
+          void applyGpsLocation(data.latitude, data.longitude);
+        }
+      });
   };
 
   const submit = async () => {
@@ -244,6 +346,26 @@ export function DrinkEntrySheet({
       const drink_item_id = await resolveItem('memoir_drink_items', selection, {
         drink_type: drinkType,
       });
+
+      // Resolve the venue only in Venue mode; carry coordinates from a freshly
+      // picked place so the saved venue keeps its location (deduped by osm id).
+      let venue_id: string | null = null;
+      if (locationKind === 'venue' && venue?.name?.trim()) {
+        const placeMatches = !!pickedVenue && pickedVenue.name === venue.name;
+        venue_id = await resolveItem(
+          'memoir_venues',
+          venue,
+          placeMatches && pickedVenue
+            ? {
+                latitude: pickedVenue.latitude,
+                longitude: pickedVenue.longitude,
+                address: pickedVenue.address,
+                osm_id: pickedVenue.osmId,
+              }
+            : {},
+        );
+      }
+
       const sizeColumns = Object.fromEntries(
         BEER_SIZES.map((s) => [s.column, isBeer && s.key === beerSize ? beerCount : 0]),
       );
@@ -260,6 +382,9 @@ export function DrinkEntrySheet({
         rating,
         cost,
         notes: notes || null,
+        location_kind: locationKind,
+        venue_id,
+        venue_rating: locationKind === 'venue' ? venueRating : null,
         city: city || null,
         country: country || null,
         latitude: lat,
@@ -373,49 +498,98 @@ export function DrinkEntrySheet({
 
         <Field label="Where did you drink?">
           <div className="space-y-2">
-            {hasLocation && (
-              <div className="flex items-center justify-between rounded-xl bg-surface-alt px-3.5 py-2.5">
-                <span className="flex items-center gap-2 text-[15px]">
-                  <MapPin size={15} className="text-primary" />
-                  <span>
-                    {[city, country].filter(Boolean).join(', ')}
-                  </span>
-                </span>
-                <button
-                  type="button"
-                  onClick={clearLocation}
-                  className="text-text-muted hover:text-text"
-                  aria-label="Clear location"
-                >
-                  <X size={16} />
-                </button>
+            <SegmentedControl
+              value={locationKind}
+              onChange={changeLocationKind}
+              options={DRINK_LOCATION_KINDS}
+            />
+
+            {geoError && <p className="text-xs text-danger">{geoError}</p>}
+
+            {locationKind === 'home' && (
+              <div className="flex items-center gap-2 rounded-xl bg-surface-alt px-3.5 py-2.5 text-[15px]">
+                <Home size={15} className="text-primary" />
+                {geoLoading ? (
+                  <span className="text-text-muted">Saving this project&rsquo;s home…</span>
+                ) : hasLocation ? (
+                  <span>Home · {[city, country].filter(Boolean).join(', ')}</span>
+                ) : (
+                  <span className="text-text-muted">Home</span>
+                )}
               </div>
             )}
-            {geoError && <p className="text-xs text-danger">{geoError}</p>}
-            <div className="flex gap-2">
-              <Button
-                variant="secondary"
-                size="sm"
-                type="button"
-                onClick={useMyLocation}
-                disabled={geoLoading}
-              >
-                <MapPin size={16} />
-                {geoLoading ? 'Locating…' : 'Use my location'}
-              </Button>
-              <Button
-                variant="secondary"
-                size="sm"
-                type="button"
-                onClick={() => setVenuePickerOpen(true)}
-                disabled={geoLoading}
-              >
-                <MapPin size={16} />
-                Find nearby
-              </Button>
-            </div>
+
+            {locationKind === 'location' && (
+              <>
+                {hasLocation && (
+                  <div className="flex items-center justify-between rounded-xl bg-surface-alt px-3.5 py-2.5">
+                    <span className="flex items-center gap-2 text-[15px]">
+                      <MapPin size={15} className="text-primary" />
+                      <span>{[city, country].filter(Boolean).join(', ')}</span>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={clearLocation}
+                      className="text-text-muted hover:text-text"
+                      aria-label="Clear location"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                )}
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  type="button"
+                  onClick={useMyLocation}
+                  disabled={geoLoading}
+                >
+                  <MapPin size={16} />
+                  {geoLoading ? 'Locating…' : 'Use my location'}
+                </Button>
+              </>
+            )}
+
+            {locationKind === 'venue' && (
+              <>
+                <Combobox
+                  table="memoir_venues"
+                  value={venue}
+                  onChange={onVenueChange}
+                  placeholder="e.g. The Dead Rabbit"
+                />
+                <div className="flex gap-2">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    type="button"
+                    onClick={() => setVenuePickerOpen(true)}
+                    disabled={geoLoading}
+                  >
+                    <MapPin size={16} />
+                    Find nearby venues
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    type="button"
+                    onClick={() => setMapPickerOpen(true)}
+                    disabled={geoLoading}
+                  >
+                    <MapPin size={16} />
+                    Find venues
+                  </Button>
+                </div>
+              </>
+            )}
           </div>
         </Field>
+
+        {locationKind === 'venue' && venue?.name?.trim() && (
+          <Field label="Rate the venue" hint="Separate from the drink rating above.">
+            <RatingField value={venueRating} onChange={setVenueRating} />
+          </Field>
+        )}
 
         <RatingField value={rating} onChange={setRating} />
 
@@ -453,6 +627,16 @@ export function DrinkEntrySheet({
         open={venuePickerOpen}
         onClose={() => setVenuePickerOpen(false)}
         onSelect={onVenuePicked}
+      />
+
+      <MapRestaurantPicker
+        open={mapPickerOpen}
+        onClose={() => setMapPickerOpen(false)}
+        onSelect={onVenuePicked}
+        find={findNearbyVenues}
+        radius={500}
+        title="Find venues"
+        Icon={Beer}
       />
     </Sheet>
   );

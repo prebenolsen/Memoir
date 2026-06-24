@@ -98,6 +98,11 @@ create table memoir_projects (
   end_date          date,
   is_default        boolean not null default false,
   settings_override jsonb,
+  -- Per-project home location, captured once and reused for every "Home" drink.
+  home_latitude     double precision,
+  home_longitude    double precision,
+  home_city         text,
+  home_country      text,
   created_at        timestamptz not null default now()
 );
 create index memoir_projects_user_idx on memoir_projects (user_id);
@@ -162,12 +167,19 @@ create table memoir_drink_entries (
   notes         text,
   city          text,
   country       text,
+  -- Raw GPS fix the drink was logged at, so the Beverages stats screen can plot it.
   latitude      double precision,
   longitude     double precision,
+  -- "Where did you drink?" mode: Home (project's home coords), Location (raw GPS),
+  -- or Venue (a bar/pub linked below, with its own rating independent of the drink).
+  location_kind text check (location_kind is null or location_kind in ('home', 'location', 'venue')),
+  venue_id      uuid references memoir_venues(id) on delete set null,
+  venue_rating  int  check (venue_rating between 1 and 10),
   created_at    timestamptz not null default now()
 );
-create index memoir_drink_entries_day_idx  on memoir_drink_entries (user_id, project_id, entry_date);
-create index memoir_drink_entries_item_idx on memoir_drink_entries (drink_item_id);
+create index memoir_drink_entries_day_idx   on memoir_drink_entries (user_id, project_id, entry_date);
+create index memoir_drink_entries_item_idx  on memoir_drink_entries (drink_item_id);
+create index memoir_drink_entries_venue_idx on memoir_drink_entries (venue_id);
 
 create table memoir_activity_entries (
   id               uuid primary key default gen_random_uuid(),
@@ -175,7 +187,6 @@ create table memoir_activity_entries (
   project_id       uuid not null references memoir_projects(id) on delete cascade,
   entry_date       date not null,
   activity_item_id uuid references memoir_activity_items(id) on delete set null,
-  description      text,
   rating           int  check (rating between 1 and 10),
   cost             numeric(12, 2),
   notes            text,
@@ -222,13 +233,19 @@ from memoir_food_items fi
 left join memoir_food_entries fe on fe.food_item_id = fi.id
 group by fi.id, fi.user_id, fi.default_rating;
 
--- Overall per-venue stats (visit count + blended avg across all meal types).
+-- Overall per-venue stats: visit count + blended avg across every time the venue
+-- was eaten or drunk at (food meals + drink venue ratings), all meal types.
 create or replace view memoir_venue_stats with (security_invoker = true) as
+with visits as (
+  select venue_id, rating                 from memoir_food_entries  where venue_id is not null
+  union all
+  select venue_id, venue_rating as rating from memoir_drink_entries where venue_id is not null
+)
 select v.id as venue_id, v.user_id,
-  count(fe.id) as visits,
-  coalesce(avg(fe.rating), v.default_rating) as avg_rating
+  count(vi.venue_id) as visits,
+  coalesce(avg(vi.rating), v.default_rating) as avg_rating
 from memoir_venues v
-left join memoir_food_entries fe on fe.venue_id = v.id
+left join visits vi on vi.venue_id = v.id
 group by v.id, v.user_id, v.default_rating;
 
 -- Per-meal-type breakdown — lets the app surface that a venue scores
@@ -387,6 +404,138 @@ as $$
   group by v.user_id, p.username, v.id, v.name, v.latitude, v.longitude, v.address, v.default_rating;
 $$;
 grant execute on function memoir_friend_venue_favorites() to authenticated;
+
+-- Friends' beverage favorites — mirrors memoir_friend_venue_favorites so the
+-- Explore page can show friends' favorite drinks alongside their venues.
+-- Security-definer but constrained to accepted friends of auth.uid(); only
+-- aggregates are returned, never raw entries.
+create or replace function memoir_friend_drink_favorites()
+returns table (
+  friend_id       uuid,
+  friend_username text,
+  drink_id        uuid,
+  name            text,
+  drink_type      text,
+  avg_rating      numeric,
+  count           bigint
+)
+language sql stable security definer set search_path = public
+as $$
+  select
+    d.user_id as friend_id,
+    p.username as friend_username,
+    d.id as drink_id,
+    d.name,
+    d.drink_type::text as drink_type,
+    coalesce(avg(de.rating), d.default_rating) as avg_rating,
+    count(de.id) as count
+  from memoir_friendships f
+  join memoir_drink_items d
+    on d.user_id = case when f.requester_id = auth.uid() then f.addressee_id else f.requester_id end
+  left join memoir_drink_entries de on de.drink_item_id = d.id
+  left join memoir_profiles p on p.user_id = d.user_id
+  where f.status = 'accepted'
+    and (f.requester_id = auth.uid() or f.addressee_id = auth.uid())
+  group by d.user_id, p.username, d.id, d.name, d.drink_type, d.default_rating;
+$$;
+grant execute on function memoir_friend_drink_favorites() to authenticated;
+
+-- ---------------------------------------------------------------------------
+-- Currencies — shared reference data (SCD2 / slowly-changing dimension)
+--
+-- NOT per-user: every user reads the same rates. The owner keeps rates current
+-- by running SQL from the Supabase SQL Editor — the app only ever reads. Each
+-- currency keeps every rate it has ever had; the "current" rate is the row whose
+-- __end_at is NULL. See supabase/CURRENCIES.md for the update guide.
+-- ---------------------------------------------------------------------------
+create table memoir_currencies (
+  id            uuid primary key default gen_random_uuid(),
+  code          text not null,                       -- ISO code, e.g. 'NOK', 'EUR', 'USD'
+  name          text not null,                       -- human name, e.g. 'Norwegian krone'
+  symbol        text not null,                       -- display symbol, e.g. 'kr', '€', '$'
+  symbol_before boolean not null default false,      -- true => '€10', false => '10 kr'
+  rate_to_nok   numeric(18, 6) not null,             -- how many NOK = 1 unit of this currency
+  __start_at    timestamptz not null default now(),  -- when this rate took effect
+  __end_at      timestamptz                          -- NULL = current rate; set = superseded
+);
+-- At most one current (open) row per currency code.
+create unique index memoir_currencies_current_uniq
+  on memoir_currencies (code) where __end_at is null;
+-- Fast history lookups by code.
+create index memoir_currencies_code_idx on memoir_currencies (code);
+
+-- RLS: any signed-in user may READ; nobody writes through the API. Updates happen
+-- only from the SQL Editor (the postgres role bypasses RLS).
+alter table memoir_currencies enable row level security;
+alter table memoir_currencies force row level security;
+grant select on memoir_currencies to authenticated;
+
+create policy currencies_select on memoir_currencies
+  for select to authenticated using (true);
+
+-- Convenience view: just the current rates (one row per currency). The app reads
+-- this to populate the currency picker.
+create or replace view memoir_currencies_current with (security_invoker = true) as
+select id, code, name, symbol, symbol_before, rate_to_nok, __start_at
+from memoir_currencies
+where __end_at is null;
+grant select on memoir_currencies_current to authenticated;
+
+-- Helper: set a currency's rate the SCD2 way in one call. Closes the current open
+-- row (if any) and inserts a new open row, carrying forward name/symbol unless
+-- overridden. For a brand-new currency, pass name + symbol too. Owner-only — not
+-- granted to the app role. e.g.:
+--   select memoir_set_currency_rate('EUR', 11.62);
+--   select memoir_set_currency_rate('GBP', 13.40, 'British pound', '£', true);
+create or replace function memoir_set_currency_rate(
+  p_code          text,
+  p_rate          numeric,
+  p_name          text    default null,
+  p_symbol        text    default null,
+  p_symbol_before boolean default null
+) returns void
+language plpgsql
+as $$
+declare
+  cur memoir_currencies%rowtype;
+begin
+  select * into cur from memoir_currencies where code = p_code and __end_at is null;
+
+  if found then
+    -- Same rate? Nothing to do — don't churn history.
+    if cur.rate_to_nok = p_rate
+       and (p_name is null or p_name = cur.name)
+       and (p_symbol is null or p_symbol = cur.symbol)
+       and (p_symbol_before is null or p_symbol_before = cur.symbol_before) then
+      return;
+    end if;
+    -- Close the current version, then open a new one (metadata carried forward).
+    update memoir_currencies set __end_at = now() where id = cur.id;
+    insert into memoir_currencies (code, name, symbol, symbol_before, rate_to_nok)
+    values (
+      p_code,
+      coalesce(p_name, cur.name),
+      coalesce(p_symbol, cur.symbol),
+      coalesce(p_symbol_before, cur.symbol_before),
+      p_rate
+    );
+  else
+    -- First time we've seen this currency: name + symbol are required.
+    if p_name is null or p_symbol is null then
+      raise exception 'New currency % needs a name and symbol on first insert', p_code;
+    end if;
+    insert into memoir_currencies (code, name, symbol, symbol_before, rate_to_nok)
+    values (p_code, p_name, p_symbol, coalesce(p_symbol_before, false), p_rate);
+  end if;
+end $$;
+
+-- Seed the three currencies the app ships with. NOK is the base (rate = 1); the
+-- EUR/USD rates are starting placeholders — update them with memoir_set_currency_rate.
+insert into memoir_currencies (code, name, symbol, symbol_before, rate_to_nok) values
+  ('NOK', 'Norwegian krone', 'kr', false, 1.000000),
+  ('EUR', 'Euro',            '€',  true,  11.500000),
+  ('USD', 'US dollar',       '$',  true,  10.500000)
+on conflict do nothing;
 
 -- ---------------------------------------------------------------------------
 -- Account deletion RPC
