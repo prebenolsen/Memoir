@@ -130,7 +130,6 @@ export interface ActivityEntry {
   project_id: string;
   entry_date: string;
   activity_item_id: string | null;
-  description: string | null;
   rating: number | null;
   cost: number | null;
   notes: string | null;

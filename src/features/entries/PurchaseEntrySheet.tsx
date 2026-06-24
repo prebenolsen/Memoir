@@ -122,7 +122,7 @@ export function PurchaseEntrySheet({
           </Field>
         </div>
 
-        <Field label="Notes">
+        <Field label="Notes" hint="Private — only you can see this. Never shared with friends.">
           <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} />
         </Field>
       </div>

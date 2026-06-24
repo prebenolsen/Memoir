@@ -41,7 +41,6 @@ const CONFIGS: Record<ItemKind, LatestConfig | null> = {
     join: 'memoir_activity_items(name)',
     namePath: 'memoir_activity_items',
     requireColumn: 'activity_item_id',
-    fallbackColumn: 'description',
   },
 };
 

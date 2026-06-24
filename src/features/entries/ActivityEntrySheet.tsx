@@ -76,7 +76,6 @@ export function ActivityEntrySheet({
         entry_date: entryDate,
         created_at: combineDateTime(entryDate, entryTime, editing?.created_at),
         activity_item_id,
-        description: null,
         rating,
         cost,
         notes: notes || null,
@@ -129,7 +128,7 @@ export function ActivityEntrySheet({
           </Field>
         </div>
 
-        <Field label="Notes">
+        <Field label="Notes" hint="Private — only you can see this. Never shared with friends.">
           <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} />
         </Field>
       </div>

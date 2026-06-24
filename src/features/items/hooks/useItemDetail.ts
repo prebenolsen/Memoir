@@ -17,7 +17,7 @@ const ENTRY_TABLE: Record<ItemKind, { table: string; fk: string; detailCol?: str
   food: { table: 'memoir_food_entries', fk: 'food_item_id', detailCol: 'main_course' },
   venue: { table: 'memoir_food_entries', fk: 'venue_id', detailCol: 'main_course' },
   drink: { table: 'memoir_drink_entries', fk: 'drink_item_id' },
-  activity: { table: 'memoir_activity_entries', fk: 'activity_item_id', detailCol: 'description' },
+  activity: { table: 'memoir_activity_entries', fk: 'activity_item_id' },
 };
 
 /** All occasions (history entries) for a given reusable item, newest first. */

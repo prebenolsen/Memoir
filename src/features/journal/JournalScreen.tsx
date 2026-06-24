@@ -216,7 +216,7 @@ export function JournalScreen() {
               <Row
                 key={e.id}
                 title={activityTitle(e)}
-                subtitle={e.description ?? undefined}
+                subtitle={e.notes ?? undefined}
                 cost={e.cost}
                 rating={e.rating}
                 onEdit={() => edit('activity', e.id)}

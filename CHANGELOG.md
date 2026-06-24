@@ -11,6 +11,18 @@ This project uses [Semantic Versioning](https://semver.org/) (`MAJOR.MINOR.PATCH
 The current version is tracked in [`VERSION.md`](VERSION.md) and shown at the bottom
 of the in-app **Profile** screen.
 
+## [17.5.0] - 2026-06-24
+
+### Changed
+- **Notes are clearly marked private.** Every Notes field — on food, drinks,
+  activities, purchases, and saved items — now says **"Private — only you can see
+  this. Never shared with friends."** so it's obvious these jottings stay yours.
+  (Friends only ever see a place or drink's name and your average rating.)
+- **Activities use Notes only.** Activities had a leftover separate "description"
+  from before they became reusable items. It's gone — there's just the activity you
+  pick and your private Notes. Any text from old activity descriptions is folded into
+  Notes, so nothing is lost.
+
 ## [17.4.0] - 2026-06-24
 
 ### Changed

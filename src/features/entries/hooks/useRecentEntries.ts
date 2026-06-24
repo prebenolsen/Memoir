@@ -50,7 +50,7 @@ const SOURCES: Source[] = [
     table: 'memoir_activity_entries',
     kind: 'activity',
     select: '*, activity_item:memoir_activity_items(name)',
-    label: (r) => named(r, 'activity_item') ?? (r.description as string | null) ?? 'Activity',
+    label: (r) => named(r, 'activity_item') ?? 'Activity',
     strip: ['activity_item'],
   },
   {

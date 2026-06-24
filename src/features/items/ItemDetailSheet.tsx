@@ -125,7 +125,7 @@ export function ItemDetailSheet({
         <Field label="Personal rating" hint="Your headline rating for this item." optional>
           <RatingInput value={rating} onChange={setRating} scale={settings.rating_scale} />
         </Field>
-        <Field label="Notes" optional>
+        <Field label="Notes" hint="Private — only you can see this. Never shared with friends." optional>
           <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} />
         </Field>
 

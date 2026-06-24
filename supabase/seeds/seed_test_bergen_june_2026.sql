@@ -200,13 +200,13 @@ begin
   -- Activity entries (history)
   -- --------------------------------------------------------------------------
   insert into memoir_activity_entries
-    (user_id, project_id, entry_date, activity_item_id, description, rating, cost, notes)
+    (user_id, project_id, entry_date, activity_item_id, rating, cost, notes)
   values
-    (v_user_id, v_project_id, '2026-06-08', a_bryggen,   'Afternoon stroll through the old Hanseatic wharf', 8, 0.00, 'Free to wander'),
-    (v_user_id, v_project_id, '2026-06-09', a_floibanen, 'Funicular up Mount Fløyen, hiked back down', 9, 160.00, 'Clear views over the city'),
-    (v_user_id, v_project_id, '2026-06-10', a_fjord,     'Mostraumen fjord cruise from the harbour', 10, 690.00, 'Waterfalls and tidal rapids — highlight of the trip'),
-    (v_user_id, v_project_id, '2026-06-11', a_ulriken,   'Cable car up Mount Ulriken', 8, 295.00, NULL),
-    (v_user_id, v_project_id, '2026-06-12', a_aquarium,  'Bergen Aquarium in the morning', 6, 320.00, 'A bit small');
+    (v_user_id, v_project_id, '2026-06-08', a_bryggen,   8, 0.00, 'Afternoon stroll through the old Hanseatic wharf. Free to wander'),
+    (v_user_id, v_project_id, '2026-06-09', a_floibanen, 9, 160.00, 'Funicular up Mount Fløyen, hiked back down. Clear views over the city'),
+    (v_user_id, v_project_id, '2026-06-10', a_fjord,     10, 690.00, 'Mostraumen fjord cruise from the harbour. Waterfalls and tidal rapids — highlight of the trip'),
+    (v_user_id, v_project_id, '2026-06-11', a_ulriken,   8, 295.00, 'Cable car up Mount Ulriken'),
+    (v_user_id, v_project_id, '2026-06-12', a_aquarium,  6, 320.00, 'Bergen Aquarium in the morning. A bit small');
 
   -- --------------------------------------------------------------------------
   -- Purchases (history)
