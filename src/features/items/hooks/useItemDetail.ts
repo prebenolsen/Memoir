@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
-import { itemConfig, type ItemKind } from './useItems';
+import { itemConfig, type ItemKind } from '@/hooks/useItems';
 
 export interface Occasion {
   id: string;
@@ -15,7 +15,7 @@ export interface Occasion {
 
 const ENTRY_TABLE: Record<ItemKind, { table: string; fk: string; detailCol?: string }> = {
   food: { table: 'memoir_food_entries', fk: 'food_item_id', detailCol: 'main_course' },
-  restaurant: { table: 'memoir_food_entries', fk: 'restaurant_id', detailCol: 'main_course' },
+  venue: { table: 'memoir_food_entries', fk: 'venue_id', detailCol: 'main_course' },
   drink: { table: 'memoir_drink_entries', fk: 'drink_item_id' },
   activity: { table: 'memoir_activity_entries', fk: 'activity_item_id', detailCol: 'description' },
 };

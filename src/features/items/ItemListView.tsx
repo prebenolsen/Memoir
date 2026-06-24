@@ -11,8 +11,31 @@ import { Input } from '@/components/ui/Input';
 import { titleCase } from '@/lib/format';
 import { ItemDetailSheet } from './ItemDetailSheet';
 import { BeverageThumb } from './BeverageThumb';
+import type { RatingScale } from '@/types/db';
 
 type SortKey = 'most' | 'rated' | 'name';
+
+/**
+ * For a venue, build a per-meal-type rating line when two or more meal types
+ * have been rated — e.g. "Dinner ★4.5 · Lunch ★3.0". Returns null when a
+ * flat visit count is more informative (only one meal type, or no ratings).
+ */
+function venueMealSubtitle(item: ItemWithStats, scale: RatingScale): string | null {
+  const ms = item.extra?.meal_stats as
+    | Record<string, { visits: number; avg_rating: number | null }>
+    | undefined;
+  if (!ms) return null;
+  const order = ['dinner', 'lunch', 'breakfast', 'snack'] as const;
+  const rated = order.filter((m) => ms[m]?.avg_rating != null);
+  if (rated.length < 2) return null;
+  return rated
+    .map((m) => {
+      const r = ms[m].avg_rating!;
+      const display = scale === 5 ? Math.round(r / 2 * 2) / 2 : Math.round(r * 10) / 10;
+      return `${titleCase(m)} ★${display}`;
+    })
+    .join(' · ');
+}
 
 export function ItemListView({
   kind,
@@ -31,7 +54,7 @@ export function ItemListView({
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState<SortKey>('most');
 
-  // Food, drink and restaurant items that have never been logged (0× consumed /
+  // Food, drink and venue items that have never been logged (0× consumed /
   // 0 visits) are hidden — only activities keep their un-logged rows, which the
   // user can remove explicitly from the detail sheet.
   const visibleItems = useMemo(
@@ -84,8 +107,6 @@ export function ItemListView({
       </div>
 
       {kind === 'drink' ? (
-        // Beverages show an Open Food Facts photo to the left of each row, so
-        // every drink gets its own (shortened) card sitting beside the thumbnail.
         <div className="space-y-2">
           {shown.map((item) => (
             <div key={item.id} className="flex items-center gap-3">
@@ -110,22 +131,20 @@ export function ItemListView({
         </div>
       ) : (
         <Card>
-          {shown.map((item) => (
-            <div key={item.id} className="border-t border-border first:border-t-0">
-              <ListRow
-                title={item.name}
-                subtitle={
-                  countLabel(item.count) +
-                  (kind === 'restaurant' && item.extra?.source
-                    ? ` · ${titleCase(String(item.extra.source))}`
-                    : '')
-                }
-                right={<RatingBadge value={item.avg_rating} scale={settings.rating_scale} />}
-                chevron
-                onClick={() => setSelected(item)}
-              />
-            </div>
-          ))}
+          {shown.map((item) => {
+            const mealLine = kind === 'venue' ? venueMealSubtitle(item, settings.rating_scale) : null;
+            return (
+              <div key={item.id} className="border-t border-border first:border-t-0">
+                <ListRow
+                  title={item.name}
+                  subtitle={mealLine ?? countLabel(item.count)}
+                  right={<RatingBadge value={item.avg_rating} scale={settings.rating_scale} />}
+                  chevron
+                  onClick={() => setSelected(item)}
+                />
+              </div>
+            );
+          })}
           {shown.length === 0 && (
             <div className="px-4 py-6 text-center text-sm text-text-muted">
               <Database className="mx-auto mb-1 opacity-50" size={20} />

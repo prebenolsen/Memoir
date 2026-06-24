@@ -19,8 +19,8 @@ import {
   type NamedCount,
   type NamedRating,
   type WineStyleStat,
-} from '@/hooks/useStats';
-import { useEntryMutations } from '@/hooks/useEntryMutations';
+} from '@/features/stats/hooks/useStats';
+import { useEntryMutations } from '@/features/entries/hooks/useEntryMutations';
 import { useConfirmDelete } from '@/hooks/useConfirmDelete';
 import { useQuickAdd } from '@/lib/quickAdd';
 import { supabase } from '@/lib/supabase';
@@ -280,7 +280,7 @@ export function StatsScreen() {
       <section>
         <SectionTitle icon={<UtensilsCrossed size={15} />}>Food</SectionTitle>
         <div className="mb-3 grid grid-cols-2 gap-3">
-          <StatCard label="Restaurants visited" value={stats.restaurantsVisited} />
+          <StatCard label="Venues visited" value={stats.venuesVisited} />
           <StatCard
             label="Avg food rating"
             value={stats.avgFoodRating != null ? `${Math.round(stats.avgFoodRating * 10) / 10}/10` : '—'}

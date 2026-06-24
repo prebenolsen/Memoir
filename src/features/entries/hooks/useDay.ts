@@ -9,7 +9,7 @@ import type {
 
 export interface FoodEntryFull extends FoodEntry {
   food_item: { name: string } | null;
-  restaurant: { name: string } | null;
+  venue: { name: string } | null;
 }
 export interface DrinkEntryFull extends DrinkEntry {
   drink_item: { name: string } | null;
@@ -49,7 +49,7 @@ export function useDay(projectId: string | null | undefined, date: string) {
       const [food, drinks, activities, purchases] = await Promise.all([
         base(
           'memoir_food_entries',
-          '*, food_item:memoir_food_items(name), restaurant:memoir_restaurants(name)',
+          '*, food_item:memoir_food_items(name), venue:memoir_venues(name)',
         ),
         base('memoir_drink_entries', '*, drink_item:memoir_drink_items(name)'),
         base('memoir_activity_entries', '*, activity_item:memoir_activity_items(name)'),

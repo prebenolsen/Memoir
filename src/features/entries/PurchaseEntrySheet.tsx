@@ -7,10 +7,10 @@ import { CurrencyInput } from '@/components/ui/CurrencyInput';
 import { DateField } from '@/components/ui/DateField';
 import { useProject } from '@/context/ProjectProvider';
 import { useSettings } from '@/context/SettingsProvider';
-import { useEntryMutations } from '@/hooks/useEntryMutations';
-import { newId, titleCase } from '@/lib/format';
+import { useEntryMutations } from '@/features/entries/hooks/useEntryMutations';
+import { combineDateTime, newId, nowTime, timeFromISO, titleCase } from '@/lib/format';
 import { PURCHASE_CATEGORIES, type PurchaseCategory, type PurchaseEntry } from '@/types/db';
-import { useEditingEntry } from './useEditingEntry';
+import { useEditingEntry } from './hooks/useEditingEntry';
 
 export function PurchaseEntrySheet({
   open,
@@ -27,6 +27,7 @@ export function PurchaseEntrySheet({
   const { data: editing } = useEditingEntry<PurchaseEntry>('memoir_purchase_entries', editId);
 
   const [entryDate, setEntryDate] = useState(date);
+  const [entryTime, setEntryTime] = useState(nowTime());
   const [itemName, setItemName] = useState('');
   const [category, setCategory] = useState<PurchaseCategory>('clothes');
   const [cost, setCost] = useState<number | null>(null);
@@ -37,12 +38,14 @@ export function PurchaseEntrySheet({
     if (!open) return;
     if (editing) {
       setEntryDate(editing.entry_date);
+      setEntryTime(timeFromISO(editing.created_at));
       setItemName(editing.item_name);
       setCategory(editing.category);
       setCost(editing.cost);
       setNotes(editing.notes ?? '');
     } else if (!editId) {
       setEntryDate(date);
+      setEntryTime(nowTime());
       setItemName('');
       setCategory('clothes');
       setCost(null);
@@ -59,6 +62,7 @@ export function PurchaseEntrySheet({
       await save('memoir_purchase_entries', editId ?? newId(), {
         project_id: project.id,
         entry_date: entryDate,
+        created_at: combineDateTime(entryDate, entryTime, editing?.created_at),
         item_name: itemName.trim(),
         category,
         cost,
@@ -109,7 +113,12 @@ export function PurchaseEntrySheet({
             />
           </Field>
           <Field label="Date">
-            <DateField value={entryDate} onChange={setEntryDate} />
+            <DateField
+              date={entryDate}
+              onDateChange={setEntryDate}
+              time={entryTime}
+              onTimeChange={setEntryTime}
+            />
           </Field>
         </div>
 

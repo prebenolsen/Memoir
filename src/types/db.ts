@@ -1,7 +1,8 @@
 // Hand-written database types mirroring supabase/migrations/0001_init.sql.
 
-export type MealType = 'breakfast' | 'lunch' | 'dinner';
-export type FoodSource = 'home' | 'restaurant' | 'cafe';
+export type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack';
+export type SnackType = 'ice_cream' | 'pastry' | 'cake' | 'candy' | 'dessert' | 'other';
+export type FoodSource = 'home' | 'venue';
 export type DrinkType = 'beer' | 'wine' | 'cocktail' | 'spirit' | 'other';
 export type WineStyle = 'red' | 'white' | 'rose' | 'sparkling';
 export type PurchaseCategory = 'clothes' | 'souvenir' | 'electronics' | 'other';
@@ -47,11 +48,10 @@ export interface FoodItem {
   created_at: string;
 }
 
-export interface Restaurant {
+export interface Venue {
   id: string;
   user_id: string;
   name: string;
-  source: FoodSource | null;
   default_rating: number | null;
   notes: string | null;
   latitude: number | null;
@@ -86,9 +86,10 @@ export interface FoodEntry {
   project_id: string;
   entry_date: string;
   meal_type: MealType;
+  snack_type: SnackType | null;
   source: FoodSource;
   food_item_id: string | null;
-  restaurant_id: string | null;
+  venue_id: string | null;
   starter: string | null;
   main_course: string | null;
   dessert: string | null;
@@ -167,11 +168,11 @@ export interface Friendship {
   responded_at: string | null;
 }
 
-/** Aggregated restaurant favorite shared by a friend (from the RPC). */
+/** Aggregated venue favorite shared by a friend (from the RPC). */
 export interface FriendFavorite {
   friend_id: string;
   friend_username: string | null;
-  restaurant_id: string;
+  venue_id: string;
   name: string;
   latitude: number | null;
   longitude: number | null;
@@ -198,9 +199,16 @@ export interface FoodItemStat {
   times_eaten: number;
   avg_rating: number | null;
 }
-export interface RestaurantStat {
-  restaurant_id: string;
+export interface VenueStat {
+  venue_id: string;
   user_id: string;
+  visits: number;
+  avg_rating: number | null;
+}
+export interface VenueMealStat {
+  venue_id: string;
+  user_id: string;
+  meal_type: MealType;
   visits: number;
   avg_rating: number | null;
 }
@@ -220,8 +228,21 @@ export interface ActivityItemStat {
   avg_rating: number | null;
 }
 
-export const MEAL_TYPES: MealType[] = ['breakfast', 'lunch', 'dinner'];
-export const FOOD_SOURCES: FoodSource[] = ['home', 'restaurant', 'cafe'];
+export const MEAL_TYPES: MealType[] = ['breakfast', 'lunch', 'dinner', 'snack'];
+export const FOOD_SOURCES: FoodSource[] = ['home', 'venue'];
+
+export const SNACK_TYPES: { value: SnackType; label: string }[] = [
+  { value: 'ice_cream', label: 'Ice cream' },
+  { value: 'pastry', label: 'Pastry' },
+  { value: 'cake', label: 'Cake' },
+  { value: 'candy', label: 'Candy' },
+  { value: 'dessert', label: 'Dessert' },
+  { value: 'other', label: 'Other' },
+];
+
+export function snackTypeLabel(t: SnackType): string {
+  return SNACK_TYPES.find((s) => s.value === t)?.label ?? t;
+}
 export const DRINK_TYPES: DrinkType[] = ['beer', 'wine', 'cocktail', 'spirit', 'other'];
 
 export const WINE_STYLES: { value: WineStyle; label: string }[] = [
@@ -255,10 +276,6 @@ export interface BeerSize {
   short: string;
 }
 
-/**
- * Beer serving sizes, smallest first. Picked from a dropdown next to the amount
- * stepper. The 0.33l bottle is the default the size dropdown starts on.
- */
 export const BEER_SIZES: BeerSize[] = [
   { key: '033', column: 'count_033l', liters: 0.33, label: '0.33l', short: '0.33l' },
   { key: '04', column: 'count_04l', liters: 0.4, label: '0.4l', short: '0.4l' },
@@ -267,10 +284,6 @@ export const BEER_SIZES: BeerSize[] = [
   { key: '06', column: 'count_06l', liters: 0.6, label: '0.6l', short: '0.6l' },
 ];
 
-/**
- * Name applied to a beer when the name field is left blank. The serving size is
- * stored separately (count columns), so the blank-name fallback is just "Beer".
- */
 export const BEER_EMPTY_NAME = 'Beer';
 
 /** Name applied to a wine when the name field is left blank, per style. */

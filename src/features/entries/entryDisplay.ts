@@ -1,15 +1,20 @@
 import { baseDrinkName, formatAbv, titleCase } from '@/lib/format';
-import { BEER_SIZES, wineStyleLabel } from '@/types/db';
-import type { DrinkEntryFull, FoodEntryFull, ActivityEntryFull } from '@/hooks/useDay';
+import { BEER_SIZES, snackTypeLabel, wineStyleLabel } from '@/types/db';
+import type { DrinkEntryFull, FoodEntryFull, ActivityEntryFull } from '@/features/entries/hooks/useDay';
 
 export function foodTitle(e: FoodEntryFull): string {
-  return e.food_item?.name || e.main_course || e.restaurant?.name || 'Food';
+  return e.food_item?.name || e.main_course || e.venue?.name || 'Food';
 }
 
 export function foodSubtitle(e: FoodEntryFull): string {
-  const bits: string[] = [titleCase(e.meal_type)];
-  if (e.restaurant?.name && e.food_item?.name) bits.push(e.restaurant.name);
-  else if (e.source !== 'home' && !e.restaurant?.name) bits.push(titleCase(e.source));
+  // For snacks, refine the meal label with the sub-type, e.g. "Snack · Ice cream".
+  const mealLabel =
+    e.meal_type === 'snack' && e.snack_type
+      ? `Snack · ${snackTypeLabel(e.snack_type)}`
+      : titleCase(e.meal_type);
+  const bits: string[] = [mealLabel];
+  if (e.venue?.name && e.food_item?.name) bits.push(e.venue.name);
+  else if (e.source !== 'home' && !e.venue?.name) bits.push('Venue');
   const courses = [e.starter, e.main_course, e.dessert].filter(Boolean);
   if (courses.length && !e.food_item?.name) return bits.join(' · ');
   if (courses.length) bits.push(courses.join(' / '));

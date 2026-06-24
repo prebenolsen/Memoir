@@ -1,8 +1,8 @@
 import { useRef } from 'react';
 import { ChevronLeft, ChevronRight, Trash2, UtensilsCrossed, Wine, Ticket, ShoppingBag, Wallet, CalendarClock } from 'lucide-react';
 import { useProject } from '@/context/ProjectProvider';
-import { useDay, dayCost, type DayData } from '@/hooks/useDay';
-import { useEntryMutations, type EntryTable } from '@/hooks/useEntryMutations';
+import { useDay, dayCost, type DayData } from '@/features/entries/hooks/useDay';
+import { useEntryMutations, type EntryTable } from '@/features/entries/hooks/useEntryMutations';
 import { useConfirmDelete } from '@/hooks/useConfirmDelete';
 import { useQuickAdd, type AddKind } from '@/lib/quickAdd';
 import { Card, SectionTitle } from '@/components/ui/Card';
@@ -80,7 +80,7 @@ function alcoholSummary(d: DayData) {
   return { beers, sizeDetail, drinks };
 }
 
-export function TodayScreen() {
+export function JournalScreen() {
   const { viewProjectId, date, setDate, settings } = useProject();
   const { data, isLoading } = useDay(viewProjectId, date);
   const { remove } = useEntryMutations();

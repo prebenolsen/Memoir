@@ -13,10 +13,10 @@ import { Stepper } from '@/components/ui/Stepper';
 import { AbvInput } from '@/components/ui/AbvInput';
 import { useProject } from '@/context/ProjectProvider';
 import { useSettings } from '@/context/SettingsProvider';
-import { useEntryMutations } from '@/hooks/useEntryMutations';
+import { useEntryMutations } from '@/features/entries/hooks/useEntryMutations';
 import { resolveItem } from '@/hooks/useItems';
 import { supabase } from '@/lib/supabase';
-import { newId, titleCase, baseDrinkName, formatAbv } from '@/lib/format';
+import { combineDateTime, newId, nowTime, timeFromISO, titleCase, baseDrinkName, formatAbv } from '@/lib/format';
 import { cn } from '@/lib/cn';
 import { getCurrentPosition, reverseGeocode, GeoError } from '@/lib/geo';
 import type { NearbyVenue } from '@/lib/nearbyPlaces';
@@ -35,7 +35,7 @@ import {
 } from '@/types/db';
 import type { DrinkPreFill } from '@/lib/quickAdd';
 import { type BarcodeProduct } from '@/lib/barcodeProduct';
-import { useEditingEntry } from './useEditingEntry';
+import { useEditingEntry } from './hooks/useEditingEntry';
 import { BarcodeScanner } from './BarcodeScanner';
 import { NearbyVenuePicker } from './NearbyVenuePicker';
 
@@ -56,6 +56,7 @@ export function DrinkEntrySheet({
   const { data: editing } = useEditingEntry<DrinkEntry>('memoir_drink_entries', editId);
 
   const [entryDate, setEntryDate] = useState(date);
+  const [entryTime, setEntryTime] = useState(nowTime());
   const [drinkType, setDrinkType] = useState<DrinkType>('beer');
   const [wineStyle, setWineStyle] = useState<WineStyle>('red');
   const [abv, setAbv] = useState<number | null>(null);
@@ -80,6 +81,7 @@ export function DrinkEntrySheet({
     if (!open) return;
     if (editing) {
       setEntryDate(editing.entry_date);
+      setEntryTime(timeFromISO(editing.created_at));
       setDrinkType(editing.drink_type);
       setWineStyle(editing.wine_style ?? 'red');
       setAbv(editing.abv);
@@ -114,6 +116,7 @@ export function DrinkEntrySheet({
       }
     } else if (!editId) {
       setEntryDate(date);
+      setEntryTime(nowTime());
       setDrinkType(preFill?.drinkType ?? 'beer');
       setWineStyle(preFill?.wineStyle ?? 'red');
       setAbv(preFill?.abv ?? null);
@@ -247,6 +250,7 @@ export function DrinkEntrySheet({
       await save('memoir_drink_entries', editId ?? newId(), {
         project_id: project.id,
         entry_date: entryDate,
+        created_at: combineDateTime(entryDate, entryTime, editing?.created_at),
         drink_item_id,
         drink_type: drinkType,
         wine_style: isWine ? wineStyle : null,
@@ -427,7 +431,12 @@ export function DrinkEntrySheet({
             />
           </Field>
           <Field label="Date">
-            <DateField value={entryDate} onChange={setEntryDate} />
+            <DateField
+              date={entryDate}
+              onDateChange={setEntryDate}
+              time={entryTime}
+              onTimeChange={setEntryTime}
+            />
           </Field>
         </div>
 

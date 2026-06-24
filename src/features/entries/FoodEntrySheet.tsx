@@ -4,21 +4,37 @@ import { Sheet } from '@/components/ui/Sheet';
 import { Button } from '@/components/ui/Button';
 import { Field, Input, Textarea } from '@/components/ui/Input';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
+import { Select } from '@/components/ui/Select';
 import { Combobox, type ComboValue } from '@/components/ui/Combobox';
 import { RatingInput } from '@/components/ui/RatingInput';
 import { CurrencyInput } from '@/components/ui/CurrencyInput';
 import { DateField } from '@/components/ui/DateField';
 import { useProject } from '@/context/ProjectProvider';
 import { useSettings } from '@/context/SettingsProvider';
-import { useEntryMutations } from '@/hooks/useEntryMutations';
+import { useEntryMutations } from '@/features/entries/hooks/useEntryMutations';
 import { resolveItem } from '@/hooks/useItems';
 import { supabase } from '@/lib/supabase';
-import { newId, titleCase } from '@/lib/format';
-import { MEAL_TYPES, FOOD_SOURCES, type FoodEntry, type MealType, type FoodSource } from '@/types/db';
-import { useEditingEntry } from './useEditingEntry';
+import { combineDateTime, newId, nowTime, timeFromISO, titleCase } from '@/lib/format';
+import {
+  MEAL_TYPES,
+  FOOD_SOURCES,
+  SNACK_TYPES,
+  type FoodEntry,
+  type MealType,
+  type FoodSource,
+  type SnackType,
+} from '@/types/db';
+import { useEditingEntry } from './hooks/useEditingEntry';
 import { NearbyRestaurantPicker } from './NearbyRestaurantPicker';
 import { MapRestaurantPicker } from './MapRestaurantPicker';
 import type { NearbyPlace } from '@/lib/nearbyPlaces';
+
+function defaultsByTime(): { mealType: MealType; source: FoodSource } {
+  const hour = new Date().getHours();
+  if (hour < 12) return { mealType: 'breakfast', source: 'home' };
+  if (hour < 16) return { mealType: 'lunch', source: 'venue' };
+  return { mealType: 'dinner', source: 'venue' };
+}
 
 export function FoodEntrySheet({
   open,
@@ -35,10 +51,12 @@ export function FoodEntrySheet({
   const { data: editing } = useEditingEntry<FoodEntry>('memoir_food_entries', editId);
 
   const [entryDate, setEntryDate] = useState(date);
-  const [mealType, setMealType] = useState<MealType>('lunch');
-  const [source, setSource] = useState<FoodSource>('restaurant');
+  const [entryTime, setEntryTime] = useState(nowTime());
+  const [mealType, setMealType] = useState<MealType>(() => defaultsByTime().mealType);
+  const [snackType, setSnackType] = useState<SnackType>('ice_cream');
+  const [source, setSource] = useState<FoodSource>(() => defaultsByTime().source);
   const [food, setFood] = useState<ComboValue | null>(null);
-  const [restaurant, setRestaurant] = useState<ComboValue | null>(null);
+  const [venue, setVenue] = useState<ComboValue | null>(null);
   const [pickedPlace, setPickedPlace] = useState<NearbyPlace | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [mapPickerOpen, setMapPickerOpen] = useState(false);
@@ -55,10 +73,12 @@ export function FoodEntrySheet({
     if (!open) return;
     if (editing) {
       setEntryDate(editing.entry_date);
+      setEntryTime(timeFromISO(editing.created_at));
       setMealType(editing.meal_type);
+      setSnackType(editing.snack_type ?? 'ice_cream');
       setSource(editing.source);
       setFood(null);
-      setRestaurant(null);
+      setVenue(null);
       setPickedPlace(null);
       setStarter(editing.starter ?? '');
       setMain(editing.main_course ?? '');
@@ -68,11 +88,14 @@ export function FoodEntrySheet({
       setCost(editing.cost);
       setNotes(editing.notes ?? '');
     } else if (!editId) {
+      const defaults = defaultsByTime();
       setEntryDate(date);
-      setMealType('lunch');
-      setSource('restaurant');
+      setEntryTime(nowTime());
+      setMealType(defaults.mealType);
+      setSnackType('ice_cream');
+      setSource(defaults.source);
       setFood(null);
-      setRestaurant(null);
+      setVenue(null);
       setPickedPlace(null);
       setShowCourses(false);
       setStarter('');
@@ -97,13 +120,13 @@ export function FoodEntrySheet({
           .maybeSingle();
         if (!cancelled && data) setFood({ id: data.id, name: data.name });
       }
-      if (editing.restaurant_id) {
+      if (editing.venue_id) {
         const { data } = await supabase
-          .from('memoir_restaurants')
+          .from('memoir_venues')
           .select('id,name')
-          .eq('id', editing.restaurant_id)
+          .eq('id', editing.venue_id)
           .maybeSingle();
-        if (!cancelled && data) setRestaurant({ id: data.id, name: data.name });
+        if (!cancelled && data) setVenue({ id: data.id, name: data.name });
       }
     })();
     return () => {
@@ -112,21 +135,19 @@ export function FoodEntrySheet({
   }, [editing]);
 
   const hasFood = !!food?.name || (showCourses && !!(starter || main || dessert));
-  const canSave = !!project && (source === 'home' ? hasFood : !!restaurant?.name);
+  const canSave = !!project && (source === 'home' ? hasFood : !!venue?.name);
 
   const submit = async () => {
     if (!project || busy) return;
     setBusy(true);
     try {
       const food_item_id = await resolveItem('memoir_food_items', food);
-      // Pass through GPS-picked location when it still matches the chosen name.
       const placeMatches =
-        !!pickedPlace && !!restaurant && pickedPlace.name === restaurant.name;
-      const restaurant_id =
+        !!pickedPlace && !!venue && pickedPlace.name === venue.name;
+      const venue_id =
         source === 'home'
           ? null
-          : await resolveItem('memoir_restaurants', restaurant, {
-              source,
+          : await resolveItem('memoir_venues', venue, {
               ...(placeMatches && pickedPlace
                 ? {
                     latitude: pickedPlace.latitude,
@@ -139,10 +160,12 @@ export function FoodEntrySheet({
       await save('memoir_food_entries', editId ?? newId(), {
         project_id: project.id,
         entry_date: entryDate,
+        created_at: combineDateTime(entryDate, entryTime, editing?.created_at),
         meal_type: mealType,
+        snack_type: mealType === 'snack' ? snackType : null,
         source,
         food_item_id,
-        restaurant_id,
+        venue_id,
         starter: starter || null,
         main_course: main || null,
         dessert: dessert || null,
@@ -173,6 +196,17 @@ export function FoodEntrySheet({
           onChange={setMealType}
           options={MEAL_TYPES.map((m) => ({ value: m, label: titleCase(m) }))}
         />
+
+        {mealType === 'snack' && (
+          <Field label="Snack type">
+            <Select
+              value={snackType}
+              onChange={setSnackType}
+              options={SNACK_TYPES}
+              className="w-full"
+            />
+          </Field>
+        )}
 
         <SegmentedControl
           value={source}
@@ -226,13 +260,13 @@ export function FoodEntrySheet({
         </Field>
 
         {source !== 'home' && (
-          <Field label={source === 'cafe' ? 'Cafe' : 'Restaurant'}>
+          <Field label="Venue">
             <div className="space-y-2">
               <Combobox
-                table="memoir_restaurants"
-                value={restaurant}
+                table="memoir_venues"
+                value={venue}
                 onChange={(v) => {
-                  setRestaurant(v);
+                  setVenue(v);
                   setPickedPlace(null);
                 }}
                 placeholder="Where?"
@@ -245,7 +279,7 @@ export function FoodEntrySheet({
                   onClick={() => setPickerOpen(true)}
                 >
                   <MapPin size={16} />
-                  Find nearby restaurants
+                  Find nearby venues
                 </Button>
                 <Button
                   variant="secondary"
@@ -254,7 +288,7 @@ export function FoodEntrySheet({
                   onClick={() => setMapPickerOpen(true)}
                 >
                   <MapPin size={16} />
-                  Find restaurants
+                  Find venues
                 </Button>
               </div>
             </div>
@@ -275,7 +309,12 @@ export function FoodEntrySheet({
             />
           </Field>
           <Field label="Date">
-            <DateField value={entryDate} onChange={setEntryDate} />
+            <DateField
+              date={entryDate}
+              onDateChange={setEntryDate}
+              time={entryTime}
+              onTimeChange={setEntryTime}
+            />
           </Field>
         </div>
 
@@ -288,18 +327,18 @@ export function FoodEntrySheet({
         open={pickerOpen}
         onClose={() => setPickerOpen(false)}
         onSelect={(place) => {
-          setRestaurant({ id: null, name: place.name });
+          setVenue({ id: null, name: place.name });
           setPickedPlace(place);
-          if (place.source !== source) setSource(place.source);
+          setSource('venue');
         }}
       />
       <MapRestaurantPicker
         open={mapPickerOpen}
         onClose={() => setMapPickerOpen(false)}
         onSelect={(place) => {
-          setRestaurant({ id: null, name: place.name });
+          setVenue({ id: null, name: place.name });
           setPickedPlace(place);
-          if (place.source !== source) setSource(place.source);
+          setSource('venue');
         }}
       />
     </Sheet>

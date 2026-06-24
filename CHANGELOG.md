@@ -11,6 +11,47 @@ This project uses [Semantic Versioning](https://semver.org/) (`MAJOR.MINOR.PATCH
 The current version is tracked in [`VERSION.md`](VERSION.md) and shown at the bottom
 of the in-app **Profile** screen.
 
+## [17.0.1] - 2026-06-24
+
+### Changed
+- **Internal project structure cleanup (no feature changes).** Feature-specific data
+  hooks now live alongside the feature that owns them, and the "Today" screen was
+  renamed to **Journal** throughout the code to match what the tab is actually called.
+  Supabase migrations, seed data, and one-off maintenance scripts are now kept in
+  separate folders. Nothing about how the app looks or works changes.
+- **The Journal tab's address is now `#/journal`** (previously `#/today`). Old links
+  redirect to the app automatically; only matters if you had bookmarked the raw URL.
+
+## [17.0.0] - 2026-06-24
+
+### Added
+- **Snack meal type.** Food entries now have a fourth meal type, **Snack**, alongside Breakfast, Lunch, and Dinner.
+- **Snack sub-categories.** When you pick Snack, a dropdown lets you choose what kind: Ice cream, Pastry, Cake, Candy, Dessert, or Other. The sub-type shows up in the entry's subtitle (e.g. "Snack · Ice cream").
+- Snacks at a venue are included in the per-meal-type rating breakdown shown in Explore and the venue list.
+
+## [16.0.0] - 2026-06-24
+
+### Added
+- **Per-meal-type venue ratings.** The app now tracks how you rate a venue separately for breakfast, lunch, and dinner. A place you love for dinner but don't rate highly for lunch will reflect that in your Explore and venue list — you'll see a breakdown like "Dinner ★4.5 · Lunch ★3.0" instead of a single blended average.
+- **`memoir_venue_meal_stats` view.** Backing the per-meal breakdown — groups food entries by venue and meal type so ratings are queryable at that granularity.
+
+### Changed
+- **Venues replace the restaurant/cafe distinction.** Restaurants and cafes are now a single "Venue" concept. The type dropdown in food entries is now Home / Venue. "Find nearby restaurants" and "Find restaurants" buttons are now "Find nearby venues" and "Find venues".
+- **Database: `memoir_restaurants` → `memoir_venues`.** The `source` column (restaurant vs cafe) has been removed; the `restaurant_id` foreign key on food entries is now `venue_id`. The `memoir_restaurant_stats` view is now `memoir_venue_stats`. The social RPC is now `memoir_friend_venue_favorites`.
+- **Explore screen** now shows "Venues" instead of "Restaurants" as a category. The per-meal breakdown appears as the subtitle on venue rows when two or more meal types have been rated.
+- **Stats screen** now shows "Venues visited" instead of "Restaurants visited".
+- **Smart meal defaults** now default to Home (not Venue) for breakfast, and Venue for lunch/dinner.
+
+## [15.1.1] - 2026-06-24
+
+### Changed
+- **Smart meal defaults.** When adding a food entry, the meal type and source now default based on your local time: before noon → Breakfast (Home), before 4 pm → Lunch (Restaurant), 4 pm or later → Dinner (Restaurant).
+
+## [15.1.0] - 2026-06-24
+
+### Added
+- **Set the time on any entry.** The Date field on every add/edit screen (food, drinks, activities, purchases) now has a time picker beneath the calendar, pre-filled with the current time. Adjust it to record exactly when something happened — especially handy when logging entries for an earlier day. The time you set feeds the "when you drink" time-of-day stats, so back-dated drinks now land on the right hour.
+
 ## [15.0.1] - 2026-06-23
 
 ### Changed

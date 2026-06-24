@@ -36,6 +36,41 @@ export function addDays(iso: string, delta: number): string {
   return toISODate(d);
 }
 
+// Time-of-day helpers. An entry's clock time lives on its created_at timestamp;
+// the date picker lets the user set it (handy for back-dating a past day).
+function toTime(d: Date): string {
+  const hh = String(d.getHours()).padStart(2, '0');
+  const mm = String(d.getMinutes()).padStart(2, '0');
+  return `${hh}:${mm}`;
+}
+
+/** Current local time as "HH:mm", for pre-filling the time picker. */
+export function nowTime(): string {
+  return toTime(new Date());
+}
+
+/** Local "HH:mm" from an ISO timestamp (e.g. an entry's created_at). */
+export function timeFromISO(iso: string): string {
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? nowTime() : toTime(d);
+}
+
+/**
+ * Combine a YYYY-MM-DD date and an HH:mm time into an ISO timestamp for an
+ * entry's created_at. Seconds/millis come from `base` (the original created_at
+ * when editing, or now for a fresh entry) so same-minute entries keep a stable
+ * order.
+ */
+export function combineDateTime(dateStr: string, timeStr: string, base?: string): string {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const [hh, mm] = timeStr.split(':').map(Number);
+  const dt = base ? new Date(base) : new Date();
+  if (Number.isNaN(dt.getTime())) dt.setTime(Date.now());
+  dt.setFullYear(y, m - 1, d);
+  dt.setHours(hh, mm);
+  return dt.toISOString();
+}
+
 const DATE_FNS_PATTERN: Record<DateFormat, string> = {
   'DD.MM.YYYY': 'dd.MM.yyyy',
   'MM/DD/YYYY': 'MM/dd/yyyy',
@@ -50,7 +85,7 @@ export function formatDate(iso: string, fmt: DateFormat): string {
   }
 }
 
-/** Long, human form for the Today header, e.g. "20 June 2026". */
+/** Long, human form for the Journal header, e.g. "20 June 2026". */
 export function formatLongDate(iso: string): string {
   try {
     return format(parseISO(iso), 'd MMMM yyyy');

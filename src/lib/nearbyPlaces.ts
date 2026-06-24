@@ -2,13 +2,11 @@
  * Nearby place lookups via the OpenStreetMap Overpass API.
  * Free, no API key, CORS-friendly — suits this client-only app.
  */
-import type { FoodSource } from '@/types/db';
 
 export interface NearbyPlace {
-  /** OSM element id, e.g. "node/123" — used to dedupe a saved restaurant. */
+  /** OSM element id, e.g. "node/123" — used to dedupe a saved venue. */
   osmId: string;
   name: string;
-  source: FoodSource; // 'restaurant' | 'cafe'
   address: string | null;
   latitude: number;
   longitude: number;
@@ -64,19 +62,7 @@ function formatAddress(tags: OverpassTags): string | null {
   return parts.length ? parts.join(', ') : null;
 }
 
-/**
- * Find restaurants/cafes within `radius` metres of the given coordinates,
- * sorted by distance and capped at 25 results.
- */
-export async function findNearbyRestaurants(
-  latitude: number,
-  longitude: number,
-  { radius = 200 }: { radius?: number } = {},
-): Promise<NearbyPlace[]> {
-  const filter = '["amenity"~"^(restaurant|cafe|fast_food)$"]["name"]';
-  const around = `(around:${radius},${latitude},${longitude})`;
-  const query = `[out:json][timeout:25];(node${filter}${around};way${filter}${around};);out center 60;`;
-
+async function overpassQuery(query: string): Promise<OverpassElement[]> {
   let res: Response;
   try {
     res = await fetch(OVERPASS_URL, {
@@ -87,17 +73,30 @@ export async function findNearbyRestaurants(
   } catch {
     throw new NearbyError('network', 'Could not reach the places service. Check your connection.');
   }
-
-  if (res.status === 429) {
+  if (res.status === 429)
     throw new NearbyError('rate_limited', 'Too many lookups right now — try again in a moment.');
-  }
-  if (!res.ok) {
+  if (!res.ok)
     throw new NearbyError('server', 'The places service is unavailable right now.');
-  }
-
   const json = (await res.json()) as { elements?: OverpassElement[] };
+  return json.elements ?? [];
+}
+
+/**
+ * Find food venues (restaurants, cafes, fast food) within `radius` metres,
+ * sorted by distance and capped at 25 results.
+ */
+export async function findNearbyFoodVenues(
+  latitude: number,
+  longitude: number,
+  { radius = 200 }: { radius?: number } = {},
+): Promise<NearbyPlace[]> {
+  const filter = '["amenity"~"^(restaurant|cafe|fast_food)$"]["name"]';
+  const around = `(around:${radius},${latitude},${longitude})`;
+  const query = `[out:json][timeout:25];(node${filter}${around};way${filter}${around};);out center 60;`;
+
+  const elements = await overpassQuery(query);
   const places: NearbyPlace[] = [];
-  for (const el of json.elements ?? []) {
+  for (const el of elements) {
     const name = el.tags?.name;
     const lat = el.lat ?? el.center?.lat;
     const lon = el.lon ?? el.center?.lon;
@@ -105,7 +104,6 @@ export async function findNearbyRestaurants(
     places.push({
       osmId: `${el.type}/${el.id}`,
       name,
-      source: el.tags?.amenity === 'cafe' ? 'cafe' : 'restaurant',
       address: formatAddress(el.tags ?? {}),
       latitude: lat,
       longitude: lon,
@@ -143,25 +141,9 @@ export async function findNearbyVenues(
   const around = `(around:${radius},${latitude},${longitude})`;
   const query = `[out:json][timeout:25];(node${filter}${around};way${filter}${around};);out center 60;`;
 
-  let res: Response;
-  try {
-    res = await fetch(OVERPASS_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: `data=${encodeURIComponent(query)}`,
-    });
-  } catch {
-    throw new NearbyError('network', 'Could not reach the places service. Check your connection.');
-  }
-
-  if (res.status === 429)
-    throw new NearbyError('rate_limited', 'Too many lookups right now — try again in a moment.');
-  if (!res.ok)
-    throw new NearbyError('server', 'The places service is unavailable right now.');
-
-  const json = (await res.json()) as { elements?: OverpassElement[] };
+  const elements = await overpassQuery(query);
   const venues: NearbyVenue[] = [];
-  for (const el of json.elements ?? []) {
+  for (const el of elements) {
     const name = el.tags?.name;
     const lat = el.lat ?? el.center?.lat;
     const lon = el.lon ?? el.center?.lon;

@@ -24,11 +24,11 @@ interface LatestConfig {
 
 const CONFIGS: Record<ItemKind, LatestConfig | null> = {
   food: null,
-  restaurant: {
+  venue: {
     table: 'memoir_food_entries',
-    join: 'memoir_restaurants(name)',
-    namePath: 'memoir_restaurants',
-    requireColumn: 'restaurant_id',
+    join: 'memoir_venues(name)',
+    namePath: 'memoir_venues',
+    requireColumn: 'venue_id',
   },
   drink: {
     table: 'memoir_drink_entries',

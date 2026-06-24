@@ -9,3 +9,9 @@ dist-ssr
 *.log
 .vscode/*
 !.vscode/extensions.json
+
+# TypeScript incremental build cache
+*.tsbuildinfo
+
+# Repomix output (generated repo snapshot)
+repomix-output.xml

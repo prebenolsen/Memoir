@@ -11,24 +11,24 @@ import { toast } from '@/components/ui/Toast';
 import { ItemListView } from '@/features/items/ItemListView';
 import { useProject } from '@/context/ProjectProvider';
 import { useItemList, type ItemWithStats } from '@/hooks/useItems';
-import { useLatestEntries } from '@/hooks/useLatestEntries';
-import { useFriendFavorites, useFriendDrinkFavorites } from '@/hooks/useFriendFavorites';
+import { useLatestEntries } from '@/features/explore/hooks/useLatestEntries';
+import { useFriendFavorites, useFriendDrinkFavorites } from '@/features/explore/hooks/useFriendFavorites';
 import { getCurrentPosition, distanceMeters, type Coords, GeoError } from '@/lib/geo';
-import { formatDate } from '@/lib/format';
+import { formatDate, titleCase } from '@/lib/format';
 import type { RatingScale } from '@/types/db';
 
-type ExploreKind = 'restaurant' | 'drink';
+type ExploreKind = 'venue' | 'drink';
 type Category = 'all' | ExploreKind;
 type Mode = 'nearby' | 'mine' | 'friends';
 
 const NEARBY_RADIUS_M = 5_000;
 
 const KIND_META: Record<ExploreKind, { label: string; icon: LucideIcon; countLabel: (n: number) => string }> = {
-  restaurant: { label: 'Restaurants', icon: Store, countLabel: (n) => `${n} visit${n === 1 ? '' : 's'}` },
+  venue: { label: 'Venues', icon: Store, countLabel: (n) => `${n} visit${n === 1 ? '' : 's'}` },
   drink: { label: 'Beverages', icon: Wine, countLabel: (n) => `${n}× consumed` },
 };
 
-const ORDER: ExploreKind[] = ['restaurant', 'drink'];
+const ORDER: ExploreKind[] = ['venue', 'drink'];
 
 function formatDistance(m: number): string {
   return m < 1000 ? `${m} m` : `${(m / 1000).toFixed(1)} km`;
@@ -43,6 +43,27 @@ function topRated(items: ItemWithStats[], n: number): ItemWithStats[] {
 
 function Empty({ children }: { children: ReactNode }) {
   return <p className="px-4 py-3 text-sm text-text-muted">{children}</p>;
+}
+
+/**
+ * Build a compact meal-type breakdown string for a venue, e.g.
+ * "Dinner ★4.5 · Lunch ★3.0" — only when two or more meal types have ratings.
+ */
+function venueMealBreakdown(item: ItemWithStats, scale: RatingScale): string | null {
+  const ms = item.extra?.meal_stats as
+    | Record<string, { visits: number; avg_rating: number | null }>
+    | undefined;
+  if (!ms) return null;
+  const order = ['dinner', 'lunch', 'breakfast', 'snack'] as const;
+  const rated = order.filter((m) => ms[m]?.avg_rating != null);
+  if (rated.length < 2) return null;
+  return rated
+    .map((m) => {
+      const r = ms[m].avg_rating!;
+      const display = scale === 5 ? Math.round(r / 2 * 2) / 2 : Math.round(r * 10) / 10;
+      return `${titleCase(m)} ★${display}`;
+    })
+    .join(' · ');
 }
 
 /** Your 5 most recent occasions for a category. */
@@ -124,25 +145,29 @@ function FavoritesSection({
         ) : rows.length === 0 ? (
           <Empty>{coords ? 'No rated places within 5 km.' : 'No rated items yet.'}</Empty>
         ) : (
-          rows.map(({ item, dist }) => (
-            <div key={item.id} className="border-t border-border first:border-t-0">
-              <ListRow
-                title={item.name}
-                subtitle={
-                  KIND_META[kind].countLabel(item.count) +
-                  (dist != null ? ` · ${formatDistance(dist)}` : '')
-                }
-                right={<RatingBadge value={item.avg_rating} scale={scale} />}
-              />
-            </div>
-          ))
+          rows.map(({ item, dist }) => {
+            const mealLine = kind === 'venue' ? venueMealBreakdown(item, scale) : null;
+            const subtitle =
+              mealLine ??
+              KIND_META[kind].countLabel(item.count) +
+                (dist != null ? ` · ${formatDistance(dist)}` : '');
+            return (
+              <div key={item.id} className="border-t border-border first:border-t-0">
+                <ListRow
+                  title={item.name}
+                  subtitle={subtitle}
+                  right={<RatingBadge value={item.avg_rating} scale={scale} />}
+                />
+              </div>
+            );
+          })
         )}
       </Card>
     </div>
   );
 }
 
-/** Friends' top restaurants (aggregated), optionally limited to within 5 km. */
+/** Friends' top venues (aggregated), optionally limited to within 5 km. */
 function FriendFavoritesSection({ scale, coords }: { scale: RatingScale; coords: Coords | null }) {
   const { data: favs = [], isLoading, isError } = useFriendFavorites();
 
@@ -180,7 +205,7 @@ function FriendFavoritesSection({ scale, coords }: { scale: RatingScale; coords:
           </Empty>
         ) : (
           rows.map(({ fav, dist }) => (
-            <div key={fav.restaurant_id} className="border-t border-border first:border-t-0">
+            <div key={fav.venue_id} className="border-t border-border first:border-t-0">
               <ListRow
                 title={fav.name}
                 subtitle={
@@ -243,7 +268,7 @@ function CategorySection({
   onSeeAll: (kind: ExploreKind) => void;
 }) {
   const { icon: Icon, label } = KIND_META[kind];
-  const isRestaurant = kind === 'restaurant';
+  const isVenue = kind === 'venue';
 
   return (
     <section className="space-y-4">
@@ -252,20 +277,20 @@ function CategorySection({
       </h2>
 
       {mode === 'friends' ? (
-        isRestaurant ? (
+        isVenue ? (
           <FriendFavoritesSection scale={scale} coords={null} />
         ) : (
           <FriendDrinkFavoritesSection scale={scale} />
         )
       ) : mode === 'nearby' ? (
-        isRestaurant ? (
+        isVenue ? (
           <>
             <FavoritesSection kind={kind} scale={scale} coords={coords} onSeeAll={() => onSeeAll(kind)} />
             <FriendFavoritesSection scale={scale} coords={coords} />
           </>
         ) : (
           <>
-            <Empty>Location filtering only applies to restaurants — showing all of yours.</Empty>
+            <Empty>Location filtering only applies to venues — showing all of yours.</Empty>
             <LatestSection kind={kind} scale={scale} />
             <FavoritesSection kind={kind} scale={scale} coords={null} onSeeAll={() => onSeeAll(kind)} />
           </>
@@ -288,8 +313,6 @@ export function ExploreScreen() {
   const [coords, setCoords] = useState<Coords | null>(null);
   const [seeAll, setSeeAll] = useState<ExploreKind | null>(null);
 
-  // Resolve the device location the first time "Nearby" is active; fall back to
-  // "Mine" with a toast if the user denies or location is unavailable.
   useEffect(() => {
     if (mode !== 'nearby' || coords) return;
     let active = true;
@@ -321,7 +344,7 @@ export function ExploreScreen() {
         onChange={setCategory}
         options={[
           { value: 'all', label: 'All' },
-          { value: 'restaurant', label: 'Restaurants' },
+          { value: 'venue', label: 'Venues' },
           { value: 'drink', label: 'Beverages' },
         ]}
       />

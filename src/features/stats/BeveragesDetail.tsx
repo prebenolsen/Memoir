@@ -10,7 +10,7 @@ import {
   Hourglass,
 } from 'lucide-react';
 import { useProject } from '@/context/ProjectProvider';
-import { useBeverageStats, type NamedCount, type NamedRating } from '@/hooks/useBeverageStats';
+import { useBeverageStats, type NamedCount, type NamedRating } from '@/features/stats/hooks/useBeverageStats';
 import { Card, SectionTitle } from '@/components/ui/Card';
 import { StatCard } from '@/components/ui/StatCard';
 import { EmptyState } from '@/components/ui/EmptyState';

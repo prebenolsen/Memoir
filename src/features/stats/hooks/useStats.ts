@@ -28,7 +28,7 @@ export interface WineStyleStat {
 export interface ProjectStats {
   // Food
   foodEntries: number;
-  restaurantsVisited: number;
+  venuesVisited: number;
   mostEaten: NamedCount[];
   topRatedFoods: NamedRating[];
   avgFoodRating: number | null;
@@ -91,7 +91,7 @@ export function useProjectStats(
       const [food, drinks, activities, purchases] = await Promise.all([
         p(
           'memoir_food_entries',
-          'entry_date, rating, cost, restaurant_id, food_item:memoir_food_items(name)',
+          'entry_date, rating, cost, venue_id, food_item:memoir_food_items(name)',
         ),
         p('memoir_drink_entries', 'entry_date, rating, cost, drink_type, wine_style, count_033l, count_04l, count_05l, count_0568l, count_06l, quantity, drink_item:memoir_drink_items(name)'),
         p('memoir_activity_entries', 'entry_date, rating, cost, activity_item:memoir_activity_items(name)'),
@@ -100,7 +100,7 @@ export function useProjectStats(
       for (const r of [food, drinks, activities, purchases]) if (r.error) throw r.error;
 
       const foodRows = (food.data ?? []) as unknown as {
-        entry_date: string; rating: number | null; cost: number | null; restaurant_id: string | null; food_item: { name: string } | null;
+        entry_date: string; rating: number | null; cost: number | null; venue_id: string | null; food_item: { name: string } | null;
       }[];
       const drinkRows = (drinks.data ?? []) as unknown as {
         entry_date: string; rating: number | null; cost: number | null; drink_type: string; wine_style: WineStyle | null; count_033l: number; count_04l: number; count_05l: number; count_0568l: number; count_06l: number; quantity: number; drink_item: { name: string } | null;
@@ -113,13 +113,13 @@ export function useProjectStats(
       }[];
 
       // Food
-      const restaurants = new Set<string>();
+      const venues = new Set<string>();
       const foodCounts = new Map<string, number>();
       const foodRatings = new Map<string, number[]>();
       let foodRatingSum = 0;
       let foodRatingN = 0;
       for (const f of foodRows) {
-        if (f.restaurant_id) restaurants.add(f.restaurant_id);
+        if (f.venue_id) venues.add(f.venue_id);
         const name = f.food_item?.name;
         if (name) foodCounts.set(name, (foodCounts.get(name) ?? 0) + 1);
         if (f.rating != null) {
@@ -197,7 +197,6 @@ export function useProjectStats(
         byCategory.food + byCategory.alcohol + byCategory.activities + byCategory.purchases + byCategory.other;
       const activeDays = days.size;
 
-      // Beer sizes (smallest first) and wine styles, each dropping anything with none.
       const beerSizes: BeerSizeStat[] = BEER_SIZES.filter((s) => beerSizeUnits.get(s.key)).map(
         (s) => {
           const units = beerSizeUnits.get(s.key)!;
@@ -210,7 +209,7 @@ export function useProjectStats(
 
       return {
         foodEntries: foodRows.length,
-        restaurantsVisited: restaurants.size,
+        venuesVisited: venues.size,
         mostEaten: topCounts(foodCounts),
         topRatedFoods: topRatings(foodRatings),
         avgFoodRating: foodRatingN ? foodRatingSum / foodRatingN : null,

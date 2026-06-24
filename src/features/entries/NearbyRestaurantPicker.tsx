@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Coffee, MapPin, UtensilsCrossed } from 'lucide-react';
+import { MapPin, UtensilsCrossed } from 'lucide-react';
 import { Sheet } from '@/components/ui/Sheet';
 import { Button } from '@/components/ui/Button';
 import { getCurrentPosition, GeoError } from '@/lib/geo';
-import { findNearbyRestaurants, NearbyError, type NearbyPlace } from '@/lib/nearbyPlaces';
+import { findNearbyFoodVenues, NearbyError, type NearbyPlace } from '@/lib/nearbyPlaces';
 
 type State =
   | { status: 'loading' }
@@ -31,13 +31,13 @@ export function NearbyRestaurantPicker({
     setState({ status: 'loading' });
     try {
       const { latitude, longitude } = await getCurrentPosition();
-      const places = await findNearbyRestaurants(latitude, longitude, { radius });
+      const places = await findNearbyFoodVenues(latitude, longitude, { radius });
       setState({ status: 'ready', places, radius });
     } catch (err) {
       const message =
         err instanceof GeoError || err instanceof NearbyError
           ? err.message
-          : 'Something went wrong finding nearby places.';
+          : 'Something went wrong finding nearby venues.';
       setState({ status: 'error', message });
     }
   }, []);
@@ -47,11 +47,11 @@ export function NearbyRestaurantPicker({
   }, [open, run]);
 
   return (
-    <Sheet open={open} onClose={onClose} title="Find nearby restaurants">
+    <Sheet open={open} onClose={onClose} title="Find nearby venues">
       {state.status === 'loading' && (
         <div className="py-10 text-center text-sm text-text-muted">
           <MapPin className="mx-auto mb-2 animate-pulse text-primary" size={24} />
-          Finding places near you…
+          Finding venues near you…
         </div>
       )}
 
@@ -66,7 +66,7 @@ export function NearbyRestaurantPicker({
 
       {state.status === 'ready' && state.places.length === 0 && (
         <div className="py-8 text-center">
-          <p className="text-sm text-text-muted">No places found within {formatDistance(state.radius)}.</p>
+          <p className="text-sm text-text-muted">No venues found within {formatDistance(state.radius)}.</p>
           <Button variant="secondary" className="mt-4" onClick={() => run(state.radius * 2)}>
             Search wider
           </Button>
@@ -86,7 +86,7 @@ export function NearbyRestaurantPicker({
                 className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left hover:bg-surface-alt"
               >
                 <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-surface-alt text-text-muted">
-                  {place.source === 'cafe' ? <Coffee size={16} /> : <UtensilsCrossed size={16} />}
+                  <UtensilsCrossed size={16} />
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-[15px] font-medium text-text">{place.name}</span>

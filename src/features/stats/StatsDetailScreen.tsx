@@ -7,7 +7,7 @@ import { formatDate } from '@/lib/format';
 import { BeveragesDetail } from './BeveragesDetail';
 
 export const STATS_CATEGORIES: { slug: string; label: string; icon: LucideIcon; ready: boolean }[] = [
-  { slug: 'restaurants', label: 'Restaurants', icon: UtensilsCrossed, ready: false },
+  { slug: 'venues', label: 'Venues', icon: UtensilsCrossed, ready: false },
   { slug: 'beverages', label: 'Beverages', icon: Wine, ready: true },
   { slug: 'activity', label: 'Activity', icon: Ticket, ready: false },
   { slug: 'purchases', label: 'Purchases', icon: ShoppingBag, ready: false },

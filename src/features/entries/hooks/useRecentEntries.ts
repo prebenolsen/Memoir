@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { titleCase } from '@/lib/format';
-import type { EntryTable } from '@/hooks/useEntryMutations';
+import type { EntryTable } from '@/features/entries/hooks/useEntryMutations';
 import type { AddKind } from '@/lib/quickAdd';
 
 /** A recently logged entry, with everything needed to re-log it in one tap. */
@@ -34,10 +34,10 @@ const SOURCES: Source[] = [
   {
     table: 'memoir_food_entries',
     kind: 'food',
-    select: '*, food_item:memoir_food_items(name), restaurant:memoir_restaurants(name)',
+    select: '*, food_item:memoir_food_items(name), venue:memoir_venues(name)',
     label: (r) =>
-      named(r, 'restaurant') ?? named(r, 'food_item') ?? (r.main_course as string | null) ?? 'Food',
-    strip: ['food_item', 'restaurant'],
+      named(r, 'venue') ?? named(r, 'food_item') ?? (r.main_course as string | null) ?? 'Food',
+    strip: ['food_item', 'venue'],
   },
   {
     table: 'memoir_drink_entries',
@@ -95,8 +95,6 @@ export function useRecentEntries(enabled = true, limit = 5) {
           });
         }),
       );
-      // Collapse re-logs of the same drink into a single, most-recent entry so
-      // the list never shows the same label twice.
       const seen = new Set<string>();
       return perSource
         .flat()

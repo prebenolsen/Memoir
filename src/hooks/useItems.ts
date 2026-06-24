@@ -121,12 +121,12 @@ const CONFIGS: Record<string, ItemListConfig> = {
     statIdField: 'food_item_id',
     countField: 'times_eaten',
   },
-  restaurant: {
-    itemTable: 'memoir_restaurants',
-    statView: 'memoir_restaurant_stats',
-    statIdField: 'restaurant_id',
+  venue: {
+    itemTable: 'memoir_venues',
+    statView: 'memoir_venue_stats',
+    statIdField: 'venue_id',
     countField: 'visits',
-    extraColumns: ['source', 'latitude', 'longitude', 'address'],
+    extraColumns: ['latitude', 'longitude', 'address'],
   },
   drink: {
     itemTable: 'memoir_drink_items',
@@ -151,12 +151,45 @@ export function useItemList(kind: ItemKind) {
     queryKey: ['itemList', kind],
     queryFn: async (): Promise<ItemWithStats[]> => {
       const cols = ['id', 'name', 'default_rating', 'notes', ...(cfg.extraColumns ?? [])].join(',');
-      const [{ data: items, error: e1 }, { data: stats, error: e2 }] = await Promise.all([
-        supabase.from(cfg.itemTable).select(cols).order('name'),
-        supabase.from(cfg.statView).select('*'),
-      ]);
+
+      // For venues we also load per-meal-type stats so the UI can surface
+      // that a venue scores differently for breakfast vs lunch vs dinner.
+      const mealStatsQuery =
+        kind === 'venue'
+          ? supabase
+              .from('memoir_venue_meal_stats')
+              .select('venue_id,meal_type,visits,avg_rating')
+          : Promise.resolve({ data: null, error: null });
+
+      const [{ data: items, error: e1 }, { data: stats, error: e2 }, { data: mealRows }] =
+        await Promise.all([
+          supabase.from(cfg.itemTable).select(cols).order('name'),
+          supabase.from(cfg.statView).select('*'),
+          mealStatsQuery,
+        ]);
       if (e1) throw e1;
       if (e2) throw e2;
+
+      // Build per-venue meal-type stat lookup: venue_id -> meal_type -> { visits, avg_rating }
+      const mealByVenue = new Map<
+        string,
+        Record<string, { visits: number; avg_rating: number | null }>
+      >();
+      if (mealRows) {
+        for (const ms of mealRows as {
+          venue_id: string;
+          meal_type: string;
+          visits: number;
+          avg_rating: number | null;
+        }[]) {
+          if (!mealByVenue.has(ms.venue_id)) mealByVenue.set(ms.venue_id, {});
+          mealByVenue.get(ms.venue_id)![ms.meal_type] = {
+            visits: ms.visits,
+            avg_rating: ms.avg_rating,
+          };
+        }
+      }
+
       const statMap = new Map<string, Record<string, number | null>>();
       (stats ?? []).forEach((s: Record<string, unknown>) => {
         statMap.set(s[cfg.statIdField] as string, s as Record<string, number | null>);
@@ -165,6 +198,9 @@ export function useItemList(kind: ItemKind) {
         const s = statMap.get(it.id as string);
         const extra: Record<string, unknown> = {};
         (cfg.extraColumns ?? []).forEach((c) => (extra[c] = it[c]));
+        if (kind === 'venue') {
+          extra.meal_stats = mealByVenue.get(it.id as string) ?? {};
+        }
         return {
           id: it.id as string,
           name: it.name as string,
@@ -193,7 +229,7 @@ export async function updateItem(
 /** Entry table + foreign key that points back to each reusable item. */
 const ENTRY_FK: Record<ItemKind, { table: string; fk: string }> = {
   food: { table: 'memoir_food_entries', fk: 'food_item_id' },
-  restaurant: { table: 'memoir_food_entries', fk: 'restaurant_id' },
+  venue: { table: 'memoir_food_entries', fk: 'venue_id' },
   drink: { table: 'memoir_drink_entries', fk: 'drink_item_id' },
   activity: { table: 'memoir_activity_entries', fk: 'activity_item_id' },
 };

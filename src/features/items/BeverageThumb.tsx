@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Wine } from 'lucide-react';
-import { useBeverageImage } from '@/hooks/useBeverageImage';
+import { useBeverageImage } from '@/features/items/hooks/useBeverageImage';
 
 /**
  * Square thumbnail for a beverage, sourced from its Open Food Facts photo.

@@ -3,7 +3,7 @@ import { supabase } from './supabase';
 // Tables included in backups, in dependency order (items + projects before entries).
 const ITEM_TABLES = [
   'memoir_food_items',
-  'memoir_restaurants',
+  'memoir_venues',
   'memoir_drink_items',
   'memoir_activity_items',
 ] as const;

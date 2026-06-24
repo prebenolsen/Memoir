@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { MapContainer, TileLayer, useMap, useMapEvents } from 'react-leaflet';
-import { Coffee, MapPin, UtensilsCrossed, X } from 'lucide-react';
+import { MapPin, UtensilsCrossed, X } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 import { Sheet } from '@/components/ui/Sheet';
 import { Button } from '@/components/ui/Button';
 import { getCurrentPosition, GeoError } from '@/lib/geo';
-import { findNearbyRestaurants, NearbyError, type NearbyPlace } from '@/lib/nearbyPlaces';
+import { findNearbyFoodVenues, NearbyError, type NearbyPlace } from '@/lib/nearbyPlaces';
 import type { Map as LeafletMap, LatLng } from 'leaflet';
 
 const RADIUS = 200;
@@ -52,7 +52,6 @@ export function MapRestaurantPicker({
   const [userCoords, setUserCoords] = useState<[number, number] | null>(null);
   const [search, setSearch] = useState<SearchState>({ status: 'idle' });
 
-  // Fly to user's location each time the sheet opens.
   useEffect(() => {
     if (!open) return;
     setUserCoords(null);
@@ -69,13 +68,13 @@ export function MapRestaurantPicker({
     if (!center) return;
     setSearch({ status: 'loading' });
     try {
-      const places = await findNearbyRestaurants(center.lat, center.lng, { radius: RADIUS });
+      const places = await findNearbyFoodVenues(center.lat, center.lng, { radius: RADIUS });
       setSearch({ status: 'ready', places });
     } catch (err) {
       const message =
         err instanceof NearbyError || err instanceof GeoError
           ? err.message
-          : 'Something went wrong finding restaurants.';
+          : 'Something went wrong finding venues.';
       setSearch({ status: 'error', message });
     }
   }, []);
@@ -83,7 +82,7 @@ export function MapRestaurantPicker({
   const reset = useCallback(() => setSearch({ status: 'idle' }), []);
 
   return (
-    <Sheet open={open} onClose={onClose} title="Find restaurants">
+    <Sheet open={open} onClose={onClose} title="Find venues">
       {/* Map */}
       <div className="relative -mx-4 h-64 overflow-hidden">
         {open && (
@@ -102,7 +101,6 @@ export function MapRestaurantPicker({
             <FlyToLocation coords={userCoords} />
           </MapContainer>
         )}
-        {/* Fixed crosshair pin at center */}
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
           <MapPin
             size={32}
@@ -127,14 +125,13 @@ export function MapRestaurantPicker({
         )}
       </div>
 
-      {/* Results */}
       {search.status === 'error' && (
         <p className="mt-4 text-center text-sm text-text-muted">{search.message}</p>
       )}
 
       {search.status === 'ready' && search.places.length === 0 && (
         <p className="mt-4 text-center text-sm text-text-muted">
-          No restaurants or cafes found within {RADIUS} m of that spot.
+          No venues found within {RADIUS} m of that spot.
         </p>
       )}
 
@@ -151,7 +148,7 @@ export function MapRestaurantPicker({
                 className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left hover:bg-surface-alt"
               >
                 <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-surface-alt text-text-muted">
-                  {place.source === 'cafe' ? <Coffee size={16} /> : <UtensilsCrossed size={16} />}
+                  <UtensilsCrossed size={16} />
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-[15px] font-medium text-text">

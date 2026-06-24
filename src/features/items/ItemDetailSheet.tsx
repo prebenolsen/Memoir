@@ -7,7 +7,7 @@ import { RatingInput, RatingBadge } from '@/components/ui/RatingInput';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { useProject } from '@/context/ProjectProvider';
-import { useItemOccasions, entryEditKind } from '@/hooks/useItemDetail';
+import { useItemOccasions, entryEditKind } from '@/features/items/hooks/useItemDetail';
 import { updateItem, deleteItem, type ItemKind, type ItemWithStats } from '@/hooks/useItems';
 import { useQuickAdd } from '@/lib/quickAdd';
 import { toast } from '@/components/ui/Toast';

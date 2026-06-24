@@ -3,7 +3,7 @@ import { NotebookPen, Compass, BarChart3 } from 'lucide-react';
 import { cn } from '@/lib/cn';
 
 const tabs = [
-  { to: '/today', label: 'Journal', icon: NotebookPen },
+  { to: '/journal', label: 'Journal', icon: NotebookPen },
   { to: '/explore', label: 'Explore', icon: Compass },
   { to: '/stats', label: 'Stats', icon: BarChart3 },
 ];

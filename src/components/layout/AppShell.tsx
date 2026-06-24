@@ -22,7 +22,7 @@ export function AppShell() {
   // Project context applies across the Journal, Explore and Stats tabs, so the
   // switcher is available on all three.
   const showProjectSwitcher =
-    pathname === '/today' || pathname === '/explore' || pathname === '/stats';
+    pathname === '/journal' || pathname === '/explore' || pathname === '/stats';
 
   return (
     <div className="mx-auto flex h-full max-w-md flex-col bg-bg">

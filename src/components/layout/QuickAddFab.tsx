@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { Plus, UtensilsCrossed, Wine, Ticket, ShoppingBag, ScanLine, X, Clock } from 'lucide-react';
 import { useQuickAdd, type AddKind } from '@/lib/quickAdd';
-import { useRecentEntries, type RecentEntry } from '@/hooks/useRecentEntries';
-import { useEntryMutations } from '@/hooks/useEntryMutations';
+import { useRecentEntries, type RecentEntry } from '@/features/entries/hooks/useRecentEntries';
+import { useEntryMutations } from '@/features/entries/hooks/useEntryMutations';
 import { useProject } from '@/context/ProjectProvider';
 import { newId } from '@/lib/format';
 

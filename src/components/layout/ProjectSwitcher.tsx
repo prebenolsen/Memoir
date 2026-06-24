@@ -135,10 +135,10 @@ export function ProjectSwitcher() {
             </Field>
             <div className="grid grid-cols-2 gap-3">
               <Field label="Start" optional>
-                <DateField value={start} onChange={setStart} />
+                <DateField date={start} onDateChange={setStart} />
               </Field>
               <Field label="End" optional>
-                <DateField value={end} onChange={setEnd} />
+                <DateField date={end} onDateChange={setEnd} />
               </Field>
             </div>
             <Field label="Currency">

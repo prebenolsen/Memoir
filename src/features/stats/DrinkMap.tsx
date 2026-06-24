@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { MapContainer, TileLayer, CircleMarker, Tooltip, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { latLngBounds } from 'leaflet';
-import type { MapPoint } from '@/hooks/useBeverageStats';
+import type { MapPoint } from '@/features/stats/hooks/useBeverageStats';
 
 /** Resolve a theme CSS variable (e.g. "--accent") to an `rgb()` string for SVG. */
 function themeColor(name: string, fallback: string): string {

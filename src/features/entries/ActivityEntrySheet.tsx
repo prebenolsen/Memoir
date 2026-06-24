@@ -8,12 +8,12 @@ import { CurrencyInput } from '@/components/ui/CurrencyInput';
 import { DateField } from '@/components/ui/DateField';
 import { useProject } from '@/context/ProjectProvider';
 import { useSettings } from '@/context/SettingsProvider';
-import { useEntryMutations } from '@/hooks/useEntryMutations';
+import { useEntryMutations } from '@/features/entries/hooks/useEntryMutations';
 import { resolveItem } from '@/hooks/useItems';
 import { supabase } from '@/lib/supabase';
-import { newId } from '@/lib/format';
+import { combineDateTime, newId, nowTime, timeFromISO } from '@/lib/format';
 import type { ActivityEntry } from '@/types/db';
-import { useEditingEntry } from './useEditingEntry';
+import { useEditingEntry } from './hooks/useEditingEntry';
 
 export function ActivityEntrySheet({
   open,
@@ -30,6 +30,7 @@ export function ActivityEntrySheet({
   const { data: editing } = useEditingEntry<ActivityEntry>('memoir_activity_entries', editId);
 
   const [entryDate, setEntryDate] = useState(date);
+  const [entryTime, setEntryTime] = useState(nowTime());
   const [activity, setActivity] = useState<ComboValue | null>(null);
   const [rating, setRating] = useState<number | null>(null);
   const [cost, setCost] = useState<number | null>(null);
@@ -40,6 +41,7 @@ export function ActivityEntrySheet({
     if (!open) return;
     if (editing) {
       setEntryDate(editing.entry_date);
+      setEntryTime(timeFromISO(editing.created_at));
       setRating(editing.rating);
       setCost(editing.cost);
       setNotes(editing.notes ?? '');
@@ -54,6 +56,7 @@ export function ActivityEntrySheet({
       }
     } else if (!editId) {
       setEntryDate(date);
+      setEntryTime(nowTime());
       setActivity(null);
       setRating(null);
       setCost(null);
@@ -71,6 +74,7 @@ export function ActivityEntrySheet({
       await save('memoir_activity_entries', editId ?? newId(), {
         project_id: project.id,
         entry_date: entryDate,
+        created_at: combineDateTime(entryDate, entryTime, editing?.created_at),
         activity_item_id,
         description: null,
         rating,
@@ -118,7 +122,12 @@ export function ActivityEntrySheet({
             />
           </Field>
           <Field label="Date">
-            <DateField value={entryDate} onChange={setEntryDate} />
+            <DateField
+              date={entryDate}
+              onDateChange={setEntryDate}
+              time={entryTime}
+              onTimeChange={setEntryTime}
+            />
           </Field>
         </div>
 
