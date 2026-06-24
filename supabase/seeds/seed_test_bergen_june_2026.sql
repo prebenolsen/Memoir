@@ -67,28 +67,28 @@ begin
   -- --------------------------------------------------------------------------
 
   -- Restaurants (with rough Bryggen-area coordinates)
-  insert into memoir_restaurants (user_id, name, source, default_rating, latitude, longitude, address, notes)
-  values (v_user_id, 'Bryggeloftet & Stuene', 'restaurant', 8, 60.3972, 5.3225, 'Bryggen 11, 5003 Bergen', 'Classic Norwegian, on the old wharf')
+  insert into memoir_venues (user_id, name, default_rating, latitude, longitude, address, notes)
+  values (v_user_id, 'Bryggeloftet & Stuene', 8, 60.3972, 5.3225, 'Bryggen 11, 5003 Bergen', 'Classic Norwegian, on the old wharf')
   on conflict (user_id, lower(name)) do update set notes = excluded.notes
   returning id into r_bryggeloftet;
 
-  insert into memoir_restaurants (user_id, name, source, default_rating, latitude, longitude, address, notes)
-  values (v_user_id, 'Pingvinen', 'restaurant', 9, 60.3897, 5.3215, 'Vaskerelven 14, 5014 Bergen', 'Cosy local pub, traditional dishes')
+  insert into memoir_venues (user_id, name, default_rating, latitude, longitude, address, notes)
+  values (v_user_id, 'Pingvinen', 9, 60.3897, 5.3215, 'Vaskerelven 14, 5014 Bergen', 'Cosy local pub, traditional dishes')
   on conflict (user_id, lower(name)) do update set notes = excluded.notes
   returning id into r_pingvinen;
 
-  insert into memoir_restaurants (user_id, name, source, default_rating, latitude, longitude, address, notes)
-  values (v_user_id, 'Bare Vestland', 'restaurant', 8, 60.3935, 5.3242, 'Torgallmenningen 2, 5014 Bergen', 'Modern west-coast tasting menu')
+  insert into memoir_venues (user_id, name, default_rating, latitude, longitude, address, notes)
+  values (v_user_id, 'Bare Vestland', 8, 60.3935, 5.3242, 'Torgallmenningen 2, 5014 Bergen', 'Modern west-coast tasting menu')
   on conflict (user_id, lower(name)) do update set notes = excluded.notes
   returning id into r_bare;
 
-  insert into memoir_restaurants (user_id, name, source, default_rating, latitude, longitude, address, notes)
-  values (v_user_id, 'Trekroneren', 'restaurant', 7, 60.3925, 5.3245, 'Kong Oscars gate 1, 5017 Bergen', 'Famous reindeer hot dog stand')
+  insert into memoir_venues (user_id, name, default_rating, latitude, longitude, address, notes)
+  values (v_user_id, 'Trekroneren', 7, 60.3925, 5.3245, 'Kong Oscars gate 1, 5017 Bergen', 'Famous reindeer hot dog stand')
   on conflict (user_id, lower(name)) do update set notes = excluded.notes
   returning id into r_trekroneren;
 
-  insert into memoir_restaurants (user_id, name, source, default_rating, latitude, longitude, address, notes)
-  values (v_user_id, 'Fish Me', 'restaurant', 8, 60.3955, 5.3251, 'Zachariasbryggen, 5014 Bergen', 'Seafood by the harbour')
+  insert into memoir_venues (user_id, name, default_rating, latitude, longitude, address, notes)
+  values (v_user_id, 'Fish Me', 8, 60.3955, 5.3251, 'Zachariasbryggen, 5014 Bergen', 'Seafood by the harbour')
   on conflict (user_id, lower(name)) do update set notes = excluded.notes
   returning id into r_fishme;
 
@@ -169,15 +169,15 @@ begin
   -- Food entries (history)
   -- --------------------------------------------------------------------------
   insert into memoir_food_entries
-    (user_id, project_id, entry_date, meal_type, source, food_item_id, restaurant_id, starter, main_course, dessert, rating, cost, notes)
+    (user_id, project_id, entry_date, meal_type, source, food_item_id, venue_id, starter, main_course, dessert, rating, cost, notes)
   values
-    (v_user_id, v_project_id, '2026-06-08', 'dinner', 'restaurant', f_fishsoup,  r_bryggeloftet, 'Bergen fish soup', 'Bacalao', 'Cloudberry cream', 9, 645.00, 'Great first night on the wharf'),
-    (v_user_id, v_project_id, '2026-06-09', 'lunch',  'restaurant', f_hotdog,    r_trekroneren,  NULL, 'Reindeer hot dog', NULL, 7, 95.00,  'Quick street-food lunch'),
-    (v_user_id, v_project_id, '2026-06-09', 'dinner', 'restaurant', f_reindeer,  r_pingvinen,    NULL, 'Reindeer stew', 'Apple cake', 9, 410.00, 'Cosy pub, packed'),
-    (v_user_id, v_project_id, '2026-06-10', 'lunch',  'restaurant', f_fishcake,  r_pingvinen,    NULL, 'Fish cakes with potatoes', NULL, 7, 245.00, NULL),
-    (v_user_id, v_project_id, '2026-06-11', 'dinner', 'restaurant', f_wholefish, r_fishme,       'Shrimp', 'Grilled halibut', NULL, 8, 720.00, 'By the harbour at sunset'),
-    (v_user_id, v_project_id, '2026-06-12', 'dinner', 'restaurant', NULL,        r_bare,         'Scallop', 'West-coast tasting menu', 'Brown cheese ice cream', 9, 1290.00, 'Splurge night'),
-    (v_user_id, v_project_id, '2026-06-13', 'breakfast', 'cafe',    NULL,        NULL,           NULL, 'Skillingsbolle & coffee', NULL, 8, 110.00, 'Cinnamon bun by the fish market');
+    (v_user_id, v_project_id, '2026-06-08', 'dinner', 'venue', f_fishsoup,  r_bryggeloftet, 'Bergen fish soup', 'Bacalao', 'Cloudberry cream', 9, 645.00, 'Great first night on the wharf'),
+    (v_user_id, v_project_id, '2026-06-09', 'lunch',  'venue', f_hotdog,    r_trekroneren,  NULL, 'Reindeer hot dog', NULL, 7, 95.00,  'Quick street-food lunch'),
+    (v_user_id, v_project_id, '2026-06-09', 'dinner', 'venue', f_reindeer,  r_pingvinen,    NULL, 'Reindeer stew', 'Apple cake', 9, 410.00, 'Cosy pub, packed'),
+    (v_user_id, v_project_id, '2026-06-10', 'lunch',  'venue', f_fishcake,  r_pingvinen,    NULL, 'Fish cakes with potatoes', NULL, 7, 245.00, NULL),
+    (v_user_id, v_project_id, '2026-06-11', 'dinner', 'venue', f_wholefish, r_fishme,       'Shrimp', 'Grilled halibut', NULL, 8, 720.00, 'By the harbour at sunset'),
+    (v_user_id, v_project_id, '2026-06-12', 'dinner', 'venue', NULL,        r_bare,         'Scallop', 'West-coast tasting menu', 'Brown cheese ice cream', 9, 1290.00, 'Splurge night'),
+    (v_user_id, v_project_id, '2026-06-13', 'breakfast', 'venue', NULL,     NULL,           NULL, 'Skillingsbolle & coffee', NULL, 8, 110.00, 'Cinnamon bun by the fish market');
 
   -- --------------------------------------------------------------------------
   -- Drink entries (history) — count_* columns track the various glass/bottle
@@ -230,6 +230,6 @@ end $$;
 --    where name = 'Bergen 2026'
 --      and user_id = (select id from auth.users where email = 'test@test.com');
 -- (Entries cascade with the project. The reusable items above are left in place
---  on purpose — delete them by name from memoir_restaurants / memoir_drink_items
+--  on purpose — delete them by name from memoir_venues / memoir_drink_items
 --  / memoir_food_items / memoir_activity_items if you want a full teardown.)
 -- ============================================================================
