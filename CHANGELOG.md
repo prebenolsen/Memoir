@@ -11,6 +11,16 @@ This project uses [Semantic Versioning](https://semver.org/) (`MAJOR.MINOR.PATCH
 The current version is tracked in [`VERSION.md`](VERSION.md) and shown at the bottom
 of the in-app **Profile** screen.
 
+## [17.8.0] - 2026-06-24
+
+### Changed
+- **Explore opens faster.** Its data — your nearby location plus your venue, beverage and
+  friend favorites — now starts loading in the background while you're still on Journal,
+  so the Explore tab is ready the moment you tap it. To avoid a surprise location prompt
+  on a screen that has nothing to do with location, your GPS position is only pre-fetched
+  when you've already granted location access; otherwise it's still requested when you
+  open Explore, exactly as before.
+
 ## [17.7.1] - 2026-06-24
 
 ### Changed
