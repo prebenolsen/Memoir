@@ -67,7 +67,7 @@ function UsernameCard() {
   return (
     <Card className="space-y-2 p-4">
       <p className="text-sm text-text-muted">
-        Create your username.
+        Your username — this is how friends find and add you. Change it anytime.
       </p>
       <div className="flex gap-2">
         <Input
@@ -105,7 +105,7 @@ function FriendsCard() {
   return (
     <div className="space-y-3">
       <Card className="space-y-2 p-4">
-        <p className="text-sm text-text-muted">Add a friend by their username or login email.</p>
+        <p className="text-sm text-text-muted">Add a friend by their username.</p>
         <div className="flex gap-2">
           <Input
             value={identifier}

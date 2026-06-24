@@ -11,6 +11,13 @@ This project uses [Semantic Versioning](https://semver.org/) (`MAJOR.MINOR.PATCH
 The current version is tracked in [`VERSION.md`](VERSION.md) and shown at the bottom
 of the in-app **Profile** screen.
 
+## [17.7.1] - 2026-06-24
+
+### Changed
+- **Profile screen wording around usernames.** Since every account now has a username,
+  the Profile screen says "Your username — this is how friends find and add you" instead
+  of "Create your username," and adding a friend now simply asks for their username.
+
 ## [17.7.0] - 2026-06-24
 
 ### Added
