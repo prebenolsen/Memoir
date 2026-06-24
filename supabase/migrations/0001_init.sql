@@ -7,12 +7,25 @@
 
 -- ---------------------------------------------------------------------------
 -- Enums
+-- Postgres has no `create type if not exists`, so each is wrapped in a guard
+-- that swallows the duplicate-object error. This keeps the whole file safe to
+-- re-run even if a prior drop left a type behind (e.g. a rolled-back wipe).
 -- ---------------------------------------------------------------------------
-create type memoir_meal_type         as enum ('breakfast', 'lunch', 'dinner', 'snack');
-create type memoir_snack_type        as enum ('ice_cream', 'pastry', 'cake', 'candy', 'dessert', 'other');
-create type memoir_food_source       as enum ('home', 'venue');
-create type memoir_drink_type        as enum ('beer', 'wine', 'cocktail', 'spirit', 'other');
-create type memoir_purchase_category as enum ('clothes', 'souvenir', 'electronics', 'other');
+do $$ begin
+  create type memoir_meal_type as enum ('breakfast', 'lunch', 'dinner', 'snack');
+exception when duplicate_object then null; end $$;
+do $$ begin
+  create type memoir_snack_type as enum ('ice_cream', 'pastry', 'cake', 'candy', 'dessert', 'other');
+exception when duplicate_object then null; end $$;
+do $$ begin
+  create type memoir_food_source as enum ('home', 'venue');
+exception when duplicate_object then null; end $$;
+do $$ begin
+  create type memoir_drink_type as enum ('beer', 'wine', 'cocktail', 'spirit', 'other');
+exception when duplicate_object then null; end $$;
+do $$ begin
+  create type memoir_purchase_category as enum ('clothes', 'souvenir', 'electronics', 'other');
+exception when duplicate_object then null; end $$;
 
 -- ---------------------------------------------------------------------------
 -- Helper: apply the standard owner-only RLS policy to a table
