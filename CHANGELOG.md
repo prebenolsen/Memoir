@@ -11,6 +11,37 @@ This project uses [Semantic Versioning](https://semver.org/) (`MAJOR.MINOR.PATCH
 The current version is tracked in [`VERSION.md`](VERSION.md) and shown at the bottom
 of the in-app **Profile** screen.
 
+## [17.8.0] - 2026-07-03
+
+### Fixed
+- **Scanned wines no longer land on Beer at 4.7 %.** Drink-type detection used to
+  rely solely on the product's category tags in Open Food Facts, which many wines
+  don't have — and everything undetected fell back to Beer. The scanner now also
+  reads the label name (Rosé, Chardonnay, IPA, øl, cider, gin, …) and, as a last
+  resort, the alcohol strength, so a rosé opens the Wine form with the Rosé style
+  and the 12.5 % wine default instead of beer sizes and 4.7 %.
+- Scanned spirits and ciders are now recognized too, instead of defaulting to Beer.
+
+## [17.7.0] - 2026-07-03
+
+### Changed
+- **Barcode scanning is much faster.** On phones the scanner now uses the same
+  barcode engine as the official Open Food Facts app (Google's built-in detector),
+  recognizing codes near-instantly. On other browsers the fallback scanner checks
+  frames every 0.08 s instead of every 0.5 s and only looks for product barcodes.
+  The camera also opens on the back lens at higher resolution with continuous
+  autofocus, so codes come into focus quickly.
+- **Product lookups always fetch the latest Open Food Facts data** and download a
+  fraction of the data per scan, so results appear faster on mobile connections.
+
+### Fixed
+- **Scanned products that exist in Open Food Facts no longer show "Product not
+  found".** The lookup now tries both spellings of the same barcode (with and
+  without the leading zero) and falls back to the product's brand when no name
+  has been contributed yet — matching what the official app finds.
+- The "Product not found" message now shows the scanned barcode, so you can
+  double-check against the number printed under the code.
+
 ## [17.6.0] - 2026-06-24
 
 ### Added
