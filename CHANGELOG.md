@@ -11,7 +11,7 @@ This project uses [Semantic Versioning](https://semver.org/) (`MAJOR.MINOR.PATCH
 The current version is tracked in [`VERSION.md`](VERSION.md) and shown at the bottom
 of the in-app **Profile** screen.
 
-## [17.8.0] - 2026-07-03
+## [17.13.0] - 2026-07-03
 
 ### Fixed
 - **Scanned wines no longer land on Beer at 4.7 %.** Drink-type detection used to
@@ -22,7 +22,7 @@ of the in-app **Profile** screen.
   and the 12.5 % wine default instead of beer sizes and 4.7 %.
 - Scanned spirits and ciders are now recognized too, instead of defaulting to Beer.
 
-## [17.7.0] - 2026-07-03
+## [17.12.0] - 2026-07-03
 
 ### Changed
 - **Barcode scanning is much faster.** On phones the scanner now uses the same
@@ -41,6 +41,72 @@ of the in-app **Profile** screen.
   has been contributed yet — matching what the official app finds.
 - The "Product not found" message now shows the scanned barcode, so you can
   double-check against the number printed under the code.
+
+## [17.11.0] - 2026-06-25
+
+### Added
+- **🏳️‍🌈 Pride theme (temporary, for June).** Settings → Theme now has a "Pride"
+  option that splashes animated rainbow stripes across the whole app, gives headings
+  a shimmering rainbow gradient, and floats unicorns, rainbows, and sparkles drifting
+  up the screen. It's a limited-time celebration and is self-contained so it can be
+  removed easily later.
+
+## [17.10.0] - 2026-06-25
+
+### Added
+- **Set your project's Home in Settings.** Profile now has a "Project home" section
+  showing the current project's home location, with a button to set or update it to
+  your current location (and clear it). Each project keeps its own home, so you can
+  relocate — or move to a new city on the same project — and just pick a new home.
+
+### Changed
+- **"Home" drinks reuse the saved home.** Once a project's home is set, choosing Home
+  for a drink uses it automatically with no extra tap or location prompt — until you
+  change it in Settings.
+
+## [17.9.1] - 2026-06-24
+
+### Changed
+- **Tidier rating labels.** The drink rating no longer shows the "How the drink itself
+  tasted" helper line. On Add food, the rating now carries a "Rate the venue" title to
+  match the drink form's labelled ratings.
+
+## [17.9.0] - 2026-06-24
+
+### Changed
+- **Clearer ratings on Add drink.** Rating the drink now sits right below ABV, above the
+  location section, with its own "Rate the drink" label so there's no confusion about
+  what you're scoring. When you drank at a venue, the separate "Rate the venue" rating is
+  labelled for the place itself, keeping the two scores distinct.
+- **One scale switch.** The 1–5 / 1–10 toggle now lives on the drink rating; the venue
+  rating follows the same scale instead of showing its own switch.
+- **"Store price" at home.** When the location is set to Home, the Cost field is labelled
+  "Store price" to reflect that you bought, rather than were served, the drink.
+
+## [17.8.0] - 2026-06-24
+
+### Changed
+- **Explore opens faster.** Its data — your nearby location plus your venue, beverage and
+  friend favorites — now starts loading in the background while you're still on Journal,
+  so the Explore tab is ready the moment you tap it. To avoid a surprise location prompt
+  on a screen that has nothing to do with location, your GPS position is only pre-fetched
+  when you've already granted location access; otherwise it's still requested when you
+  open Explore, exactly as before.
+
+## [17.7.1] - 2026-06-24
+
+### Changed
+- **Profile screen wording around usernames.** Since every account now has a username,
+  the Profile screen says "Your username — this is how friends find and add you" instead
+  of "Create your username," and adding a friend now simply asks for their username.
+
+## [17.7.0] - 2026-06-24
+
+### Added
+- **You now get a username automatically.** New accounts start with a username taken
+  from your email — the part before the "@" (so `thisismyemail281@gmail.com` becomes
+  `thisismyemail281`). If that name is already taken, your full email is used instead.
+  You can still change it anytime on the Profile screen.
 
 ## [17.6.0] - 2026-06-24
 

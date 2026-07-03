@@ -33,6 +33,7 @@ function applyTheme(theme: Settings['theme']) {
     window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
   const dark = theme === 'dark' || (theme === 'system' && prefersDark);
   root.classList.toggle('dark', dark);
+  root.classList.toggle('pride', theme === 'pride'); // PRIDE THEME (temporary) — see src/pride-theme.tsx
 }
 
 export function SettingsProvider({ children }: { children: ReactNode }) {

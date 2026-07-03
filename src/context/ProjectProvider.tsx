@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from './AuthProvider';
 import { useSettings } from './SettingsProvider';
 import { effectiveSettings, logicalToday, newId } from '@/lib/format';
+import { getCurrentPosition, reverseGeocode } from '@/lib/geo';
 import type { Currency, Project, Settings } from '@/types/db';
 
 interface ProjectContextValue {
@@ -37,11 +38,22 @@ interface ProjectContextValue {
     /** Currency for this project; stored as a settings override. */
     currency?: Currency | null;
   }) => Promise<Project>;
-  /** Persist a project's permanent home location (captured on the first "Home" drink). */
+  /**
+   * Persist a project's permanent home location. Pass null coordinates to clear
+   * it (e.g. from Settings). Captured automatically on the first "Home" drink and
+   * editable anytime in Settings.
+   */
   updateProjectHome: (
     projectId: string,
-    home: { latitude: number; longitude: number; city: string | null; country: string | null },
+    home: {
+      latitude: number | null;
+      longitude: number | null;
+      city: string | null;
+      country: string | null;
+    },
   ) => Promise<void>;
+  /** Capture the device's current position and store it as the project's home. */
+  captureProjectHome: (projectId: string) => Promise<void>;
   refetchProjects: () => void;
 }
 
@@ -142,6 +154,17 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     await qc.invalidateQueries({ queryKey: ['projects', user?.id] });
   };
 
+  const captureProjectHome: ProjectContextValue['captureProjectHome'] = async (projectId) => {
+    const { latitude, longitude } = await getCurrentPosition();
+    let info = { city: null as string | null, country: null as string | null };
+    try {
+      info = await reverseGeocode(latitude, longitude);
+    } catch {
+      // Coordinates are enough; city/country are a nicety.
+    }
+    await updateProjectHome(projectId, { latitude, longitude, ...info });
+  };
+
   const project = useMemo(
     () => projects.find((p) => p.id === projectId) ?? null,
     [projects, projectId],
@@ -177,6 +200,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     setDate,
     createProject,
     updateProjectHome,
+    captureProjectHome,
     refetchProjects: () => void qc.invalidateQueries({ queryKey: ['projects', user?.id] }),
   };
 

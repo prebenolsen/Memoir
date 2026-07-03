@@ -13,7 +13,7 @@ export type DateFormat = 'DD.MM.YYYY' | 'MM/DD/YYYY' | 'YYYY-MM-DD';
 export type Currency = 'NOK' | 'EUR' | 'USD' | 'Other';
 export type RatingScale = 5 | 10;
 export type FirstDayOfWeek = 'monday' | 'sunday';
-export type Theme = 'light' | 'dark' | 'system';
+export type Theme = 'light' | 'dark' | 'system' | 'pride'; // 'pride' = temporary Pride theme (see src/pride-theme.tsx)
 
 export interface Project {
   id: string;

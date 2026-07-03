@@ -6,6 +6,7 @@ import { QuickAddFab } from './QuickAddFab';
 import { SyncBanner } from './SyncBanner';
 import { Toaster } from '@/components/ui/Toast';
 import { GlobalAddSheets } from '@/features/entries/GlobalAddSheets';
+import { useWarmExplore } from '@/features/explore/hooks/useWarmExplore';
 import { useFriends } from '@/hooks/useFriends';
 import { cn } from '@/lib/cn';
 
@@ -19,6 +20,9 @@ function FriendRequestDot() {
 
 export function AppShell() {
   const { pathname } = useLocation();
+  // Warm Explore's data (GPS + venue/beverage/friend queries) while the user is
+  // on Journal so opening the Explore tab is instant.
+  useWarmExplore();
   // Project context applies across the Journal, Explore and Stats tabs, so the
   // switcher is available on all three.
   const showProjectSwitcher =

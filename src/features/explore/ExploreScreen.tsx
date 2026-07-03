@@ -13,9 +13,10 @@ import { useProject } from '@/context/ProjectProvider';
 import { useItemList, type ItemWithStats } from '@/hooks/useItems';
 import { useLatestEntries } from '@/features/explore/hooks/useLatestEntries';
 import { useFriendFavorites, useFriendDrinkFavorites } from '@/features/explore/hooks/useFriendFavorites';
+import { useGeoPosition } from '@/features/explore/hooks/useGeoPosition';
 import { FriendsStrip, FriendDetailSheet, AllFriendsSheet, type FriendRef } from '@/features/explore/FriendFavorites';
 import { useFriends } from '@/hooks/useFriends';
-import { getCurrentPosition, distanceMeters, type Coords, GeoError } from '@/lib/geo';
+import { distanceMeters, type Coords, GeoError } from '@/lib/geo';
 import { formatDate, titleCase } from '@/lib/format';
 import type { RatingScale } from '@/types/db';
 
@@ -312,26 +313,22 @@ export function ExploreScreen() {
   const scale = settings.rating_scale;
   const [category, setCategory] = useState<Category>('all');
   const [mode, setMode] = useState<Mode>('nearby');
-  const [coords, setCoords] = useState<Coords | null>(null);
   const [seeAll, setSeeAll] = useState<ExploreKind | null>(null);
   const [friendDetail, setFriendDetail] = useState<FriendRef | null>(null);
   const [allFriendsOpen, setAllFriendsOpen] = useState(false);
   const { friends } = useFriends();
 
+  // Position is warmed on Journal (see useWarmExplore), so in Nearby mode it's
+  // usually already cached and available the moment this screen mounts.
+  const { data: coords = null, isError: geoError, error: geoErr } = useGeoPosition(
+    mode === 'nearby',
+  );
+
   useEffect(() => {
-    if (mode !== 'nearby' || coords) return;
-    let active = true;
-    getCurrentPosition()
-      .then((c) => active && setCoords(c))
-      .catch((e: unknown) => {
-        if (!active) return;
-        toast(e instanceof GeoError ? e.message : 'Could not get your location.', 'error');
-        setMode('mine');
-      });
-    return () => {
-      active = false;
-    };
-  }, [mode, coords]);
+    if (mode !== 'nearby' || !geoError) return;
+    toast(geoErr instanceof GeoError ? geoErr.message : 'Could not get your location.', 'error');
+    setMode('mine');
+  }, [mode, geoError, geoErr]);
 
   const nearbyCoords = mode === 'nearby' ? coords : null;
   const kinds: ExploreKind[] = category === 'all' ? ORDER : [category];

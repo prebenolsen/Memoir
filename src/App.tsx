@@ -11,6 +11,7 @@ import { ExploreScreen } from '@/features/explore/ExploreScreen';
 import { StatsScreen } from '@/features/stats/StatsScreen';
 import { StatsDetailScreen } from '@/features/stats/StatsDetailScreen';
 import { ProfileScreen } from '@/features/profile/ProfileScreen';
+import { PrideOverlay } from '@/pride-theme'; // PRIDE THEME (temporary) — see src/pride-theme.tsx
 
 function Protected() {
   const { session, loading } = useAuth();
@@ -36,6 +37,7 @@ function Protected() {
           <Route path="*" element={<Navigate to="/journal" replace />} />
         </Routes>
       </ProjectProvider>
+      <PrideOverlay /> {/* PRIDE THEME (temporary) — see src/pride-theme.tsx */}
     </SettingsProvider>
   );
 }
