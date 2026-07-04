@@ -11,6 +11,14 @@ This project uses [Semantic Versioning](https://semver.org/) (`MAJOR.MINOR.PATCH
 The current version is tracked in [`VERSION.md`](VERSION.md) and shown at the bottom
 of the in-app **Profile** screen.
 
+## [18.0.1] - 2026-07-04
+
+### Fixed
+- **Home is never a venue.** Logging food at home no longer asks you to "Rate the
+  venue" — the rating field is now correctly labelled **"Rate the food"**, so at home
+  you only ever rate what you ate, never the location. (Drinks already worked this
+  way: the venue rating only appears when you pick an actual venue.)
+
 ## [18.0.0] - 2026-07-04
 
 ### Added
