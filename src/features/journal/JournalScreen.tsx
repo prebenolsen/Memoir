@@ -4,12 +4,13 @@ import { useProject } from '@/context/ProjectProvider';
 import { useDay, dayCost, type DayData } from '@/features/entries/hooks/useDay';
 import { useEntryMutations, type EntryTable } from '@/features/entries/hooks/useEntryMutations';
 import { useConfirmDelete } from '@/hooks/useConfirmDelete';
+import { useCurrencyRates } from '@/hooks/useCurrencies';
 import { useQuickAdd, type AddKind } from '@/lib/quickAdd';
 import { Card, SectionTitle } from '@/components/ui/Card';
 import { RatingBadge } from '@/components/ui/RatingInput';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { addDays, formatLongDate, formatMoney, formatWeekday } from '@/lib/format';
-import { BEER_SIZES } from '@/types/db';
+import { addDays, convertMoney, formatLongDate, formatMoney, formatWeekday } from '@/lib/format';
+import { BEER_SIZES, type Currency } from '@/types/db';
 import {
   activityTitle,
   drinkAmount,
@@ -22,6 +23,7 @@ function Row({
   title,
   subtitle,
   cost,
+  currency,
   rating,
   onEdit,
   onDelete,
@@ -29,6 +31,8 @@ function Row({
   title: string;
   subtitle?: string;
   cost?: number | null;
+  /** The cost's own currency; falls back to the display currency when omitted. */
+  currency?: Currency | null;
   rating?: number | null;
   onEdit: () => void;
   onDelete: () => void;
@@ -44,7 +48,7 @@ function Row({
         {rating != null && <RatingBadge value={rating} scale={settings.rating_scale} />}
         {cost != null && (
           <span className="text-sm font-medium text-text-muted">
-            {formatMoney(cost, settings.currency)}
+            {formatMoney(cost, currency ?? settings.currency)}
           </span>
         )}
       </button>
@@ -85,6 +89,7 @@ export function JournalScreen() {
   const { data, isLoading } = useDay(viewProjectId, date);
   const { remove } = useEntryMutations();
   const confirmDelete = useConfirmDelete();
+  const rates = useCurrencyRates();
   const openAdd = useQuickAdd((s) => s.open);
   const dateInputRef = useRef<HTMLInputElement>(null);
 
@@ -101,7 +106,11 @@ export function JournalScreen() {
     if (confirmDelete()) await remove(table, id);
   };
 
-  const total = dayCost(data);
+  // Drinks may be logged in another currency; fold them into the day's own
+  // currency so the total is meaningful even on a mixed-currency day.
+  const total = dayCost(data, (cost, currency) =>
+    convertMoney(cost, currency ?? settings.currency, settings.currency, rates),
+  );
   const al = data ? alcoholSummary(data) : null;
   const isEmpty =
     data &&
@@ -198,6 +207,7 @@ export function JournalScreen() {
                 title={drinkTitle(e)}
                 subtitle={drinkAmount(e)}
                 cost={e.cost}
+                currency={e.currency}
                 rating={e.rating}
                 onEdit={() => edit('drink', e.id)}
                 onDelete={() => del('memoir_drink_entries', e.id)}

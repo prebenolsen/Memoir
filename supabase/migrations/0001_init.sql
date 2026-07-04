@@ -79,6 +79,41 @@ create table memoir_venues (
 create unique index memoir_venues_uniq     on memoir_venues (user_id, lower(name));
 create unique index memoir_venues_osm_uniq on memoir_venues (user_id, osm_id) where osm_id is not null;
 
+-- Community venues: a shared, crowdsourced gazetteer of places contributed by
+-- users. Unlike memoir_venues (private, per-user) these rows are visible to
+-- everyone: when a user can't find their spot in the OpenStreetMap-backed
+-- "Find nearby venues" search, they add it with their current GPS location and
+-- it then shows up for every other user, flagged as manually added.
+create table memoir_community_venues (
+  id         uuid primary key default gen_random_uuid(),
+  name       text not null,
+  category   text not null default 'food' check (category in ('food', 'drink')),
+  latitude   double precision not null,
+  longitude  double precision not null,
+  address    text,
+  created_by uuid default auth.uid() references auth.users(id) on delete set null,
+  created_at timestamptz not null default now()
+);
+-- Dedupe near-identical contributions: same name at (roughly) the same spot.
+-- round(...::numeric, 4) is ~11 m of precision and is index-immutable.
+create unique index memoir_community_venues_uniq on memoir_community_venues (
+  category, lower(name), round(latitude::numeric, 4), round(longitude::numeric, 4)
+);
+create index memoir_community_venues_geo_idx on memoir_community_venues (latitude, longitude);
+
+alter table memoir_community_venues enable row level security;
+alter table memoir_community_venues force row level security;
+grant select, insert, delete on memoir_community_venues to authenticated;
+
+-- Anyone signed in can read the whole gazetteer…
+create policy community_venues_select on memoir_community_venues
+  for select to authenticated using (true);
+-- …but may only contribute rows as themselves, and only remove their own.
+create policy community_venues_insert on memoir_community_venues
+  for insert to authenticated with check (auth.uid() = created_by);
+create policy community_venues_delete on memoir_community_venues
+  for delete to authenticated using (auth.uid() = created_by);
+
 create table memoir_drink_items (
   id             uuid primary key default gen_random_uuid(),
   user_id        uuid not null default auth.uid() references auth.users(id) on delete cascade,
@@ -177,6 +212,10 @@ create table memoir_drink_entries (
   quantity      int not null default 1,
   rating        int check (rating between 1 and 10),
   cost          numeric(12, 2),
+  -- Currency the cost was paid in, so a drink bought abroad keeps its currency and
+  -- the Stats screens can normalize a mixed-currency project to the viewer's
+  -- currency (via memoir_currencies rates). NULL = the viewer's display currency.
+  currency      text check (currency is null or currency in ('NOK', 'EUR', 'USD', 'Other')),
   notes         text,
   city          text,
   country       text,

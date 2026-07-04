@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import type {
   ActivityEntry,
+  Currency,
   DrinkEntry,
   FoodEntry,
   PurchaseEntry,
@@ -66,9 +67,21 @@ export function useDay(projectId: string | null | undefined, date: string) {
   });
 }
 
-export function dayCost(d: DayData | undefined): number {
+/**
+ * Sum a day's costs. Drinks can carry their own currency, so pass `convertDrink`
+ * to normalize them to the display currency; without it, all costs are summed at
+ * face value (fine when everything shares one currency). Food, activity and
+ * purchase costs have no per-entry currency and are always taken at face value.
+ */
+export function dayCost(
+  d: DayData | undefined,
+  convertDrink?: (cost: number, currency: Currency | null) => number,
+): number {
   if (!d) return 0;
   const sum = (arr: { cost: number | null }[]) =>
     arr.reduce((acc, x) => acc + (x.cost ?? 0), 0);
-  return sum(d.food) + sum(d.drinks) + sum(d.activities) + sum(d.purchases);
+  const drinkSum = convertDrink
+    ? d.drinks.reduce((acc, x) => acc + (x.cost == null ? 0 : convertDrink(x.cost, x.currency)), 0)
+    : sum(d.drinks);
+  return sum(d.food) + drinkSum + sum(d.activities) + sum(d.purchases);
 }

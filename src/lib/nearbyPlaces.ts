@@ -1,16 +1,27 @@
 /**
  * Nearby place lookups via the OpenStreetMap Overpass API.
  * Free, no API key, CORS-friendly — suits this client-only app.
+ *
+ * Results are blended with user-contributed "community" venues (see
+ * communityVenues.ts) so places missing from OpenStreetMap still surface.
  */
 
+import {
+  findNearbyCommunityVenues,
+  type CommunityCategory,
+  type NearbyCommunityVenue,
+} from '@/lib/communityVenues';
+
 export interface NearbyPlace {
-  /** OSM element id, e.g. "node/123" — used to dedupe a saved venue. */
+  /** OSM element id ("node/123") or "community/<uuid>" — dedupes a saved venue. */
   osmId: string;
   name: string;
   address: string | null;
   latitude: number;
   longitude: number;
   distanceMeters: number;
+  /** True when contributed by a user (not from OpenStreetMap). */
+  community?: boolean;
 }
 
 export type NearbyErrorKind = 'rate_limited' | 'network' | 'server';
@@ -81,6 +92,47 @@ async function overpassQuery(query: string): Promise<OverpassElement[]> {
   return json.elements ?? [];
 }
 
+interface Located {
+  name: string;
+  latitude: number;
+  longitude: number;
+  distanceMeters: number;
+  community?: boolean;
+}
+
+/**
+ * Fold user-contributed venues into an OSM result set: drop any community row
+ * that duplicates an OSM place (same name within 60 m), tag the rest as
+ * community, and re-sort by distance. A gazetteer hiccup never sinks the OSM
+ * results — on failure the original list is returned untouched.
+ */
+async function withCommunityVenues<T extends Located>(
+  osm: T[],
+  latitude: number,
+  longitude: number,
+  category: CommunityCategory,
+  radius: number,
+  build: (v: NearbyCommunityVenue) => T,
+): Promise<T[]> {
+  let community: NearbyCommunityVenue[];
+  try {
+    community = await findNearbyCommunityVenues(latitude, longitude, category, { radius });
+  } catch {
+    return osm;
+  }
+  const extras = community
+    .filter((c) => {
+      const lower = c.name.trim().toLowerCase();
+      return !osm.some(
+        (p) =>
+          p.name.trim().toLowerCase() === lower &&
+          haversineMeters(c.latitude, c.longitude, p.latitude, p.longitude) < 60,
+      );
+    })
+    .map(build);
+  return [...osm, ...extras].sort((a, b) => a.distanceMeters - b.distanceMeters);
+}
+
 /**
  * Find food venues (restaurants, cafes, fast food) within `radius` metres,
  * sorted by distance and capped at 25 results.
@@ -111,7 +163,23 @@ export async function findNearbyFoodVenues(
     });
   }
   places.sort((a, b) => a.distanceMeters - b.distanceMeters);
-  return places.slice(0, 25);
+  const merged = await withCommunityVenues(
+    places,
+    latitude,
+    longitude,
+    'food',
+    radius,
+    (v) => ({
+      osmId: `community/${v.id}`,
+      name: v.name,
+      address: v.address,
+      latitude: v.latitude,
+      longitude: v.longitude,
+      distanceMeters: v.distanceMeters,
+      community: true,
+    }),
+  );
+  return merged.slice(0, 25);
 }
 
 // ---------------------------------------------------------------------------
@@ -126,6 +194,8 @@ export interface NearbyVenue {
   latitude: number;
   longitude: number;
   distanceMeters: number;
+  /** True when contributed by a user (not from OpenStreetMap). */
+  community?: boolean;
 }
 
 /**
@@ -159,5 +229,22 @@ export async function findNearbyVenues(
     });
   }
   venues.sort((a, b) => a.distanceMeters - b.distanceMeters);
-  return venues.slice(0, 25);
+  const merged = await withCommunityVenues(
+    venues,
+    latitude,
+    longitude,
+    'drink',
+    radius,
+    (v) => ({
+      osmId: `community/${v.id}`,
+      name: v.name,
+      amenityType: 'bar',
+      address: v.address,
+      latitude: v.latitude,
+      longitude: v.longitude,
+      distanceMeters: v.distanceMeters,
+      community: true,
+    }),
+  );
+  return merged.slice(0, 25);
 }

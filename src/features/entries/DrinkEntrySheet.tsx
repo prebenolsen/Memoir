@@ -12,7 +12,6 @@ import { DateField } from '@/components/ui/DateField';
 import { Stepper } from '@/components/ui/Stepper';
 import { AbvInput } from '@/components/ui/AbvInput';
 import { useProject } from '@/context/ProjectProvider';
-import { useSettings } from '@/context/SettingsProvider';
 import { useEntryMutations } from '@/features/entries/hooks/useEntryMutations';
 import { resolveItem } from '@/hooks/useItems';
 import { supabase } from '@/lib/supabase';
@@ -30,6 +29,7 @@ import {
   DRINK_TYPES,
   WINE_EMPTY_NAMES,
   WINE_STYLES,
+  type Currency,
   type DrinkEntry,
   type DrinkLocationKind,
   type DrinkType,
@@ -54,7 +54,6 @@ export function DrinkEntrySheet({
   preFill?: DrinkPreFill | null;
 }) {
   const { activeProject: project, date, settings, updateProjectHome } = useProject();
-  const { update: updateSettings } = useSettings();
   const { save } = useEntryMutations();
   const { data: editing } = useEditingEntry<DrinkEntry>('memoir_drink_entries', editId);
 
@@ -69,6 +68,7 @@ export function DrinkEntrySheet({
   const [quantity, setQuantity] = useState(1);
   const [rating, setRating] = useState<number | null>(null);
   const [cost, setCost] = useState<number | null>(null);
+  const [currency, setCurrency] = useState<Currency>(settings.currency);
   const [notes, setNotes] = useState('');
   const [locationKind, setLocationKind] = useState<DrinkLocationKind>('home');
   const [venue, setVenue] = useState<ComboValue | null>(null);
@@ -99,6 +99,7 @@ export function DrinkEntrySheet({
       setQuantity(editing.quantity);
       setRating(editing.rating);
       setCost(editing.cost);
+      setCurrency(editing.currency ?? settings.currency);
       setNotes(editing.notes ?? '');
       // Older entries predate location_kind: infer from what they carry.
       setLocationKind(
@@ -143,6 +144,7 @@ export function DrinkEntrySheet({
       setQuantity(1);
       setRating(null);
       setCost(null);
+      setCurrency(settings.currency);
       setNotes('');
       setLocationKind('home');
       setVenue(null);
@@ -386,6 +388,7 @@ export function DrinkEntrySheet({
         quantity: isBeer ? Math.max(1, beerCount) : quantity,
         rating,
         cost,
+        currency: cost != null ? currency : null,
         notes: notes || null,
         location_kind: locationKind,
         venue_id,
@@ -605,8 +608,8 @@ export function DrinkEntrySheet({
             <CurrencyInput
               value={cost}
               onChange={setCost}
-              currency={settings.currency}
-              onCurrencyChange={(c) => updateSettings({ currency: c })}
+              currency={currency}
+              onCurrencyChange={setCurrency}
             />
           </Field>
           <Field label="Date">
@@ -644,6 +647,7 @@ export function DrinkEntrySheet({
         radius={500}
         title="Find venues"
         Icon={Beer}
+        category="drink"
       />
     </Sheet>
   );

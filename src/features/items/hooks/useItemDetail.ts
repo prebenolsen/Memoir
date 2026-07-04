@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { itemConfig, type ItemKind } from '@/hooks/useItems';
+import type { Currency } from '@/types/db';
 
 export interface Occasion {
   id: string;
@@ -9,6 +10,8 @@ export interface Occasion {
   project_name: string;
   rating: number | null;
   cost: number | null;
+  /** The cost's currency (drinks only); null means the viewer's display currency. */
+  currency: Currency | null;
   notes: string | null;
   detail: string | null;
 }
@@ -28,7 +31,9 @@ export function useItemOccasions(kind: ItemKind, itemId: string | null) {
     queryFn: async (): Promise<Occasion[]> => {
       const cfg = ENTRY_TABLE[kind];
       const detail = cfg.detailCol ? `, ${cfg.detailCol}` : '';
-      const selectStr = `id, entry_date, rating, cost, notes${detail}, project:memoir_projects(id, name)`;
+      // Only drink entries carry a per-entry currency column.
+      const currencyCol = kind === 'drink' ? ', currency' : '';
+      const selectStr = `id, entry_date, rating, cost${currencyCol}, notes${detail}, project:memoir_projects(id, name)`;
       const { data, error } = await supabase
         .from(cfg.table)
         .select(selectStr)
@@ -45,6 +50,7 @@ export function useItemOccasions(kind: ItemKind, itemId: string | null) {
           project_name: project?.name ?? '',
           rating: (r.rating as number | null) ?? null,
           cost: (r.cost as number | null) ?? null,
+          currency: kind === 'drink' ? ((r.currency as Currency | null) ?? null) : null,
           notes: (r.notes as string | null) ?? null,
           detail: cfg.detailCol ? ((r[cfg.detailCol] as string | null) ?? null) : null,
         };

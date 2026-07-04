@@ -1,7 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
+import { convertMoney, type RateMap } from '@/lib/format';
 import { BEER_SIZES, WINE_STYLES } from '@/types/db';
-import type { ExpenseCategory, WineStyle } from '@/types/db';
+import type { Currency, ExpenseCategory, WineStyle } from '@/types/db';
 
 export interface NamedCount {
   name: string;
@@ -70,14 +71,21 @@ function topRatings(map: Map<string, number[]>, n = 5): NamedRating[] {
  * - null      → "Everything" mode, all projects included
  * - string    → specific project filter
  * Optional `from`/`to` (YYYY-MM-DD) bound the entry dates inclusively.
+ *
+ * Drink costs are normalized to `displayCurrency` using `rates` (from
+ * `useCurrencies`), so a project mixing currencies totals correctly. Food,
+ * activity and purchase costs carry no currency and are assumed to already be in
+ * the display currency.
  */
 export function useProjectStats(
   projectId: string | null | undefined,
-  from?: string,
-  to?: string,
+  from: string | undefined,
+  to: string | undefined,
+  displayCurrency: Currency,
+  rates: RateMap,
 ) {
   return useQuery({
-    queryKey: ['stats', projectId, from, to],
+    queryKey: ['stats', projectId, from, to, displayCurrency, rates],
     enabled: projectId !== undefined,
     queryFn: async (): Promise<ProjectStats> => {
       const p = (table: string, select: string) => {
@@ -93,7 +101,7 @@ export function useProjectStats(
           'memoir_food_entries',
           'entry_date, rating, cost, venue_id, food_item:memoir_food_items(name)',
         ),
-        p('memoir_drink_entries', 'entry_date, rating, cost, drink_type, wine_style, count_033l, count_04l, count_05l, count_0568l, count_06l, quantity, drink_item:memoir_drink_items(name)'),
+        p('memoir_drink_entries', 'entry_date, rating, cost, currency, drink_type, wine_style, count_033l, count_04l, count_05l, count_0568l, count_06l, quantity, drink_item:memoir_drink_items(name)'),
         p('memoir_activity_entries', 'entry_date, rating, cost, activity_item:memoir_activity_items(name)'),
         p('memoir_purchase_entries', 'entry_date, cost'),
       ]);
@@ -103,7 +111,7 @@ export function useProjectStats(
         entry_date: string; rating: number | null; cost: number | null; venue_id: string | null; food_item: { name: string } | null;
       }[];
       const drinkRows = (drinks.data ?? []) as unknown as {
-        entry_date: string; rating: number | null; cost: number | null; drink_type: string; wine_style: WineStyle | null; count_033l: number; count_04l: number; count_05l: number; count_0568l: number; count_06l: number; quantity: number; drink_item: { name: string } | null;
+        entry_date: string; rating: number | null; cost: number | null; currency: Currency | null; drink_type: string; wine_style: WineStyle | null; count_033l: number; count_04l: number; count_05l: number; count_0568l: number; count_06l: number; quantity: number; drink_item: { name: string } | null;
       }[];
       const activityRows = (activities.data ?? []) as unknown as {
         entry_date: string; rating: number | null; cost: number | null; activity_item: { name: string } | null;
@@ -189,7 +197,13 @@ export function useProjectStats(
         days.add(date);
       };
       foodRows.forEach((f) => addCost('food', f.cost, f.entry_date));
-      drinkRows.forEach((d) => addCost('alcohol', d.cost, d.entry_date));
+      drinkRows.forEach((d) =>
+        addCost(
+          'alcohol',
+          d.cost == null ? null : convertMoney(d.cost, d.currency ?? displayCurrency, displayCurrency, rates),
+          d.entry_date,
+        ),
+      );
       activityRows.forEach((a) => addCost('activities', a.cost, a.entry_date));
       purchaseRows.forEach((pr) => addCost('purchases', pr.cost, pr.entry_date));
 

@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { useProject } from '@/context/ProjectProvider';
 import { useBeverageStats, type NamedCount, type NamedRating } from '@/features/stats/hooks/useBeverageStats';
+import { useCurrencyRates } from '@/hooks/useCurrencies';
 import { Card, SectionTitle } from '@/components/ui/Card';
 import { StatCard } from '@/components/ui/StatCard';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -160,7 +161,8 @@ export function BeveragesDetail({
 }) {
   const { settings } = useProject();
   const cur = settings.currency;
-  const { data: s, isLoading, isError } = useBeverageStats(projectId, from, to);
+  const rates = useCurrencyRates();
+  const { data: s, isLoading, isError } = useBeverageStats(projectId, from, to, cur, rates);
 
   if (isError)
     return (

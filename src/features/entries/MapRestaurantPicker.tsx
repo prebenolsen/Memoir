@@ -6,6 +6,9 @@ import { Sheet } from '@/components/ui/Sheet';
 import { Button } from '@/components/ui/Button';
 import { getCurrentPosition, GeoError } from '@/lib/geo';
 import { findNearbyFoodVenues, NearbyError, type NearbyPlace } from '@/lib/nearbyPlaces';
+import { AddMissingVenue } from './AddMissingVenue';
+import type { CommunityCategory } from '@/lib/communityVenues';
+import type { CommunityVenue } from '@/types/db';
 import type { Map as LeafletMap, LatLng } from 'leaflet';
 
 const DEFAULT_CENTER: [number, number] = [48.8566, 2.3522]; // Paris fallback
@@ -51,6 +54,7 @@ export function MapRestaurantPicker({
   radius = 200,
   title = 'Find venues',
   Icon = UtensilsCrossed,
+  category = 'food',
 }: {
   open: boolean;
   onClose: () => void;
@@ -62,6 +66,8 @@ export function MapRestaurantPicker({
   title?: string;
   /** Icon shown on each result row. */
   Icon?: LucideIcon;
+  /** Which gazetteer a manually-added place is filed under. */
+  category?: CommunityCategory;
 }) {
   const centerRef = useRef<LatLng | null>(null);
   const mapRef = useRef<LeafletMap | null>(null);
@@ -96,6 +102,25 @@ export function MapRestaurantPicker({
   }, [find, radius]);
 
   const reset = useCallback(() => setSearch({ status: 'idle' }), []);
+
+  // The searched location for a manual add is wherever the map is centred.
+  const currentCoords = useCallback(() => {
+    const c = centerRef.current ?? mapRef.current?.getCenter();
+    return c ? { latitude: c.lat, longitude: c.lng } : null;
+  }, []);
+
+  const onAdded = (v: CommunityVenue) => {
+    onSelect({
+      osmId: `community/${v.id}`,
+      name: v.name,
+      address: v.address,
+      latitude: v.latitude,
+      longitude: v.longitude,
+      distanceMeters: 0,
+      community: true,
+    });
+    onClose();
+  };
 
   return (
     <Sheet open={open} onClose={onClose} title={title}>
@@ -173,6 +198,9 @@ export function MapRestaurantPicker({
                   {place.address && (
                     <span className="block truncate text-xs text-text-muted">{place.address}</span>
                   )}
+                  {place.community && (
+                    <span className="text-xs text-primary">Added by a user</span>
+                  )}
                 </span>
                 <span className="shrink-0 text-xs text-text-muted">
                   {formatDistance(place.distanceMeters)}
@@ -182,6 +210,8 @@ export function MapRestaurantPicker({
           ))}
         </ul>
       )}
+
+      <AddMissingVenue category={category} getCoords={currentCoords} onAdded={onAdded} />
     </Sheet>
   );
 }

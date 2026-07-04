@@ -2,13 +2,15 @@ import { useCallback, useEffect, useState } from 'react';
 import { Beer, MapPin } from 'lucide-react';
 import { Sheet } from '@/components/ui/Sheet';
 import { Button } from '@/components/ui/Button';
-import { getCurrentPosition, GeoError } from '@/lib/geo';
+import { getCurrentPosition, GeoError, type Coords } from '@/lib/geo';
 import { findNearbyVenues, NearbyError, type NearbyVenue } from '@/lib/nearbyPlaces';
+import { AddMissingVenue } from './AddMissingVenue';
+import type { CommunityVenue } from '@/types/db';
 
 type State =
   | { status: 'loading' }
   | { status: 'error'; message: string }
-  | { status: 'ready'; venues: NearbyVenue[]; radius: number };
+  | { status: 'ready'; venues: NearbyVenue[]; radius: number; coords: Coords };
 
 const BASE_RADIUS = 500;
 
@@ -27,12 +29,26 @@ export function NearbyVenuePicker({
 }) {
   const [state, setState] = useState<State>({ status: 'loading' });
 
+  const onAdded = (v: CommunityVenue) => {
+    onSelect({
+      osmId: `community/${v.id}`,
+      name: v.name,
+      amenityType: 'bar',
+      address: v.address,
+      latitude: v.latitude,
+      longitude: v.longitude,
+      distanceMeters: 0,
+      community: true,
+    });
+    onClose();
+  };
+
   const run = useCallback(async (radius: number) => {
     setState({ status: 'loading' });
     try {
-      const { latitude, longitude } = await getCurrentPosition();
-      const venues = await findNearbyVenues(latitude, longitude, { radius });
-      setState({ status: 'ready', venues, radius });
+      const coords = await getCurrentPosition();
+      const venues = await findNearbyVenues(coords.latitude, coords.longitude, { radius });
+      setState({ status: 'ready', venues, radius, coords });
     } catch (err) {
       const message =
         err instanceof GeoError || err instanceof NearbyError
@@ -97,6 +113,9 @@ export function NearbyVenuePicker({
                   {venue.address && (
                     <span className="block truncate text-xs text-text-muted">{venue.address}</span>
                   )}
+                  {venue.community && (
+                    <span className="text-xs text-primary">Added by a user</span>
+                  )}
                 </span>
                 <span className="shrink-0 text-xs text-text-muted">
                   {formatDistance(venue.distanceMeters)}
@@ -105,6 +124,14 @@ export function NearbyVenuePicker({
             </li>
           ))}
         </ul>
+      )}
+
+      {state.status === 'ready' && (
+        <AddMissingVenue
+          category="drink"
+          getCoords={() => (state.status === 'ready' ? state.coords : null)}
+          onAdded={onAdded}
+        />
       )}
     </Sheet>
   );

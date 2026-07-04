@@ -22,6 +22,7 @@ import {
 } from '@/features/stats/hooks/useStats';
 import { useEntryMutations } from '@/features/entries/hooks/useEntryMutations';
 import { useConfirmDelete } from '@/hooks/useConfirmDelete';
+import { useCurrencyRates } from '@/hooks/useCurrencies';
 import { useQuickAdd } from '@/lib/quickAdd';
 import { supabase } from '@/lib/supabase';
 import { Card, SectionTitle } from '@/components/ui/Card';
@@ -116,7 +117,14 @@ export function StatsScreen() {
   const { project, isEverything, viewProjectId, settings } = useProject();
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
-  const { data: stats, isLoading } = useProjectStats(viewProjectId, from || undefined, to || undefined);
+  const rates = useCurrencyRates();
+  const { data: stats, isLoading } = useProjectStats(
+    viewProjectId,
+    from || undefined,
+    to || undefined,
+    settings.currency,
+    rates,
+  );
   const { data: purchases = [] } = usePurchases(viewProjectId, from || undefined, to || undefined);
   const { data: bounds } = useProjectDateBounds(viewProjectId);
   const { remove } = useEntryMutations();

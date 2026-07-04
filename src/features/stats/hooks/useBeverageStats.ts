@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { BEER_SIZES, WINE_STYLES } from '@/types/db';
-import { DAY_START_HOUR, logicalToday } from '@/lib/format';
-import type { DrinkType, WineStyle } from '@/types/db';
+import { convertMoney, DAY_START_HOUR, logicalToday, type RateMap } from '@/lib/format';
+import type { Currency, DrinkType, WineStyle } from '@/types/db';
 
 export interface NamedCount {
   name: string;
@@ -139,6 +139,7 @@ interface DrinkRow {
   quantity: number;
   rating: number | null;
   cost: number | null;
+  currency: Currency | null;
   city: string | null;
   country: string | null;
   latitude: number | null;
@@ -188,7 +189,7 @@ function topRatings(map: Map<string, number[]>, n = 5): NamedRating[] {
     .slice(0, n);
 }
 
-function compute(rows: DrinkRow[]): BeverageStats {
+function compute(rows: DrinkRow[], displayCurrency: Currency, rates: RateMap): BeverageStats {
   const empty: BeverageStats = {
     totalEntries: 0,
     totalServings: 0,
@@ -269,7 +270,7 @@ function compute(rows: DrinkRow[]): BeverageStats {
   for (const d of rows) {
     const servings = servingsOf(d);
     totalServings += servings;
-    if (d.cost) totalSpent += d.cost;
+    if (d.cost) totalSpent += convertMoney(d.cost, d.currency ?? displayCurrency, displayCurrency, rates);
 
     byTypeServings.set(d.drink_type, (byTypeServings.get(d.drink_type) ?? 0) + servings);
     byTypeEntries.set(d.drink_type, (byTypeEntries.get(d.drink_type) ?? 0) + 1);
@@ -493,28 +494,31 @@ function compute(rows: DrinkRow[]): BeverageStats {
  *   - undefined → loading, query disabled
  *   - null      → "Everything" mode, all projects included
  *   - string    → specific project filter
- * Optional `from`/`to` (YYYY-MM-DD) bound the entry dates inclusively.
+ * Optional `from`/`to` (YYYY-MM-DD) bound the entry dates inclusively. Drink costs
+ * are normalized to `displayCurrency` using `rates` (from `useCurrencyRates`).
  */
 export function useBeverageStats(
   projectId: string | null | undefined,
-  from?: string,
-  to?: string,
+  from: string | undefined,
+  to: string | undefined,
+  displayCurrency: Currency,
+  rates: RateMap,
 ) {
   return useQuery({
-    queryKey: ['stats', 'beverages', projectId, from, to],
+    queryKey: ['stats', 'beverages', projectId, from, to, displayCurrency, rates],
     enabled: projectId !== undefined,
     queryFn: async (): Promise<BeverageStats> => {
       let q = supabase
         .from('memoir_drink_entries')
         .select(
-          'id, entry_date, created_at, drink_type, wine_style, abv, count_033l, count_04l, count_05l, count_0568l, count_06l, quantity, rating, cost, city, country, latitude, longitude, drink_item:memoir_drink_items(name)',
+          'id, entry_date, created_at, drink_type, wine_style, abv, count_033l, count_04l, count_05l, count_0568l, count_06l, quantity, rating, cost, currency, city, country, latitude, longitude, drink_item:memoir_drink_items(name)',
         );
       if (projectId !== null) q = q.eq('project_id', projectId);
       if (from) q = q.gte('entry_date', from);
       if (to) q = q.lte('entry_date', to);
       const { data, error } = await q;
       if (error) throw error;
-      return compute((data ?? []) as unknown as DrinkRow[]);
+      return compute((data ?? []) as unknown as DrinkRow[], displayCurrency, rates);
     },
   });
 }

@@ -11,7 +11,38 @@ This project uses [Semantic Versioning](https://semver.org/) (`MAJOR.MINOR.PATCH
 The current version is tracked in [`VERSION.md`](VERSION.md) and shown at the bottom
 of the in-app **Profile** screen.
 
-## [17.13.0] - 2026-07-03
+## [18.0.0] - 2026-07-04
+
+### Added
+- **Add a place that's missing from the map.** When you search "Find nearby venues"
+  (for food or drinks) and can't find where you are, you can now add it yourself:
+  type the name and Memoir saves it with your current GPS location. From then on the
+  spot shows up for everyone else searching that area, labelled **"Added by a user."**
+  These community-added places appear right alongside the ones from the map, so a
+  brand-new café or a bar the map hasn't caught up with is still one tap to log.
+
+## [17.14.0] - 2026-07-03
+
+### Added
+- **Pick a currency for each drink.** The currency button next to a drink's cost
+  now sets the currency for *that drink only* instead of silently changing your
+  whole app's default. Log a €6 beer abroad and a 95 kr beer at home and each keeps
+  the currency you paid in.
+
+### Changed
+- **Statistics now normalize mixed currencies.** Money on the Stats and Beverages
+  screens (and the day total on the Journal) converts every drink into the currency
+  you're viewing, using the shared exchange rates, so a trip that mixed euros and
+  kroner adds up correctly. Costs in an unknown ("Other") currency are counted as-is.
+- Each drink's cost is now shown in its own currency in the Journal and in an item's
+  history, rather than always using your default currency's symbol.
+
+### Fixed
+- **Your last-used project is remembered again.** Signing in after a while no longer
+  drops you into a different project: the app now waits for your saved preferences to
+  load before choosing a project, instead of falling back to the default and locking
+  it in before your remembered project was known.
+
 
 ### Fixed
 - **Scanned wines no longer land on Beer at 4.7 %.** Drink-type detection used to

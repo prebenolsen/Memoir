@@ -61,7 +61,7 @@ const ProjectContext = createContext<ProjectContextValue | undefined>(undefined)
 
 export function ProjectProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
-  const { settings, update: updateSettings } = useSettings();
+  const { settings, update: updateSettings, loading: settingsLoading } = useSettings();
   const qc = useQueryClient();
 
   const { data: projects = [], isLoading } = useQuery({
@@ -82,9 +82,13 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
   const [isEverythingMode, setIsEverythingMode] = useState(false);
   const [date, setDateState] = useState<string>(logicalToday());
 
-  // Initialise selection once projects + settings are known.
+  // Initialise selection once projects + settings are known. Waiting for settings
+  // to finish loading is essential: they load independently of projects, and if we
+  // picked the fallback (default) project before `last_project_id` arrived, the
+  // guard below would lock it in and the remembered project would never be restored
+  // — the app would silently reset to another project after each fresh login.
   useEffect(() => {
-    if (!projects.length) return;
+    if (!projects.length || settingsLoading) return;
     if (isEverythingMode) return;
     if (projectId && projects.some((p) => p.id === projectId)) return;
     const remembered =
@@ -93,7 +97,14 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
         : undefined;
     const fallback = projects.find((p) => p.is_default) ?? projects[0];
     setProjectId((remembered ?? fallback).id);
-  }, [projects, projectId, isEverythingMode, settings.remember_last_project, settings.last_project_id]);
+  }, [
+    projects,
+    projectId,
+    isEverythingMode,
+    settingsLoading,
+    settings.remember_last_project,
+    settings.last_project_id,
+  ]);
 
   // Restore last date once on load if the user opted in.
   useEffect(() => {

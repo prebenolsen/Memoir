@@ -2,13 +2,15 @@ import { useCallback, useEffect, useState } from 'react';
 import { MapPin, UtensilsCrossed } from 'lucide-react';
 import { Sheet } from '@/components/ui/Sheet';
 import { Button } from '@/components/ui/Button';
-import { getCurrentPosition, GeoError } from '@/lib/geo';
+import { getCurrentPosition, GeoError, type Coords } from '@/lib/geo';
 import { findNearbyFoodVenues, NearbyError, type NearbyPlace } from '@/lib/nearbyPlaces';
+import { AddMissingVenue } from './AddMissingVenue';
+import type { CommunityVenue } from '@/types/db';
 
 type State =
   | { status: 'loading' }
   | { status: 'error'; message: string }
-  | { status: 'ready'; places: NearbyPlace[]; radius: number };
+  | { status: 'ready'; places: NearbyPlace[]; radius: number; coords: Coords };
 
 const BASE_RADIUS = 200;
 
@@ -27,12 +29,25 @@ export function NearbyRestaurantPicker({
 }) {
   const [state, setState] = useState<State>({ status: 'loading' });
 
+  const onAdded = (v: CommunityVenue) => {
+    onSelect({
+      osmId: `community/${v.id}`,
+      name: v.name,
+      address: v.address,
+      latitude: v.latitude,
+      longitude: v.longitude,
+      distanceMeters: 0,
+      community: true,
+    });
+    onClose();
+  };
+
   const run = useCallback(async (radius: number) => {
     setState({ status: 'loading' });
     try {
-      const { latitude, longitude } = await getCurrentPosition();
-      const places = await findNearbyFoodVenues(latitude, longitude, { radius });
-      setState({ status: 'ready', places, radius });
+      const coords = await getCurrentPosition();
+      const places = await findNearbyFoodVenues(coords.latitude, coords.longitude, { radius });
+      setState({ status: 'ready', places, radius, coords });
     } catch (err) {
       const message =
         err instanceof GeoError || err instanceof NearbyError
@@ -93,12 +108,23 @@ export function NearbyRestaurantPicker({
                   {place.address && (
                     <span className="block truncate text-xs text-text-muted">{place.address}</span>
                   )}
+                  {place.community && (
+                    <span className="text-xs text-primary">Added by a user</span>
+                  )}
                 </span>
                 <span className="shrink-0 text-xs text-text-muted">{formatDistance(place.distanceMeters)}</span>
               </button>
             </li>
           ))}
         </ul>
+      )}
+
+      {state.status === 'ready' && (
+        <AddMissingVenue
+          category="food"
+          getCoords={() => (state.status === 'ready' ? state.coords : null)}
+          onAdded={onAdded}
+        />
       )}
     </Sheet>
   );

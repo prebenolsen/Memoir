@@ -172,7 +172,7 @@ export function ItemDetailSheet({
                   <RatingBadge value={o.rating} scale={settings.rating_scale} />
                   {o.cost != null && (
                     <span className="text-sm text-text-muted">
-                      {formatMoney(o.cost, settings.currency)}
+                      {formatMoney(o.cost, o.currency ?? settings.currency)}
                     </span>
                   )}
                 </div>

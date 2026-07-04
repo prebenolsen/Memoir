@@ -68,6 +68,18 @@ export interface Venue {
   created_at: string;
 }
 
+/** A crowdsourced place shared across all users (see memoir_community_venues). */
+export interface CommunityVenue {
+  id: string;
+  name: string;
+  category: 'food' | 'drink';
+  latitude: number;
+  longitude: number;
+  address: string | null;
+  created_by: string | null;
+  created_at: string;
+}
+
 export interface DrinkItem {
   id: string;
   user_id: string;
@@ -126,6 +138,8 @@ export interface DrinkEntry {
   quantity: number;
   rating: number | null;
   cost: number | null;
+  /** Currency the cost was paid in. null = the viewer's display currency (older rows). */
+  currency: Currency | null;
   notes: string | null;
   city: string | null;
   country: string | null;

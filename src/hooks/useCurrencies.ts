@@ -1,5 +1,7 @@
+import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
+import type { RateMap } from '@/lib/format';
 
 /** A current row from the `memoir_currencies_current` view. */
 export interface CurrencyRow {
@@ -43,4 +45,18 @@ export function useCurrencies() {
 
   const currencies = query.data && query.data.length > 0 ? query.data : FALLBACK;
   return { currencies, loading: query.isLoading };
+}
+
+/**
+ * The current exchange rates as a `{ code -> rate_to_nok }` map, for normalizing
+ * mixed-currency costs to a single display currency (see `convertMoney`). NOK is
+ * always present at 1 via the seed/fallback. Referentially stable per rate set so
+ * it can safely feed a React Query key without re-triggering fetches each render.
+ */
+export function useCurrencyRates(): RateMap {
+  const { currencies } = useCurrencies();
+  return useMemo(
+    () => Object.fromEntries(currencies.map((c) => [c.code, c.rate_to_nok])),
+    [currencies],
+  );
 }

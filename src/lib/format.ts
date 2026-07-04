@@ -122,6 +122,27 @@ export function currencySymbol(currency: Currency): string {
   return CURRENCY_INFO[currency].symbol || '';
 }
 
+/** Exchange rates keyed by currency code: how many NOK equal 1 unit (NOK = 1). */
+export type RateMap = Record<string, number>;
+
+/**
+ * Convert an amount between currencies using NOK-based rates (the shape stored in
+ * `memoir_currencies`). Falls back to no conversion when either side is unknown —
+ * e.g. the "Other" currency has no rate — so the amount is counted at face value.
+ */
+export function convertMoney(
+  amount: number,
+  from: Currency | string,
+  to: Currency | string,
+  rates: RateMap,
+): number {
+  if (from === to) return amount;
+  const rFrom = rates[from];
+  const rTo = rates[to];
+  if (!rFrom || !rTo) return amount;
+  return (amount * rFrom) / rTo;
+}
+
 /** Display a rating against the chosen scale, e.g. 8 on a 1-5 scale -> "4". */
 export function formatRating(
   rating: number | null | undefined,
