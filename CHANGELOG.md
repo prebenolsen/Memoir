@@ -11,6 +11,15 @@ This project uses [Semantic Versioning](https://semver.org/) (`MAJOR.MINOR.PATCH
 The current version is tracked in [`VERSION.md`](VERSION.md) and shown at the bottom
 of the in-app **Profile** screen.
 
+## [19.0.0] - 2026-07-04
+
+### Added
+- **Journal notes.** The Journal page now has a **Notes** section at the bottom where
+  you can write freely about your day — how you felt, what you did, whether you made it
+  to the gym, anything at all. Add as many notes as you like; each one is saved on its
+  own for that day. Notes are private to you and never shared with friends. Edit a note
+  in place and tap **Save**, or remove one with the trash button.
+
 ## [18.0.1] - 2026-07-04
 
 ### Fixed

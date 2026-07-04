@@ -9,6 +9,8 @@ import { useQuickAdd, type AddKind } from '@/lib/quickAdd';
 import { Card, SectionTitle } from '@/components/ui/Card';
 import { RatingBadge } from '@/components/ui/RatingInput';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { JournalNotes } from './JournalNotes';
+import { useJournalNotes } from './hooks/useJournalNotes';
 import { addDays, convertMoney, formatLongDate, formatMoney, formatWeekday } from '@/lib/format';
 import { BEER_SIZES, type Currency } from '@/types/db';
 import {
@@ -87,6 +89,7 @@ function alcoholSummary(d: DayData) {
 export function JournalScreen() {
   const { viewProjectId, date, setDate, settings } = useProject();
   const { data, isLoading } = useDay(viewProjectId, date);
+  const { data: notes } = useJournalNotes(viewProjectId, date);
   const { remove } = useEntryMutations();
   const confirmDelete = useConfirmDelete();
   const rates = useCurrencyRates();
@@ -117,7 +120,8 @@ export function JournalScreen() {
     !data.food.length &&
     !data.drinks.length &&
     !data.activities.length &&
-    !data.purchases.length;
+    !data.purchases.length &&
+    !notes?.length;
 
   return (
     <div className="space-y-4">
@@ -267,6 +271,9 @@ export function JournalScreen() {
           </span>
         </Card>
       )}
+
+      {/* Journal notes — freetext for the day, always available */}
+      {viewProjectId !== undefined && <JournalNotes />}
     </div>
   );
 }

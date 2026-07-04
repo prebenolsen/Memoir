@@ -172,6 +172,16 @@ export interface PurchaseEntry {
   created_at: string;
 }
 
+/** A freetext journal note for one day (see memoir_journal_entries). */
+export interface JournalEntry {
+  id: string;
+  user_id: string;
+  project_id: string;
+  entry_date: string;
+  body: string;
+  created_at: string;
+}
+
 // Social layer (usernames + friends)
 export type FriendshipStatus = 'pending' | 'accepted';
 
