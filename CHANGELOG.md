@@ -11,6 +11,23 @@ This project uses [Semantic Versioning](https://semver.org/) (`MAJOR.MINOR.PATCH
 The current version is tracked in [`VERSION.md`](VERSION.md) and shown at the bottom
 of the in-app **Profile** screen.
 
+## [19.0.2] - 2026-08-21
+
+### Fixed
+- **No more duplicate "Everyday Life" projects.** A rare timing issue on
+  sign-in could create a second default project for the same account. This
+  is no longer possible going forward; if it already happened to you, a
+  cleanup pass merges everything from the extra project into the one you've
+  actually been using and removes it.
+
+## [19.0.1] - 2026-08-21
+
+### Fixed
+- **A failed "remember last project" save no longer fails silently.** If switching
+  projects couldn't be saved (e.g. a network hiccup), the app now shows an error toast
+  instead of quietly discarding the change — previously you'd only notice when the app
+  opened back on the wrong project later, with no clue why.
+
 ## [19.0.0] - 2026-07-04
 
 ### Added

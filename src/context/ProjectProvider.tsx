@@ -5,6 +5,7 @@ import { useAuth } from './AuthProvider';
 import { useSettings } from './SettingsProvider';
 import { effectiveSettings, logicalToday, newId } from '@/lib/format';
 import { getCurrentPosition, reverseGeocode } from '@/lib/geo';
+import { toast } from '@/components/ui/Toast';
 import type { Currency, Project, Settings } from '@/types/db';
 
 interface ProjectContextValue {
@@ -121,7 +122,11 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     } else {
       setIsEverythingMode(false);
       setProjectId(id);
-      if (settings.remember_last_project) void updateSettings({ last_project_id: id });
+      if (settings.remember_last_project) {
+        updateSettings({ last_project_id: id }).catch(() => {
+          toast("Couldn't save your project choice — it may not stick next time", 'error');
+        });
+      }
     }
   };
 
